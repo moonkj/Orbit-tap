@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Swift Gestures",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "The Swift Gestures for Safari - Navigate with intuitive gestures",
+    "description": "Description of the extension"
+  }
+}
