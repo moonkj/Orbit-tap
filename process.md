@@ -55,5 +55,41 @@
 - 8단계 구현 Phase 계획
 - 제스처 인식 알고리즘 사양 확정
 
+### [2026-04-15] Phase 0: 프로젝트 스캐폴드 완료
+
+#### Flutter Container App (10 Dart 파일)
+- `main.dart` → ProviderScope 진입점
+- `app.dart` → MaterialApp.router + Light/Dark 테마
+- `core/theme/` → AppColors, AppTheme (Material3)
+- `core/constants/` → AppConstants, GestureDefaults
+- `core/utils/` → PlatformChannel (3 MethodChannel), GoRouter
+- `features/onboarding/` → 5페이지 온보딩 (PageView + SmoothPageIndicator)
+- `features/settings/` → 메인 설정 화면 (Extension 상태, 제스처 토글, 구독)
+
+#### Safari Web Extension (11 TypeScript 파일 → JS 번들)
+- `GestureEngine` → 5-state FSM, AbortController 기반 이벤트
+- `TouchTracker` → 30Hz 적응형 샘플링
+- `ShapeDetector` → Douglas-Peucker + 세그먼트 분석 (V/L Shape)
+- `TapDetector` → Double Tap, Long Press 감지
+- `FloatingButton` → Shadow DOM, CSS transform, snap-to-edge
+- `FeedbackOverlay` → 제스처별 0.3초 피드백
+- `IntentDetector` → 스크롤/입력/idle 상태 추적
+- `ExclusionManager` → 도메인/iframe 제외
+- `ConfigBridge` → Native message + storage 폴백
+- `background/index.ts` → 탭 네비게이션/닫기/복원
+
+#### iOS Native (5 Swift 파일)
+- `SafariWebExtensionHandler` → config/subscription/settings 핸들링
+- `StoreKitChannel` → StoreKit 2 구매/복원
+- `AppGroupChannel` → 설정 저장/로드
+- `ExtensionStatusChannel` → Extension 상태 확인
+- `AppGroupConstants` → 공유 키 상수
+
+#### 빌드 검증
+- `flutter analyze` → No issues
+- `tsc --noEmit` → No errors
+- `rollup -c` → content_script.js + background.js 빌드 성공
+- GitHub 푸시 완료: https://github.com/moonkj/Swift.git
+
 ---
 <!-- 이후 Phase별 진행 기록 추가 -->
