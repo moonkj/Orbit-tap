@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/platform_channel.dart';
 
 final extensionEnabledProvider = FutureProvider<bool>((ref) async {
@@ -16,68 +18,161 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final extensionEnabled = ref.watch(extensionEnabledProvider);
     final subscriptionActive = ref.watch(subscriptionActiveProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text(AppConstants.appName)),
+      appBar: AppBar(title: Text(AppConstants.appName)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Extension Status Card
           extensionEnabled.when(
             data: (enabled) => _StatusCard(
-              title: 'Safari Extension',
-              subtitle: enabled ? 'Enabled' : 'Not Enabled',
+              title: l10n.get('safariExtension'),
+              subtitle: enabled ? l10n.get('enabled') : l10n.get('notEnabled'),
               icon: enabled ? Icons.check_circle : Icons.error,
               color: enabled ? Colors.green : Colors.red,
-              onTap: enabled ? null : () => _showExtensionGuide(context),
+              onTap: enabled ? null : () => _showExtensionGuide(context, l10n),
             ),
-            loading: () => const _StatusCard(title: 'Safari Extension', subtitle: 'Checking...', icon: Icons.hourglass_empty, color: Colors.grey),
-            error: (e, s) => const _StatusCard(title: 'Safari Extension', subtitle: 'Unknown', icon: Icons.help, color: Colors.grey),
+            loading: () => _StatusCard(
+              title: l10n.get('safariExtension'),
+              subtitle: l10n.get('checking'),
+              icon: Icons.hourglass_empty,
+              color: Colors.grey,
+            ),
+            error: (e, s) => _StatusCard(
+              title: l10n.get('safariExtension'),
+              subtitle: l10n.get('unknown'),
+              icon: Icons.help,
+              color: Colors.grey,
+            ),
           ),
           const SizedBox(height: 16),
 
           // Gestures Section
-          const _SectionHeader(title: 'Gestures'),
-          const _GestureToggle(name: 'Swipe Back/Forward', subtitle: 'Horizontal swipe in center area', enabled: true, isPremium: false),
-          const _GestureToggle(name: 'V Shape - Close Tab', subtitle: 'Draw V to close current tab', enabled: true, isPremium: true),
-          const _GestureToggle(name: 'L Shape - Restore Tab', subtitle: 'Draw L to restore closed tab', enabled: true, isPremium: true),
-          const _GestureToggle(name: 'Double Tap - Search', subtitle: 'Quick page search', enabled: true, isPremium: true),
-          const _GestureToggle(name: 'Long Press - Scroll', subtitle: 'Jump to top/bottom', enabled: true, isPremium: true),
-          const _GestureToggle(name: 'Two Finger Flick', subtitle: 'Refresh / Fullscreen', enabled: true, isPremium: true),
+          _SectionHeader(title: l10n.get('gestures')),
+          _GestureToggle(
+            name: l10n.get('swipeBackForward'),
+            subtitle: l10n.get('swipeDesc'),
+            gestureKey: 'swipe',
+            enabled: true,
+            isPremium: false,
+            onTap: () => context.push('/gesture-detail/swipe'),
+          ),
+          _GestureToggle(
+            name: l10n.get('vShapeCloseTab'),
+            subtitle: l10n.get('vShapeDesc'),
+            gestureKey: 'vshape',
+            enabled: true,
+            isPremium: true,
+            onTap: () => context.push('/gesture-detail/vshape'),
+          ),
+          _GestureToggle(
+            name: l10n.get('lShapeRestoreTab'),
+            subtitle: l10n.get('lShapeDesc'),
+            gestureKey: 'lshape',
+            enabled: true,
+            isPremium: true,
+            onTap: () => context.push('/gesture-detail/lshape'),
+          ),
+          _GestureToggle(
+            name: l10n.get('doubleTapSearch'),
+            subtitle: l10n.get('doubleTapDesc'),
+            gestureKey: 'doubletap',
+            enabled: true,
+            isPremium: true,
+            onTap: () => context.push('/gesture-detail/doubletap'),
+          ),
+          _GestureToggle(
+            name: l10n.get('longPressScroll'),
+            subtitle: l10n.get('longPressDesc'),
+            gestureKey: 'longpress',
+            enabled: true,
+            isPremium: true,
+            onTap: () => context.push('/gesture-detail/longpress'),
+          ),
+          _GestureToggle(
+            name: l10n.get('twoFingerFlick'),
+            subtitle: l10n.get('twoFingerDesc'),
+            gestureKey: 'twofinger',
+            enabled: true,
+            isPremium: true,
+            onTap: () => context.push('/gesture-detail/twofinger'),
+          ),
           const SizedBox(height: 24),
 
           // Floating Button Section
-          const _SectionHeader(title: 'Floating Button'),
+          _SectionHeader(title: l10n.get('floatingButton')),
           SwitchListTile(
-            title: const Text('Show Floating Button'),
-            subtitle: const Text('Quick access control on every page'),
+            title: Text(l10n.get('showFloatingButton')),
+            subtitle: Text(l10n.get('quickAccessControl')),
             value: true,
             onChanged: (v) {},
+          ),
+          ListTile(
+            title: Text(l10n.get('floatingButton')),
+            subtitle: Text(l10n.get('buttonPosition')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/floating-button-settings'),
+          ),
+          const SizedBox(height: 24),
+
+          // Exclusion List Section
+          ListTile(
+            leading: const Icon(Icons.block),
+            title: Text(l10n.get('exclusionList')),
+            subtitle: Text(l10n.get('manageExcludedSites')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/exclusion-list'),
           ),
           const SizedBox(height: 24),
 
           // Subscription Section
-          const _SectionHeader(title: 'Subscription'),
+          _SectionHeader(title: l10n.get('subscription')),
           subscriptionActive.when(
             data: (active) => Card(
               child: ListTile(
-                leading: Icon(active ? Icons.star : Icons.star_border, color: active ? Colors.amber : null),
-                title: Text(active ? 'Premium Active' : 'Free Plan'),
-                subtitle: Text(active ? 'All gestures unlocked' : '\$0.99/month for full access'),
-                trailing: active ? null : const FilledButton(onPressed: null, child: Text('Upgrade')),
+                leading: Icon(
+                  active ? Icons.star : Icons.star_border,
+                  color: active ? Colors.amber : null,
+                ),
+                title: Text(
+                  active ? l10n.get('premiumActive') : l10n.get('freePlan'),
+                ),
+                subtitle: Text(
+                  active
+                      ? l10n.get('allGesturesUnlocked')
+                      : l10n.get('monthlyPrice'),
+                ),
+                trailing: active
+                    ? null
+                    : FilledButton(
+                        onPressed: () {},
+                        child: Text(l10n.get('upgrade')),
+                      ),
               ),
             ),
-            loading: () => const Card(child: ListTile(title: Text('Loading...'))),
-            error: (e, s) => const Card(child: ListTile(title: Text('Unable to check status'))),
+            loading: () => const Card(
+              child: ListTile(title: Text('Loading...')),
+            ),
+            error: (e, s) => const Card(
+              child: ListTile(title: Text('Unable to check status')),
+            ),
           ),
+          const SizedBox(height: 8),
+          if (true)
+            TextButton(
+              onPressed: () {},
+              child: Text(l10n.get('restore')),
+            ),
         ],
       ),
     );
   }
 
-  void _showExtensionGuide(BuildContext context) {
+  void _showExtensionGuide(BuildContext context, AppLocalizations l10n) {
     showModalBottomSheet(
       context: context,
       builder: (context) => Padding(
@@ -86,16 +181,25 @@ class SettingsScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Enable Safari Extension', style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              l10n.get('enableExtension'),
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 16),
-            const Text('1. Open Settings'),
-            const Text('2. Tap Safari > Extensions'),
-            const Text('3. Enable Swift Gestures'),
-            const Text('4. Allow for All Websites'),
+            Text(l10n.get('enableStep1')),
+            const SizedBox(height: 4),
+            Text(l10n.get('enableStep2')),
+            const SizedBox(height: 4),
+            Text(l10n.get('enableStep3')),
+            const SizedBox(height: 4),
+            Text(l10n.get('enableStep4')),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Got it')),
+              child: FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.get('gotIt')),
+              ),
             ),
           ],
         ),
@@ -112,7 +216,13 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+      child: Text(
+        title,
+        style: Theme.of(context)
+            .textTheme
+            .titleLarge
+            ?.copyWith(fontWeight: FontWeight.bold),
+      ),
     );
   }
 }
@@ -124,7 +234,13 @@ class _StatusCard extends StatelessWidget {
   final Color color;
   final VoidCallback? onTap;
 
-  const _StatusCard({required this.title, required this.subtitle, required this.icon, required this.color, this.onTap});
+  const _StatusCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -143,30 +259,53 @@ class _StatusCard extends StatelessWidget {
 class _GestureToggle extends StatelessWidget {
   final String name;
   final String subtitle;
+  final String gestureKey;
   final bool enabled;
   final bool isPremium;
+  final VoidCallback? onTap;
 
-  const _GestureToggle({required this.name, required this.subtitle, required this.enabled, required this.isPremium});
+  const _GestureToggle({
+    required this.name,
+    required this.subtitle,
+    required this.gestureKey,
+    required this.enabled,
+    required this.isPremium,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
+    return ListTile(
       title: Row(
         children: [
           Expanded(child: Text(name)),
-          if (isPremium) Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(4),
+          if (isPremium)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'PRO',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
+              ),
             ),
-            child: const Text('PRO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber)),
-          ),
         ],
       ),
       subtitle: Text(subtitle),
-      value: enabled,
-      onChanged: (v) {},
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Switch(value: enabled, onChanged: (v) {}),
+          const Icon(Icons.chevron_right, size: 16),
+        ],
+      ),
+      onTap: onTap,
     );
   }
 }

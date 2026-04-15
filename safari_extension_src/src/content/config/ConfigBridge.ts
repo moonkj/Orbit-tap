@@ -43,21 +43,52 @@ const DEFAULT_CONFIG: GestureConfig = {
 };
 
 export class ConfigBridge {
+  private config: GestureConfig | null = null;
+  private subscriptionActive = false;
+  private configChangeCallbacks: Array<(config: GestureConfig) => void> = [];
+
   async loadConfig(): Promise<GestureConfig> {
     try {
-      const result = await browser.runtime.sendNativeMessage(
-        'com.swift.app',
-        { action: 'getConfig' }
-      );
-      return { ...DEFAULT_CONFIG, ...result };
+      const result = await browser.runtime.sendMessage({ action: 'getConfig' });
+      this.config = { ...DEFAULT_CONFIG, ...result };
     } catch {
-      // Fallback to storage
       const stored = await browser.storage.local.get('gestureConfig');
-      if (stored.gestureConfig) {
-        return { ...DEFAULT_CONFIG, ...stored.gestureConfig };
-      }
-      return DEFAULT_CONFIG;
+      this.config = stored.gestureConfig
+        ? { ...DEFAULT_CONFIG, ...stored.gestureConfig }
+        : { ...DEFAULT_CONFIG };
     }
+    return this.config!;
+  }
+
+  async loadSubscriptionStatus(): Promise<boolean> {
+    try {
+      const result = await browser.runtime.sendMessage({ action: 'getSubscriptionStatus' });
+      this.subscriptionActive = result?.isActive === true;
+    } catch {
+      this.subscriptionActive = false;
+    }
+    return this.subscriptionActive;
+  }
+
+  isSubscriptionActive(): boolean {
+    return this.subscriptionActive;
+  }
+
+  getConfig(): GestureConfig {
+    return this.config ?? { ...DEFAULT_CONFIG };
+  }
+
+  onConfigChange(callback: (config: GestureConfig) => void): void {
+    this.configChangeCallbacks.push(callback);
+  }
+
+  startListening(): void {
+    browser.runtime.onMessage.addListener((message: any) => {
+      if (message.action === 'configUpdated' && message.config) {
+        this.config = { ...DEFAULT_CONFIG, ...message.config };
+        this.configChangeCallbacks.forEach(cb => cb(this.config!));
+      }
+    });
   }
 
   async saveConfig(config: Partial<GestureConfig>): Promise<void> {
