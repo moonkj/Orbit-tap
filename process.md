@@ -8,7 +8,7 @@
 - **시작일**: 2026-04-15
 - **기술 스택**: Flutter (Container App) + TypeScript/JS (Safari Web Extension) + Swift (Native Bridge)
 - **GitHub**: https://github.com/moonkj/Swift.git
-- **현재 단계**: Phase 0 준비 중 (설계 완료)
+- **현재 단계**: Phase 8 완료 - 전 기능 구현 + 테스트 통과
 
 ## 진행 기록
 
@@ -91,5 +91,56 @@
 - `rollup -c` → content_script.js + background.js 빌드 성공
 - GitHub 푸시 완료: https://github.com/moonkj/Swift.git
 
+### [2026-04-15] Phase 1-5: 핵심 기능 구현
+
+#### Phase 1 - 제스처 엔진 고도화
+- TypedArray Ring Buffer (Float32/64Array, 메모리 75% 절감)
+- 적응형 샘플링 (30Hz→60Hz 방향 전환 시 자동 전환)
+- Two Finger Flick 감지 (방향 차이 <30°, 속도 >400px/s)
+- 배터리 최적화: visibility-based 리스너 해제, 30초 idle 모드
+
+#### Phase 2 - Extension 통합 강화
+- Background: 닫힌 탭 영속화, 구독 캐시(5분 TTL), 통계 로깅
+- ConfigBridge: 구독 상태, 설정 변경 리스너, 오프라인 캐시
+- 에러 바운더리, sender 기반 탭 처리
+
+#### Phase 3 - Floating Button & HUD
+- 싱글/더블/트리플 탭 (350ms 타이머), 롱프레스 제스처 가이드
+- Edge 자동 숨김 (30px), Shadow DOM, CSS Containment
+- Quick Action HUD (backdrop-filter blur), Gesture Preview (Canvas, HiDPI)
+
+#### Phase 4 - Smart Exclusion
+- 터치 지점 DOM 분석 (overflow-x, touch-action CSS, interactive media)
+- 사이트별 제스처 규칙, 빌트인 7개 + 사용자 커스텀 도메인
+
+#### Phase 5 - Flutter 앱 + 다국어 (6개국어)
+- AppLocalizations: EN/KO/JA/ZH-CN/FR/HI (80+ 키)
+- GestureDetailScreen, FloatingButtonSettingsScreen, ExclusionListScreen
+- 모든 화면 다국어 적용
+
+### [2026-04-15] Phase 6-8: 결제, 통계, 테스트
+
+#### Phase 6 - 구독 결제
+- PaywallScreen: 기능 비교 테이블, 구매/복원 버튼, 로딩 상태
+- SubscriptionService: StateNotifier (loading/free/premium/error)
+- Settings → Paywall 라우팅 연결
+
+#### Phase 7 - 통계 대시보드 + 문서화
+- StatsScreen: fl_chart 주간 바 차트, Top 5 제스처, 절약 시간
+- AboutScreen: 앱 정보, 개인정보/이용약관 링크
+
+#### Phase 8 - TDD 테스트
+- TypeScript (Vitest): 38 tests passed
+  - TouchTracker: 6 tests (Ring Buffer, adaptive sampling, two finger)
+  - ShapeDetector: 11 tests (swipe, V/L shape, two finger flick, edge zone)
+  - TapDetector: 5 tests (double tap, long press, distance rejection)
+  - IntentDetector: 8 tests (scroll, focus, idle states)
+  - ExclusionManager: 8 tests (domains, iframe, site rules)
+- Flutter (flutter_test): 15 tests passed
+  - SettingsScreen: 4 tests
+  - OnboardingScreen: 3 tests
+  - AppLocalizations: 8 tests (6개국어 + fallback)
+- **총 53개 테스트 전부 통과**
+
 ---
-<!-- 이후 Phase별 진행 기록 추가 -->
+<!-- 프로젝트 완료 -->

@@ -127,6 +127,16 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/exclusion-list'),
           ),
+          const SizedBox(height: 8),
+
+          // Statistics Section
+          ListTile(
+            leading: const Icon(Icons.bar_chart),
+            title: Text(l10n.get('statistics')),
+            subtitle: Text(l10n.get('weeklyUsage')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/stats'),
+          ),
           const SizedBox(height: 24),
 
           // Subscription Section
@@ -149,7 +159,7 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: active
                     ? null
                     : FilledButton(
-                        onPressed: () {},
+                        onPressed: () => context.push('/paywall'),
                         child: Text(l10n.get('upgrade')),
                       ),
               ),
@@ -167,6 +177,15 @@ class SettingsScreen extends ConsumerWidget {
               onPressed: () {},
               child: Text(l10n.get('restore')),
             ),
+          const SizedBox(height: 24),
+
+          // About Section
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.get('about')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/about'),
+          ),
         ],
       ),
     );
