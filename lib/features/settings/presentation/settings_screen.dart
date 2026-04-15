@@ -13,6 +13,30 @@ final subscriptionActiveProvider = FutureProvider<bool>((ref) async {
   return await PlatformChannel.isSubscriptionActive();
 });
 
+final floatingButtonEnabledProvider = StateNotifierProvider<FloatingButtonNotifier, bool>((ref) {
+  return FloatingButtonNotifier();
+});
+
+class FloatingButtonNotifier extends StateNotifier<bool> {
+  FloatingButtonNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final config = await PlatformChannel.loadGestureConfig();
+    if (config != null && config.containsKey('floatingButtonEnabled')) {
+      state = config['floatingButtonEnabled'] as bool;
+    }
+  }
+
+  Future<void> toggle(bool value) async {
+    state = value;
+    final config = await PlatformChannel.loadGestureConfig() ?? {};
+    config['floatingButtonEnabled'] = value;
+    await PlatformChannel.saveGestureConfig(config);
+  }
+}
+
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -108,8 +132,10 @@ class SettingsScreen extends ConsumerWidget {
           SwitchListTile(
             title: Text(l10n.get('showFloatingButton')),
             subtitle: Text(l10n.get('quickAccessControl')),
-            value: true,
-            onChanged: (v) {},
+            value: ref.watch(floatingButtonEnabledProvider),
+            onChanged: (v) {
+              ref.read(floatingButtonEnabledProvider.notifier).toggle(v);
+            },
           ),
           ListTile(
             title: Text(l10n.get('floatingButton')),
