@@ -8,7 +8,7 @@ class PlatformChannel {
   // StoreKit
   static Future<Map<String, dynamic>?> fetchProducts() async {
     try {
-      final result = await _storeKit.invokeMethod('fetchProducts');
+      final result = await _storeKit.invokeMethod('loadProducts');
       return Map<String, dynamic>.from(result);
     } on PlatformException {
       return null;
@@ -35,7 +35,7 @@ class PlatformChannel {
 
   static Future<bool> restorePurchases() async {
     try {
-      final result = await _storeKit.invokeMethod('restorePurchases');
+      final result = await _storeKit.invokeMethod('restore');
       return result == true;
     } on PlatformException {
       return false;

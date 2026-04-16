@@ -298,6 +298,14 @@
     } catch(_) {}
   }
 
+  // UsageTracker와 동일한 서명 알고리즘 (변조 방지)
+  function computeSig(data) {
+    const raw = `sw1ft_2026:${data.isSubscribed}:${data.date}:${data.count}`;
+    let h = 0;
+    for (let i = 0; i < raw.length; i++) { h = ((h << 5) - h + raw.charCodeAt(i)) | 0; }
+    return h.toString(36);
+  }
+
   // 구독 전환
   document.getElementById('adminSubToggle').addEventListener('change', function() {
     const isSub = this.checked;
@@ -306,6 +314,7 @@
         const data = result?.[USAGE_KEY] || {};
         data.isSubscribed = isSub;
         if (isSub) data.monthSubDays = (data.monthSubDays || 0) + 1;
+        data._sig = computeSig(data);
         browser.storage?.local?.set({ [USAGE_KEY]: data })?.then(() => {
           loadUsage();
           loadAdminStats();

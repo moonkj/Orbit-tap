@@ -48,8 +48,8 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
         let isActive = defaults?.bool(forKey: AppGroupConstants.subscriptionActiveKey) ?? false
         let expiryTimestamp = defaults?.double(forKey: AppGroupConstants.subscriptionExpiryKey) ?? 0
-        let jws = defaults?.string(forKey: "swift_jws")
-        let productId = defaults?.string(forKey: "swift_product_id")
+        let jws = defaults?.string(forKey: AppGroupConstants.jwsKey)
+        let productId = defaults?.string(forKey: AppGroupConstants.productIdKey)
 
         let now = Date().timeIntervalSince1970
 

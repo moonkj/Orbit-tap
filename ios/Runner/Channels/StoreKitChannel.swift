@@ -204,10 +204,10 @@ class StoreKitChannel {
             defaults?.set(expires, forKey: AppGroupConstants.subscriptionExpiryKey)
         }
         if let jws = jws {
-            defaults?.set(jws, forKey: "swift_jws")
+            defaults?.set(jws, forKey: AppGroupConstants.jwsKey)
         }
         if let productId = productId {
-            defaults?.set(productId, forKey: "swift_product_id")
+            defaults?.set(productId, forKey: AppGroupConstants.productIdKey)
         }
 
         defaults?.synchronize()
