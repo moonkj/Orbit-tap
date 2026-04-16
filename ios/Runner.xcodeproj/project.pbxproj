@@ -11,11 +11,10 @@
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
-		42592695E271D3D047EEF064 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B230084ECD8C98A7E6F8F4B /* Foundation.framework */; };
-		516E80DA743047BA335B73AC /* Resources in Resources */ = {isa = PBXBuildFile; fileRef = C128806CE13A75BA0BF7CC06 /* Resources */; };
-		51E73F8157216A43F073D2A9 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0004AABB0004AABB0004 /* AppGroupConstants.swift */; };
+		6F3ED8CD1290A0442A3080F6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B230084ECD8C98A7E6F8F4B /* Foundation.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
+		8C37D3649504897D74FF98B5 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0004AABB0004AABB0004 /* AppGroupConstants.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -24,7 +23,8 @@
 		AABB0013AABB0013AABB0013 /* ExtensionStatusChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0003AABB0003AABB0003 /* ExtensionStatusChannel.swift */; };
 		AABB0014AABB0014AABB0014 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0004AABB0004AABB0004 /* AppGroupConstants.swift */; };
 		C7E2C039EA1E67BF9596DEDB /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 465D1FDC88D25FC7B6AA7C37 /* Pods_Runner.framework */; };
-		D81D75766A6BD2EE41E52FC7 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E221DB48337EB6BD353882BB /* SafariWebExtensionHandler.swift */; };
+		E1A9A95D0FE7CE666B1C94BD /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4F198F09D726A42FF377B5 /* SafariWebExtensionHandler.swift */; };
+		E398D1786BD3027938EC2679 /* SwiftSafariExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C941D55287CC8509AFE6C769 /* SwiftSafariExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,11 +35,11 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
-		D032095C024EFC5DFDED06C6 /* PBXContainerItemProxy */ = {
+		7A7589662F99FF84B6732176 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 9DA64F6C7BF5CC8AEDF5F502;
+			remoteGlobalIDString = 8F3825854F4E3BAB2C82045C;
 			remoteInfo = SwiftSafariExtension;
 		};
 /* End PBXContainerItemProxy section */
@@ -53,6 +53,17 @@
 			files = (
 			);
 			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D4E5F60718A1B2C3D4 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E398D1786BD3027938EC2679 /* SwiftSafariExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -70,6 +81,7 @@
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		7A4F198F09D726A42FF377B5 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -84,9 +96,9 @@
 		AABB0003AABB0003AABB0003 /* ExtensionStatusChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStatusChannel.swift; sourceTree = "<group>"; };
 		AABB0004AABB0004AABB0004 /* AppGroupConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConstants.swift; path = Shared/AppGroupConstants.swift; sourceTree = "<group>"; };
 		BA2708E0EE5BC2F58C2B7F40 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
-		C128806CE13A75BA0BF7CC06 /* Resources */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
-		E221DB48337EB6BD353882BB /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		C941D55287CC8509AFE6C769 /* SwiftSafariExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SwiftSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8A31DE3D5DA0DD92CB1E937 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		ED7A851FC35671BF11683295 /* Resources */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
 		F010DDA78389B45AEFCE2402 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		F04AFEE7F681693FF7A282E1 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -97,6 +109,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				0CE6FB5DD974D568356A4BED /* Pods_RunnerTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8330504AF9EEACC0A2CC81D9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F3ED8CD1290A0442A3080F6 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,6 +192,7 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				05664D864D9D1DACBACA468F /* Pods */,
 				34827374E96734209DA3F7F6 /* Frameworks */,
+				AF9A8C36B431EA415B8E33CA /* SwiftSafariExtension */,
 			);
 			sourceTree = "<group>";
 		};
@@ -180,6 +201,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				C941D55287CC8509AFE6C769 /* SwiftSafariExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -219,6 +241,16 @@
 			name = Shared;
 			sourceTree = "<group>";
 		};
+		AF9A8C36B431EA415B8E33CA /* SwiftSafariExtension */ = {
+			isa = PBXGroup;
+			children = (
+				7A4F198F09D726A42FF377B5 /* SafariWebExtensionHandler.swift */,
+				ED7A851FC35671BF11683295 /* Resources */,
+			);
+			name = SwiftSafariExtension;
+			path = SwiftSafariExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -241,6 +273,24 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		8F3825854F4E3BAB2C82045C /* SwiftSafariExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F23CB8685B3ADCB333091F14 /* Build configuration list for PBXNativeTarget "SwiftSafariExtension" */;
+			buildPhases = (
+				E4EDC035EB3EA8A85C605E3C /* Sources */,
+				8330504AF9EEACC0A2CC81D9 /* Frameworks */,
+				2B21EFC5185C9C1DC61690D0 /* Resources */,
+				A6FA179FEF2D2A780E2D294D /* Copy Web Extension Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SwiftSafariExtension;
+			productName = SwiftSafariExtension;
+			productReference = C941D55287CC8509AFE6C769 /* SwiftSafariExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -251,13 +301,14 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				A1B2C3D4E5F60718A1B2C3D4 /* Embed Foundation Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				AF3BD7EC86C18C99DCB57190 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				AA00DEP1AA00DEP1AA00DEP1 /* PBXTargetDependency */,
+				B1C2D3E4F5061829B1C2D3E4 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -277,6 +328,9 @@
 					331C8080294A63A400263BE5 = {
 						CreatedOnToolsVersion = 14.0;
 						TestTargetID = 97C146ED1CF9000F007C117D;
+					};
+					8F3825854F4E3BAB2C82045C = {
+						CreatedOnToolsVersion = 16.0;
 					};
 					97C146ED1CF9000F007C117D = {
 						CreatedOnToolsVersion = 7.3.1;
@@ -302,11 +356,19 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				8F3825854F4E3BAB2C82045C /* SwiftSafariExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2B21EFC5185C9C1DC61690D0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807F294A63A400263BE5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -358,6 +420,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		A6FA179FEF2D2A780E2D294D /* Copy Web Extension Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Web Extension Resources";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "DIST=\"${SRCROOT}/SwiftSafariExtension/Resources\"\nDEST=\"${TARGET_BUILD_DIR}/${PRODUCT_NAME}.appex\"\nif [ -d \"$DIST\" ]; then\n  # Remove the Resources subfolder if it exists (it should not be in appex root)\n  rm -rf \"$DEST/Resources\"\n  rsync -a \"$DIST/\" \"$DEST/\"\n  echo \"Copied SwiftSafariExtension/Resources → ${PRODUCT_NAME}.appex\"\nelse\n  echo \"error: SwiftSafariExtension/Resources not found\"\n  exit 1\nfi\n";
 		};
 		AF3BD7EC86C18C99DCB57190 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -445,6 +525,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E4EDC035EB3EA8A85C605E3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1A9A95D0FE7CE666B1C94BD /* SafariWebExtensionHandler.swift in Sources */,
+				8C37D3649504897D74FF98B5 /* AppGroupConstants.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -453,9 +542,10 @@
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
 		};
-		AA00DEP1AA00DEP1AA00DEP1 /* PBXTargetDependency */ = {
+		B1C2D3E4F5061829B1C2D3E4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			targetProxy = D032095C024EFC5DFDED06C6 /* PBXContainerItemProxy */;
+			target = 8F3825854F4E3BAB2C82045C /* SwiftSafariExtension */;
+			targetProxy = 7A7589662F99FF84B6732176 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -479,35 +569,25 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		1ACC529B7C33AFA3755148F9 /* Profile */ = {
+		1DEB1208BC1F5FC2F9ECD404 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QN975MTM7H;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Swift Gestures";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
 				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-framework",
-					SafariServices,
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.swift.swiftSafariGesture.extension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Profile;
 		};
@@ -577,7 +657,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.swift.swiftSafariGesture;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -635,65 +715,22 @@
 			};
 			name = Profile;
 		};
-		4493D2AC95F0ED438410E8B6 /* Release */ = {
+		91C3E9BA7E3C227543D1D24A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = QN975MTM7H;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Swift Gestures";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
 				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-framework",
-					SafariServices,
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.swift.swiftSafariGesture.extension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		50F689865C20DC9ADBA634FC /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QN975MTM7H;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Swift Gestures";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_LDFLAGS = (
-					"-framework",
-					SafariServices,
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.swift.swiftSafariGesture.extension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -824,7 +861,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.swift.swiftSafariGesture;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -847,11 +884,33 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.swift.swiftSafariGesture;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		D4A2CFDECE0EEBD364A0FEE1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QN975MTM7H;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Swift Gestures";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app.extension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -884,6 +943,16 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F23CB8685B3ADCB333091F14 /* Build configuration list for PBXNativeTarget "SwiftSafariExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D4A2CFDECE0EEBD364A0FEE1 /* Release */,
+				91C3E9BA7E3C227543D1D24A /* Debug */,
+				1DEB1208BC1F5FC2F9ECD404 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

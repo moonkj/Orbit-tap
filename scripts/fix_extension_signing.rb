@@ -8,6 +8,7 @@ ext_target = project.targets.find { |t| t.name == 'SwiftSafariExtension' }
 runner_target = project.targets.find { |t| t.name == 'Runner' }
 
 raise "Extension target not found" unless ext_target
+raise "Runner target not found" unless runner_target
 
 # Fix Extension build settings to match working Scrolly project
 ext_target.build_configurations.each do |config|
@@ -18,7 +19,7 @@ ext_target.build_configurations.each do |config|
   s['INFOPLIST_FILE'] = 'SwiftSafariExtension/Info.plist'
   s['INFOPLIST_KEY_CFBundleDisplayName'] = 'Swift Gestures'
   s['INFOPLIST_KEY_NSHumanReadableCopyright'] = ''
-  s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.swift.swiftSafariGesture.extension'
+  s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.shadowengine.app.extension'
   s['PRODUCT_NAME'] = '$(TARGET_NAME)'
   s['SWIFT_VERSION'] = '5.0'
   s['TARGETED_DEVICE_FAMILY'] = '1,2'
@@ -27,19 +28,19 @@ ext_target.build_configurations.each do |config|
   s['SWIFT_EMIT_LOC_STRINGS'] = 'YES'
   s['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
   s['SDKROOT'] = 'iphoneos'
+  s['CLANG_ENABLE_OBJC_WEAK'] = 'YES'
   # Remove problematic settings
-  s.delete('CLANG_ENABLE_OBJC_WEAK')
-  s.delete('VALIDATE_PRODUCT')
+  s.delete('VALIDATE_PRODUCT') if config.name == 'Debug'
 end
 
-# Re-add Embed App Extensions phase and dependency if missing
+# Ensure "Embed Foundation Extensions" copy files build phase exists
 embed_phase = runner_target.build_phases.find { |p|
   p.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) &&
-  p.name == 'Embed App Extensions'
+  p.name&.include?('Embed') && p.name&.include?('Extension')
 }
 
 unless embed_phase
-  embed_phase = runner_target.new_copy_files_build_phase('Embed App Extensions')
+  embed_phase = runner_target.new_copy_files_build_phase('Embed Foundation Extensions')
   embed_phase.dst_subfolder_spec = '13' # PlugIns folder
   embed_phase.dst_path = ''
 
@@ -57,15 +58,19 @@ unless embed_phase
     phases.each { |p| runner_target.build_phases << p }
   end
 
-  puts "Re-added Embed App Extensions phase"
+  puts "Added 'Embed Foundation Extensions' build phase"
+else
+  puts "Embed Foundation Extensions phase already exists"
 end
 
-# Re-add dependency if missing
+# Ensure dependency on SwiftSafariExtension
 unless runner_target.dependencies.any? { |d| d.target == ext_target }
   runner_target.add_dependency(ext_target)
-  puts "Re-added dependency on SwiftSafariExtension"
+  puts "Added dependency: Runner -> SwiftSafariExtension"
+else
+  puts "Dependency already exists"
 end
 
 project.save
-puts "Extension signing fixed. Settings match working Scrolly project."
+puts "Extension signing fixed."
 puts "Build configurations updated: #{ext_target.build_configurations.map(&:name).join(', ')}"
