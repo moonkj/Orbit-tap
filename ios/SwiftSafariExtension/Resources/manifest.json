@@ -1,11 +1,12 @@
 {
-  "manifest_version": 3,
-  "name": "Swift Gestures",
+  "manifest_version": 2,
+  "name": "SWIFT",
   "version": "1.0.0",
   "description": "The Swift Gestures for Safari",
   "permissions": ["activeTab", "storage", "tabs"],
   "background": {
-    "service_worker": "background/background.js"
+    "scripts": ["background/background.js"],
+    "persistent": false
   },
   "content_scripts": [
     {
@@ -15,7 +16,7 @@
       "run_at": "document_idle"
     }
   ],
-  "action": {
+  "browser_action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
       "48": "icons/icon-48.png",
