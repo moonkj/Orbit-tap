@@ -851,8 +851,8 @@
             this.abortController = new AbortController();
             const signal = this.abortController.signal;
             this.button.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false, signal });
-            document.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
-            document.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
+            this.button.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
+            this.button.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
             this.updatePosition(false);
         }
         unmount() {
@@ -1209,6 +1209,7 @@
     }
 
     const DEFAULT_CONFIG = {
+        masterEnabled: true,
         swipeMinDistance: 80,
         edgeZonePercent: 0.12,
         vShapeMinSegment: 60,
@@ -1296,32 +1297,33 @@
             try {
                 // Load config via background (falls back to storage cache)
                 const config = await this.configBridge.loadConfig();
-                // Load subscription status to gate premium features
-                const isSubscribed = await this.configBridge.loadSubscriptionStatus();
                 this.exclusionManager = new ExclusionManager();
                 if (this.exclusionManager.shouldExclude())
                     return;
                 this.intentDetector = new IntentDetector();
-                // Gate gesture engine on subscription or free-tier allowance
-                if (isSubscribed || this.isFreeFeatureSet(config)) {
+                // Start gesture engine only if master switch is on
+                if (config.masterEnabled !== false) {
                     this.gestureEngine = new GestureEngine(config, this.intentDetector);
                     this.gestureEngine.start();
                 }
-                // Floating button — always create instance, mount based on enabled toggle
+                // Floating button — mount only when master and floatingButtonEnabled are both on
                 this.floatingButton = new FloatingButton(config);
-                if (config.floatingButtonEnabled) {
+                if (config.masterEnabled !== false && config.floatingButtonEnabled) {
                     this.floatingButton.mount();
                 }
                 // Listen for config changes broadcast by background
                 this.configBridge.onConfigChange((updatedConfig) => {
                     try {
-                        if (this.gestureEngine) {
-                            this.gestureEngine.stop();
+                        // Tear down existing gesture engine
+                        this.gestureEngine?.stop();
+                        this.gestureEngine = null;
+                        // Restart engine only if master switch is on
+                        if (updatedConfig.masterEnabled !== false) {
                             this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector);
                             this.gestureEngine.start();
                         }
-                        // Dynamically show/hide floating button based on updated config
-                        if (updatedConfig.floatingButtonEnabled) {
+                        // Floating button: show only when master + floatingButtonEnabled
+                        if (updatedConfig.masterEnabled !== false && updatedConfig.floatingButtonEnabled) {
                             if (!this.floatingButton) {
                                 this.floatingButton = new FloatingButton(updatedConfig);
                             }
@@ -1349,11 +1351,6 @@
                 // Error boundary: log and degrade gracefully — never crash the page
                 console.error('[SwiftExtension] Initialization failed:', err);
             }
-        }
-        /** Free tier: only basic swipe gestures are enabled without a subscription. */
-        isFreeFeatureSet(config) {
-            const freeGestures = ['swipeBack', 'swipeForward'];
-            return freeGestures.some(g => config.gesturesEnabled[g]);
         }
         destroy() {
             this.gestureEngine?.stop();

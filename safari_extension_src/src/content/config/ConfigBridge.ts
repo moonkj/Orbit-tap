@@ -1,4 +1,5 @@
 export interface GestureConfig {
+  masterEnabled: boolean;
   swipeMinDistance: number;
   edgeZonePercent: number;
   vShapeMinSegment: number;
@@ -17,6 +18,7 @@ export interface GestureConfig {
 }
 
 const DEFAULT_CONFIG: GestureConfig = {
+  masterEnabled: true,
   swipeMinDistance: 80,
   edgeZonePercent: 0.12,
   vShapeMinSegment: 60,

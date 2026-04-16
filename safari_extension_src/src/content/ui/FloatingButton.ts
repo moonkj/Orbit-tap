@@ -124,8 +124,8 @@ export class FloatingButton {
     const signal = this.abortController.signal;
 
     this.button.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false, signal });
-    document.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
-    document.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
+    this.button.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
+    this.button.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
 
     this.updatePosition(false);
   }
