@@ -4,8 +4,8 @@ type ButtonAction = 'back' | 'forward' | 'tabOverview' | 'gestureGuide';
 
 export class FloatingButton {
   private host: HTMLElement | null = null;
-  private shadow: ShadowRoot | null = null;
   private button: HTMLElement | null = null;
+  private styleEl: HTMLStyleElement | null = null;
   private guideOverlay: HTMLElement | null = null;
   private config: GestureConfig;
   private isDragging = false;
@@ -36,13 +36,10 @@ export class FloatingButton {
     // Guard: already mounted
     if (this.host) return;
 
-    this.host = document.createElement('div');
-    this.host.id = 'swift-gesture-host';
-    this.shadow = this.host.attachShadow({ mode: 'closed' });
-
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(`
-      :host { all: initial; }
+    // Inject scoped styles via <style> tag (no Shadow DOM — iOS Safari compatible)
+    this.styleEl = document.createElement('style');
+    this.styleEl.textContent = `
+      #swift-gesture-host { all: initial; display: block; position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none; }
       .swift-fb {
         position: fixed;
         width: ${this.BUTTON_SIZE}px;
@@ -57,12 +54,12 @@ export class FloatingButton {
         will-change: transform, opacity;
         transform: translate3d(0, 0, 0);
         touch-action: none;
-        contain: layout style paint;
         -webkit-backface-visibility: hidden;
         box-shadow: 0 2px 10px rgba(0,0,0,0.25);
         transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
         user-select: none;
         -webkit-user-select: none;
+        pointer-events: auto;
       }
       .swift-fb.dragging {
         transition: none !important;
@@ -110,14 +107,18 @@ export class FloatingButton {
       .swift-guide-text { font-size: 14px; }
       .swift-guide-label { font-weight: 600; }
       .swift-guide-desc { color: rgba(255,255,255,0.6); font-size: 12px; }
-    `);
-    this.shadow.adoptedStyleSheets = [sheet];
+    `;
+    document.head.appendChild(this.styleEl);
+
+    // Host container (no Shadow DOM)
+    this.host = document.createElement('div');
+    this.host.id = 'swift-gesture-host';
 
     this.button = document.createElement('div');
     this.button.className = 'swift-fb';
     this.button.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>`;
 
-    this.shadow.appendChild(this.button);
+    this.host.appendChild(this.button);
     document.documentElement.appendChild(this.host);
 
     this.abortController = new AbortController();
@@ -133,8 +134,9 @@ export class FloatingButton {
   unmount(): void {
     this.abortController?.abort();
     this.host?.remove();
+    this.styleEl?.remove();
     this.host = null;
-    this.shadow = null;
+    this.styleEl = null;
     this.button = null;
     if (this.tapTimer) clearTimeout(this.tapTimer);
     if (this.longPressTimer) clearTimeout(this.longPressTimer);
@@ -265,7 +267,7 @@ export class FloatingButton {
       this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
     }
 
-    // Check if dragged to extreme edge → hide
+    // Check if dragged to extreme edge -> hide
     if (this.currentX <= this.EDGE_THRESHOLD || this.currentX >= window.innerWidth - this.EDGE_THRESHOLD - this.BUTTON_SIZE) {
       this.hideToEdge();
       return;
@@ -302,9 +304,9 @@ export class FloatingButton {
   }
 
   private showGestureGuide(): void {
-    if (!this.shadow) return;
+    if (!this.host) return;
 
-    const existing = this.shadow.querySelector('.swift-guide');
+    const existing = this.host.querySelector('.swift-guide');
     if (existing) { existing.remove(); return; }
 
     this.guideOverlay = document.createElement('div');
@@ -360,7 +362,7 @@ export class FloatingButton {
       this.guideOverlay = null;
     }, { once: true });
 
-    this.shadow.appendChild(this.guideOverlay);
+    this.host.appendChild(this.guideOverlay);
     requestAnimationFrame(() => this.guideOverlay?.classList.add('visible'));
   }
 }

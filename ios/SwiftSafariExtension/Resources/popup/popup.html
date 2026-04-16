@@ -7,7 +7,7 @@
   <style>
     :root { --primary: #0A84FF; --bg: #1C1C1E; --card: #2C2C2E; --text: #fff; --sub: #98989D; --border: #3A3A3C; --green: #30D158; --red: #FF453A; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); width: 100%; min-width: 280px; max-width: 380px; padding: 16px; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); width: 100%; min-width: unset; max-width: unset; padding: 12px; margin: 0; box-sizing: border-box; }
 
     .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
     .header-icon { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -143,11 +143,13 @@
 
   <script>
   (function() {
+    var STORAGE_KEY = 'gestureConfig';
+
     var I18N = {
       ko: { master_label:'SWIFT Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', tagline:'Safari 제스처 컨트롤', gestures_title:'제스처', swipe_label:'↔ 스와이프 뒤로/앞으로', vshape_label:'✌ V 모양 — 탭 닫기', lshape_label:'↳ L 모양 — 탭 복구', doubletap_label:'👆 더블탭 — 검색', longpress_label:'👇 롱프레스 — 스크롤', twofinger_label:'🔄 두손가락 — 새로고침', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'SWIFT v1.0.0' },
       ja: { master_label:'SWIFT Extension', master_desc:'全ジェスチャーとボタンを有効化', tagline:'Safariジェスチャーコントロール', gestures_title:'ジェスチャー', swipe_label:'↔ スワイプ 戻る/進む', vshape_label:'✌ V字 — タブを閉じる', lshape_label:'↳ L字 — タブ復元', doubletap_label:'👆 ダブルタップ — 検索', longpress_label:'👇 長押し — スクロール', twofinger_label:'🔄 2本指 — 更新', floating_title:'フローティングボタン', show_button:'フローティングボタン表示', show_button_desc:'すべてのページでクイックアクセス', sensitivity_title:'感度', less_sensitive:'低い', more_sensitive:'高い', footer:'SWIFT v1.0.0' },
       zh: { master_label:'SWIFT Extension', master_desc:'启用所有手势和悬浮按钮', tagline:'Safari 手势控制', gestures_title:'手势', swipe_label:'↔ 滑动 返回/前进', vshape_label:'✌ V形 — 关闭标签', lshape_label:'↳ L形 — 恢复标签', doubletap_label:'👆 双击 — 搜索', longpress_label:'👇 长按 — 滚动', twofinger_label:'🔄 双指 — 刷新', floating_title:'悬浮按钮', show_button:'显示悬浮按钮', show_button_desc:'每个页面上快速访问', sensitivity_title:'灵敏度', less_sensitive:'低', more_sensitive:'高', footer:'SWIFT v1.0.0' },
-      fr: { master_label:'SWIFT Extension', master_desc:'Activer tous les gestes et le bouton', tagline:'Contrôle gestuel Safari', gestures_title:'GESTES', swipe_label:'↔ Glisser Retour/Avancer', vshape_label:'✌ V — Fermer onglet', lshape_label:'↳ L — Restaurer onglet', doubletap_label:'👆 Double tap — Recherche', longpress_label:'👇 Appui long — Défiler', twofinger_label:'🔄 Deux doigts — Rafraîchir', floating_title:'BOUTON FLOTTANT', show_button:'Afficher bouton flottant', show_button_desc:'Accès rapide sur chaque page', sensitivity_title:'SENSIBILITÉ', less_sensitive:'Moins', more_sensitive:'Plus', footer:'SWIFT v1.0.0' },
+      fr: { master_label:'SWIFT Extension', master_desc:'Activer tous les gestes et le bouton', tagline:'Contrôle gestuel Safari', gestures_title:'GESTES', swipe_label:'↔ Glisser Retour/Avancer', vshape_label:'✌ V — Fermer onglet', lshape_label:'↳ L — Restaurer onglet', doubletap_label:'👆 Double tap — Recherche', longpress_label:'👇 Appui long — Défiler', twofinger_label:'🔄 Deux doigts — Rafraîchir', floating_title:'BOUTON FLOTTANT', show_button:'Afficher bouton flottant', show_button_desc:'Accès rapide sur chaque page', sensitivity_title:'SENSIBILITE', less_sensitive:'Moins', more_sensitive:'Plus', footer:'SWIFT v1.0.0' },
       hi: { master_label:'SWIFT Extension', master_desc:'सभी जेस्चर और बटन सक्षम करें', tagline:'Safari जेस्चर कंट्रोल', gestures_title:'जेस्चर', swipe_label:'↔ स्वाइप पीछे/आगे', vshape_label:'✌ V आकार — टैब बंद', lshape_label:'↳ L आकार — टैब पुनर्स्थापित', doubletap_label:'👆 डबल टैप — खोज', longpress_label:'👇 लॉन्ग प्रेस — स्क्रॉल', twofinger_label:'🔄 दो अंगुली — रिफ्रेश', floating_title:'फ्लोटिंग बटन', show_button:'फ्लोटिंग बटन दिखाएं', show_button_desc:'हर पेज पर त्वरित पहुंच', sensitivity_title:'संवेदनशीलता', less_sensitive:'कम', more_sensitive:'अधिक', footer:'SWIFT v1.0.0' },
       en: { master_label:'SWIFT Extension', master_desc:'Enable all gestures & floating button', tagline:'Gesture control for Safari', gestures_title:'GESTURES', swipe_label:'↔ Swipe Back/Forward', vshape_label:'✌ V Shape — Close Tab', lshape_label:'↳ L Shape — Restore Tab', doubletap_label:'👆 Double Tap — Search', longpress_label:'👇 Long Press — Scroll', twofinger_label:'🔄 Two Finger — Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'SWIFT v1.0.0' }
     };
@@ -161,30 +163,42 @@
       document.getElementById('subControls').classList.toggle('dimmed', !enabled);
     }
 
-    // Load settings from storage
-    browser.storage.local.get('gestureConfig').then(function(data) {
-      var c = data.gestureConfig || {};
-      // Master toggle
-      var masterEnabled = c.masterEnabled !== false; // default on
+    // Apply loaded config to the UI
+    function applyConfigToUI(c) {
+      if (!c) return;
+      var masterEnabled = c.masterEnabled !== false;
       document.getElementById('masterToggle').checked = masterEnabled;
       applyMasterState(masterEnabled);
       if (c.gesturesEnabled) {
-        if (c.gesturesEnabled.swipeBack===false) document.getElementById('swipeToggle').checked=false;
-        if (c.gesturesEnabled.vShape===false) document.getElementById('vshapeToggle').checked=false;
-        if (c.gesturesEnabled.lShape===false) document.getElementById('lshapeToggle').checked=false;
-        if (c.gesturesEnabled.doubleTap===false) document.getElementById('doubletapToggle').checked=false;
-        if (c.gesturesEnabled.longPress===false) document.getElementById('longpressToggle').checked=false;
-        if (c.gesturesEnabled.twoFingerFlick===false) document.getElementById('twofingerToggle').checked=false;
+        document.getElementById('swipeToggle').checked = c.gesturesEnabled.swipeBack !== false;
+        document.getElementById('vshapeToggle').checked = c.gesturesEnabled.vShape !== false;
+        document.getElementById('lshapeToggle').checked = c.gesturesEnabled.lShape !== false;
+        document.getElementById('doubletapToggle').checked = c.gesturesEnabled.doubleTap !== false;
+        document.getElementById('longpressToggle').checked = c.gesturesEnabled.longPress !== false;
+        document.getElementById('twofingerToggle').checked = c.gesturesEnabled.twoFingerFlick !== false;
       }
-      if (c.floatingButtonEnabled===false) document.getElementById('floatingToggle').checked=false;
-    });
+      document.getElementById('floatingToggle').checked = c.floatingButtonEnabled !== false;
+      if (typeof c.sensitivity === 'number') {
+        document.getElementById('sensitivitySlider').value = c.sensitivity;
+        document.getElementById('sensitivityValue').textContent = c.sensitivity + '%';
+      }
+    }
 
-    // Save on change
-    function saveConfig() {
+    // Load settings from storage (Scrolly-safe pattern with optional chaining)
+    try {
+      browser.storage.local.get(STORAGE_KEY).then(function(data) {
+        var c = data && data[STORAGE_KEY];
+        if (c) applyConfigToUI(c);
+      }).catch(function() {});
+    } catch(e) {}
+
+    // Build config object from current UI state
+    function buildConfig() {
       var masterEnabled = document.getElementById('masterToggle').checked;
-      var config = {
+      return {
         masterEnabled: masterEnabled,
         floatingButtonEnabled: masterEnabled && document.getElementById('floatingToggle').checked,
+        sensitivity: parseInt(document.getElementById('sensitivitySlider').value, 10),
         gesturesEnabled: {
           swipeBack: masterEnabled && document.getElementById('swipeToggle').checked,
           swipeForward: masterEnabled && document.getElementById('swipeToggle').checked,
@@ -195,11 +209,23 @@
           twoFingerFlick: masterEnabled && document.getElementById('twofingerToggle').checked
         }
       };
-      browser.storage.local.set({ gestureConfig: config });
+    }
+
+    // Save to storage and notify content scripts
+    function saveConfig() {
+      var config = buildConfig();
+      // Save to extension storage (Scrolly-safe pattern)
+      try {
+        browser.storage.local.set({ gestureConfig: config }).catch(function() {});
+      } catch(e) {}
       // Notify content scripts
-      browser.tabs.query({active:true,currentWindow:true}).then(function(tabs) {
-        if (tabs[0]) browser.tabs.sendMessage(tabs[0].id, {action:'configUpdated', config:config});
-      });
+      try {
+        browser.tabs.query({active:true,currentWindow:true}).then(function(tabs) {
+          if (tabs && tabs[0] && tabs[0].id) {
+            browser.tabs.sendMessage(tabs[0].id, {action:'configUpdated', config:config}).catch(function() {});
+          }
+        }).catch(function() {});
+      } catch(e) {}
     }
 
     // Master toggle: dim sub-controls and save
@@ -211,6 +237,7 @@
     document.querySelectorAll('#subControls input[type="checkbox"]').forEach(function(cb) { cb.addEventListener('change', saveConfig); });
     document.getElementById('sensitivitySlider').addEventListener('input', function() {
       document.getElementById('sensitivityValue').textContent = this.value+'%';
+      saveConfig();
     });
   })();
   </script>
