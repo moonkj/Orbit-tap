@@ -25,7 +25,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         title: l10n.get('onboardingTitle1'),
         subtitle: l10n.get('onboardingSubtitle1'),
         description: l10n.get('onboardingDesc1'),
-        icon: Icons.swipe,
+        icon: Icons.touch_app,
       ),
       _OnboardingPageData(
         title: l10n.get('onboardingTitle2'),
@@ -43,13 +43,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         title: l10n.get('onboardingTitle4'),
         subtitle: l10n.get('onboardingSubtitle4'),
         description: l10n.get('onboardingDesc4'),
-        icon: Icons.radio_button_checked,
+        icon: Icons.adjust,
       ),
       _OnboardingPageData(
         title: l10n.get('onboardingTitle5'),
         subtitle: l10n.get('onboardingSubtitle5'),
         description: l10n.get('onboardingDesc5'),
-        icon: Icons.star,
+        icon: Icons.workspace_premium,
       ),
     ];
 

@@ -78,7 +78,11 @@ export class SearchOverlay {
     this.overlay.append(this.input, this.countEl, prevBtn, nextBtn, closeBtn);
     document.documentElement.appendChild(this.overlay);
 
-    this.input.addEventListener('input', () => this.search(this.input!.value));
+    let debounceTimer: number | null = null;
+    this.input.addEventListener('input', () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => this.search(this.input!.value), 200);
+    });
 
     requestAnimationFrame(() => {
       this.overlay?.classList.add('visible');
@@ -157,12 +161,16 @@ export class SearchOverlay {
   }
 
   private navigate(dir: number): void {
-    if (this.matches.length === 0) return;
     const marks = document.querySelectorAll('mark[data-swift-hl]');
+    if (marks.length === 0) return;
     marks.forEach(m => m.classList.remove('current'));
 
-    this.currentIdx = (this.currentIdx + dir + this.matches.length) % this.matches.length;
-    this.scrollToCurrent();
+    this.currentIdx = (this.currentIdx + dir + marks.length) % marks.length;
+    const current = marks[this.currentIdx];
+    if (current) {
+      current.classList.add('current');
+      current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     this.updateCount();
   }
 

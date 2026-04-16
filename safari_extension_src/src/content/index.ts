@@ -3,6 +3,7 @@ import { FloatingButton } from './ui/FloatingButton';
 import { IntentDetector } from './intent/IntentDetector';
 import { ExclusionManager } from './exclusion/ExclusionManager';
 import { ConfigBridge } from './config/ConfigBridge';
+import { UsageTracker } from './usage/UsageTracker';
 
 class SwiftExtension {
   private gestureEngine: GestureEngine | null = null;
@@ -10,15 +11,19 @@ class SwiftExtension {
   private intentDetector: IntentDetector | null = null;
   private exclusionManager: ExclusionManager | null = null;
   private configBridge: ConfigBridge;
+  private usageTracker: UsageTracker;
 
   constructor() {
     this.configBridge = new ConfigBridge();
+    this.usageTracker = new UsageTracker();
   }
 
   async init(): Promise<void> {
     try {
       // Load config via background (falls back to storage cache)
       const config = await this.configBridge.loadConfig();
+      await this.usageTracker.load();
+      this.usageTracker.startListening();
 
       this.exclusionManager = new ExclusionManager();
       if (this.exclusionManager.shouldExclude()) return;
@@ -27,7 +32,7 @@ class SwiftExtension {
 
       // Start gesture engine if master is on
       if (config.masterEnabled) {
-        this.gestureEngine = new GestureEngine(config, this.intentDetector);
+        this.gestureEngine = new GestureEngine(config, this.intentDetector, this.usageTracker);
         this.gestureEngine.start();
       }
 
@@ -35,6 +40,10 @@ class SwiftExtension {
       if (config.masterEnabled && config.floatingButtonEnabled) {
         this.floatingButton = new FloatingButton(config);
         this.floatingButton.mount();
+        this.floatingButton.setUsageTracker(this.usageTracker);
+        if (this.gestureEngine) {
+          this.floatingButton.setGestureActivator(() => this.gestureEngine?.activateGestureMode());
+        }
       }
 
       // Listen for config changes broadcast by background
@@ -45,8 +54,8 @@ class SwiftExtension {
           this.gestureEngine = null;
 
           // Restart engine only if master switch is on
-          if (updatedConfig.masterEnabled !== false) {
-            this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector!);
+          if (updatedConfig.masterEnabled === true) {
+            this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector!, this.usageTracker);
             this.gestureEngine.start();
           }
 
@@ -58,6 +67,10 @@ class SwiftExtension {
             }
             this.floatingButton.mount();
             this.floatingButton.updateConfig(updatedConfig);
+            this.floatingButton.setUsageTracker(this.usageTracker);
+            if (this.gestureEngine) {
+              this.floatingButton.setGestureActivator(() => this.gestureEngine?.activateGestureMode());
+            }
           } else {
             this.floatingButton?.unmount();
             this.floatingButton = null;
@@ -69,11 +82,7 @@ class SwiftExtension {
       this.configBridge.startListening();
 
       document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          this.gestureEngine?.pause();
-        } else {
-          this.gestureEngine?.resume();
-        }
+        // 제스처 모드는 오버레이 기반이므로 visibility 관리 불필요
       });
     } catch (err) {
       // Error boundary: log and degrade gracefully — never crash the page

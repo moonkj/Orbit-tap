@@ -16,17 +16,8 @@ export class IntentDetector {
     }, { signal });
   }
 
-  // 스크롤 중에도 제스처 허용 — 스크롤로 차단하면 일반 웹에서 제스처 불가
-  isScrolling(): boolean {
-    return false;
-  }
-
   isInputFocused(): boolean {
     return this._isInputFocused;
-  }
-
-  isIdle(): boolean {
-    return !this._isInputFocused;
   }
 
   dispose(): void {

@@ -9,13 +9,32 @@ class SceneDelegate: FlutterSceneDelegate {
     ) {
         super.scene(scene, willConnectTo: session, options: connectionOptions)
 
-        // After the scene is connected, the window and rootViewController are ready.
-        // Register native MethodChannels here since AppDelegate.window is nil
-        // during application(_:didFinishLaunchingWithOptions:) in Scene lifecycle.
         if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
            let windowScene = scene as? UIWindowScene,
            let controller = windowScene.windows.first?.rootViewController as? FlutterViewController {
             appDelegate.registerChannels(with: controller.binaryMessenger)
+        }
+    }
+
+    // ShieldMail 패턴: URL scheme 핸들러 (swiftgesture://subscribe)
+    override func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        for urlContext in URLContexts {
+            handleURL(urlContext.url)
+        }
+    }
+
+    private func handleURL(_ url: URL) {
+        guard url.scheme == "swiftgesture" else { return }
+
+        if url.host == "subscribe" {
+            // Extension에서 구독 요청 → StoreKit 구매 플로우 시작
+            Task { @MainActor in
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let controller = windowScene.windows.first?.rootViewController as? FlutterViewController {
+                    let channel = FlutterMethodChannel(name: StoreKitChannel.channelName, binaryMessenger: controller.binaryMessenger)
+                    channel.invokeMethod("triggerPurchase", arguments: nil)
+                }
+            }
         }
     }
 }

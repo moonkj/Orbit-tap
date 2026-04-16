@@ -3,11 +3,10 @@ import type { GestureConfig } from '../config/ConfigBridge';
 
 export enum GestureType {
   UNKNOWN = 'UNKNOWN',
-  V_SHAPE = 'V_SHAPE',
+  X_SHAPE = 'X_SHAPE',
   L_SHAPE = 'L_SHAPE',
   CIRCLE = 'CIRCLE',
   C_SHAPE = 'C_SHAPE',
-  DIAGONAL_SWIPE_UP = 'DIAGONAL_SWIPE_UP',
 }
 
 interface Segment {
@@ -23,21 +22,30 @@ export class ShapeDetector {
   private config: GestureConfig;
   private screenWidth: number;
   private edgeZone: number;
+  private resizeHandler: (() => void) | null = null;
 
   constructor(config: GestureConfig) {
     this.config = config;
     this.screenWidth = window.innerWidth;
     this.edgeZone = Math.max(40, Math.min(80, this.screenWidth * config.edgeZonePercent));
 
-    window.addEventListener('resize', () => {
+    this.resizeHandler = () => {
       this.screenWidth = window.innerWidth;
       this.edgeZone = Math.max(40, Math.min(80, this.screenWidth * config.edgeZonePercent));
-    });
+    };
+    window.addEventListener('resize', this.resizeHandler);
+  }
+
+  destroy(): void {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
   }
 
   detect(session: TouchSession): GestureType {
     const { points } = session;
-    if (points.length < 5) return GestureType.UNKNOWN;
+    if (points.length < 3) return GestureType.UNKNOWN;
 
     const start = points[0];
 
@@ -46,21 +54,24 @@ export class ShapeDetector {
       return GestureType.UNKNOWN;
     }
 
-    // 1. 원형/C형 먼저 감지 (포인트 수가 많아야 함)
-    if (points.length >= 10) {
-      const curveResult = this.detectCurve(points, session);
-      if (curveResult !== GestureType.UNKNOWN) return curveResult;
-    }
-
-    // 2. 세그먼트 기반 감지 (V, L, 대각선 스와이프)
+    // 1. 세그먼트 기반 감지 먼저 (V, L, 대각선 — 직선 제스처 우선)
     const segments = this.extractSegments(points);
 
-    if (segments.length === 1) {
-      return this.classifyDiagonalSwipe(segments[0], session);
+    if (segments.length === 2) {
+      const shape = this.classifyShape(segments, session);
+      if (shape !== GestureType.UNKNOWN) return shape;
     }
 
-    if (segments.length === 2) {
-      return this.classifyShape(segments, session);
+    // X 감지: 3~4세그먼트, 방향 전환이 2회 이상, 경로가 교차
+    if (segments.length >= 2 && segments.length <= 4) {
+      const xResult = this.classifyXShape(points, segments, session);
+      if (xResult !== GestureType.UNKNOWN) return xResult;
+    }
+
+    // 2. 곡선 감지 (원, C — 세그먼트로 안 잡히는 경우만)
+    if (points.length >= 5) {
+      const curveResult = this.detectCurve(points, session);
+      if (curveResult !== GestureType.UNKNOWN) return curveResult;
     }
 
     return GestureType.UNKNOWN;
@@ -131,46 +142,45 @@ export class ShapeDetector {
     return GestureType.UNKNOWN;
   }
 
-  // ── 대각선 위 스와이프 ──────────────────────────────────────
-  private classifyDiagonalSwipe(segment: Segment, session: TouchSession): GestureType {
-    if (segment.distance < this.config.swipeMinDistance) return GestureType.UNKNOWN;
-    if (session.duration > 800) return GestureType.UNKNOWN;
+  // ── X 형태 감지 ─────────────────────────────────────────────
+  // 한 손가락 X: ↘ → ↗ (또는 반대) — 2~3세그먼트, 방향 급전환
+  private classifyXShape(_points: TouchPoint[], segments: Segment[], session: TouchSession): GestureType {
+    if (session.duration < 150 || session.duration > 1200) return GestureType.UNKNOWN;
 
-    // 대각선 위: dy < 0 (위로), 각도 -20° ~ -70° 범위
-    const angle = segment.angle; // atan2 기반: 위 = 음수
-    if (segment.dy < -40 && angle >= -70 && angle <= -20) {
-      return GestureType.DIAGONAL_SWIPE_UP;
+    // X: 급격한 방향 전환이 있는 지그재그
+    let bigTurnCount = 0;
+    let totalDist = 0;
+    for (let i = 0; i < segments.length; i++) {
+      totalDist += segments[i].distance;
+      if (i > 0) {
+        let diff = Math.abs(segments[i].angle - segments[i - 1].angle);
+        if (diff > 180) diff = 360 - diff;
+        if (diff >= 60) bigTurnCount++;
+      }
+    }
+
+    // 1회 이상 급전환 + 충분한 거리 (L에서 안 잡힌 것만 여기 옴)
+    if (bigTurnCount >= 1 && totalDist >= 40) {
+      return GestureType.X_SHAPE;
     }
 
     return GestureType.UNKNOWN;
   }
 
-  // ── V/L 형태 감지 (기존 유지) ──────────────────────────────
+  // ── L 형태 감지 ─────────────────────────────────────────────
   private classifyShape(segments: Segment[], session: TouchSession): GestureType {
     const [seg1, seg2] = segments;
     const angleDiff = Math.abs(seg2.angle - seg1.angle);
     const normalizedAngle = angleDiff > 180 ? 360 - angleDiff : angleDiff;
 
-    // V Shape
+    // L Shape: 직각 꺾임 (60-120°)
     if (
-      seg1.distance >= this.config.vShapeMinSegment &&
-      seg2.distance >= this.config.vShapeMinSegment &&
-      normalizedAngle >= this.config.vShapeAngleMin &&
-      normalizedAngle <= this.config.vShapeAngleMax &&
-      session.duration >= 200 &&
-      session.duration <= 800
-    ) {
-      return GestureType.V_SHAPE;
-    }
-
-    // L Shape
-    if (
-      seg1.distance >= 80 &&
-      seg2.distance >= 60 &&
-      normalizedAngle >= this.config.lShapeAngleMin &&
-      normalizedAngle <= this.config.lShapeAngleMax &&
-      session.duration >= 300 &&
-      session.duration <= 1000
+      seg1.distance >= 40 &&
+      seg2.distance >= 30 &&
+      normalizedAngle >= 60 &&
+      normalizedAngle <= 120 &&
+      session.duration >= 150 &&
+      session.duration <= 1500
     ) {
       return GestureType.L_SHAPE;
     }

@@ -21,9 +21,9 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         case "getConfig":
             response = loadGestureConfig()
         case "getSubscriptionStatus":
-            response = getSubscriptionStatus()
-        case "getSettingsVersion":
-            response = getSettingsVersion()
+            response = buildSubscriptionResponse()
+        case "purchase":
+            response = ["url": "swiftgesture://subscribe"]
         default:
             response = ["error": "Unknown action"]
         }
@@ -35,35 +35,30 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     private func loadGestureConfig() -> [String: Any] {
         let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
-
         guard let data = defaults?.data(forKey: AppGroupConstants.gestureConfigKey),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else {
             return ["status": "default"]
         }
-
         return config
     }
 
-    private func getSubscriptionStatus() -> [String: Any] {
+    /// ShieldMail 패턴: App Groups에서 구독 상태 읽기
+    private func buildSubscriptionResponse() -> [String: Any] {
         let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
         let isActive = defaults?.bool(forKey: AppGroupConstants.subscriptionActiveKey) ?? false
         let expiryTimestamp = defaults?.double(forKey: AppGroupConstants.subscriptionExpiryKey) ?? 0
-        let lastVerified = defaults?.double(forKey: AppGroupConstants.lastVerifiedKey) ?? 0
+        let jws = defaults?.string(forKey: "swift_jws")
+        let productId = defaults?.string(forKey: "swift_product_id")
 
         let now = Date().timeIntervalSince1970
-        let needsRecheck = now - lastVerified > 7 * 86400
 
         return [
+            "tier": isActive ? "pro" : "free",
             "isActive": isActive && (expiryTimestamp == 0 || expiryTimestamp > now),
-            "needsRecheck": needsRecheck,
-            "expiryTimestamp": expiryTimestamp,
+            "expiresDate": expiryTimestamp,
+            "jws": jws ?? NSNull(),
+            "productId": productId ?? NSNull(),
         ]
-    }
-
-    private func getSettingsVersion() -> [String: Any] {
-        let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
-        let version = defaults?.integer(forKey: AppGroupConstants.settingsVersionKey) ?? 0
-        return ["version": version]
     }
 }

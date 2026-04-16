@@ -1,6 +1,8 @@
 import type { GestureConfig } from '../config/ConfigBridge';
+import type { UsageTracker } from '../usage/UsageTracker';
 
-type ButtonAction = 'back' | 'forward' | 'tabOverview' | 'gestureGuide';
+type ButtonAction = 'gesture' | 'back' | 'forward' | 'gestureGuide';
+type GestureActivator = () => void;
 
 const SIZE_MAP: Record<string, number> = {
   small: 42,
@@ -26,9 +28,13 @@ export class FloatingButton {
   private tapCount = 0;
   private tapTimer: number | null = null;
   private longPressTimer: number | null = null;
-  private readonly TAP_TIMEOUT = 350;
-  private readonly LONG_PRESS_DURATION = 5000;
+  private readonly TAP_TIMEOUT = 700;
+  private readonly DRAG_HOLD_DURATION = 600;
+  private readonly GUIDE_HOLD_DURATION = 3000;
+  private guideTimer: number | null = null;
   private abortController: AbortController | null = null;
+  private onGestureActivate: GestureActivator | null = null;
+  private usageTracker: UsageTracker | null = null;
 
   constructor(config: GestureConfig) {
     this.config = config;
@@ -101,24 +107,27 @@ export class FloatingButton {
                     inset 0 0.5px 0 rgba(255,255,255,0.12);
       }
       .swift-fb.pressed {
-        transform: scale(0.88);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.2),
-                    inset 0 1px 3px rgba(0,0,0,0.15);
+        transform: scale(0.82);
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.08), transparent 60%),
+                    linear-gradient(145deg, rgba(80,80,90,0.8), rgba(40,40,45,0.85));
+        box-shadow: 0 0 2px rgba(0,0,0,0.3),
+                    inset 0 2px 6px rgba(0,0,0,0.3);
       }
       .swift-fb.pressed svg circle {
-        transform: scale(0.85);
+        transform: scale(0.75);
         transform-origin: center;
-        transition: transform 0.1s ease;
+        stroke: rgba(10, 132, 255, 0.9) !important;
+        transition: transform 0.1s ease, stroke 0.1s ease;
       }
       .swift-fb.dragging {
         transition: none !important;
         opacity: 0.6;
       }
       .swift-fb svg {
-        width: 70%;
-        height: 70%;
+        width: 80%;
+        height: 80%;
         pointer-events: none;
-        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
       }
       .swift-guide {
         position: fixed;
@@ -156,7 +165,7 @@ export class FloatingButton {
 
     this.button = document.createElement('div');
     this.button.className = 'swift-fb';
-    this.button.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="sr" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="rgba(255,255,255,0.95)"/><stop offset="100%" stop-color="rgba(255,255,255,0.4)"/></linearGradient><radialGradient id="sf" cx="40%" cy="38%" r="50%"><stop offset="0%" stop-color="rgba(255,255,255,0.12)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="12" cy="12" r="8" stroke="url(#sr)" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="url(#sf)"/></svg>`;
+    this.button.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="sr" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="rgba(255,255,255,1)"/><stop offset="100%" stop-color="rgba(255,255,255,0.5)"/></linearGradient><radialGradient id="sf" cx="38%" cy="36%" r="45%"><stop offset="0%" stop-color="rgba(255,255,255,0.15)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="12" cy="12" r="8.5" stroke="url(#sr)" stroke-width="2.2"/><circle cx="12" cy="12" r="7.5" fill="url(#sf)"/></svg>`;
 
     this.host.appendChild(this.button);
     document.documentElement.appendChild(this.host);
@@ -197,8 +206,9 @@ export class FloatingButton {
     this.host = null;
     this.styleEl = null;
     this.button = null;
-    if (this.tapTimer) clearTimeout(this.tapTimer);
-    if (this.longPressTimer) clearTimeout(this.longPressTimer);
+    if (this.tapTimer) { clearTimeout(this.tapTimer); this.tapTimer = null; }
+    if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+    if (this.guideTimer) { clearTimeout(this.guideTimer); this.guideTimer = null; }
     if (this.rafId) cancelAnimationFrame(this.rafId);
   }
 
@@ -217,13 +227,8 @@ export class FloatingButton {
     if (oldSize !== newSize) {
       this.button.style.width = `${newSize}px`;
       this.button.style.height = `${newSize}px`;
-      this.button.style.borderRadius = `${newSize / 2}px`;
-      const svg = this.button.querySelector('svg') as unknown as HTMLElement | null;
-      if (svg) {
-        const svgSize = Math.round(newSize * 0.46);
-        svg.style.width = `${svgSize}px`;
-        svg.style.height = `${svgSize}px`;
-      }
+      this.button.style.borderRadius = `${Math.round(newSize * 0.22)}px`;
+      // SVG는 CSS width:80%로 자동 비례 — 별도 JS 크기 조정 불필요
     }
 
     // 투명도 변경
@@ -249,15 +254,23 @@ export class FloatingButton {
     // 눌림 효과
     this.button?.classList.add('pressed');
 
-    // 꾹 누르기 감지: LONG_PRESS_DURATION 후 드래그 가능 상태로 전환
+    // 400ms 후 드래그 가능
     this.longPressTimer = window.setTimeout(() => {
       if (this.totalDragDistance < 25) {
         this.dragReady = true;
         this.button?.classList.add('drag-ready');
-        // 햅틱 피드백 (지원 시)
         if (navigator.vibrate) navigator.vibrate(30);
       }
-    }, this.LONG_PRESS_DURATION);
+    }, this.DRAG_HOLD_DURATION);
+
+    // 5초 후 가이드 표시 (드래그 중이 아닐 때)
+    this.guideTimer = window.setTimeout(() => {
+      if (!this.isDragging) {
+        this.button?.classList.remove('drag-ready');
+        this.dragReady = false;
+        this.executeTapAction('gestureGuide');
+      }
+    }, this.GUIDE_HOLD_DURATION);
   }
 
   private onTouchMove(e: TouchEvent): void {
@@ -276,8 +289,8 @@ export class FloatingButton {
       return;
     }
 
-    // 꾹 누른 후에만 드래그 시작
-    if (this.dragReady && this.totalDragDistance > 5) {
+    // 꾹 누른 후 의도적 이동(20px+)에서만 드래그 시작
+    if (this.dragReady && this.totalDragDistance > 20) {
       this.isDragging = true;
       e.preventDefault();
 
@@ -304,10 +317,9 @@ export class FloatingButton {
   }
 
   private onTouchEnd(_e: TouchEvent): void {
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = null;
-    }
+    if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+    // guideTimer는 여기서 제거 — 5초 전에 손을 떼면 가이드 취소
+    if (this.guideTimer) { clearTimeout(this.guideTimer); this.guideTimer = null; }
 
     this.button?.classList.remove('drag-ready');
     this.button?.classList.remove('dragging');
@@ -322,16 +334,15 @@ export class FloatingButton {
       return;
     }
 
-    // 꾹 눌러서 drag-ready 됐지만 안 움직인 경우 → 제스처 가이드
+    // 꾹 눌러서 drag-ready 됐지만 안 움직인 경우 → 무시 (가이드는 5초 타이머에서)
     if (this.dragReady) {
       this.dragReady = false;
-      this.executeTapAction('gestureGuide');
       return;
     }
 
-    // 탭 감지
+    // 탭 감지 (400ms 미만 + 움직임 10px 미만)
     const duration = performance.now() - this.dragStartTime;
-    if (duration < this.LONG_PRESS_DURATION && this.totalDragDistance < 10) {
+    if (duration < this.DRAG_HOLD_DURATION && this.totalDragDistance < 10) {
       this.tapCount++;
       if (this.tapTimer) clearTimeout(this.tapTimer);
 
@@ -339,29 +350,41 @@ export class FloatingButton {
         switch (this.tapCount) {
           case 1: this.executeTapAction('back'); break;
           case 2: this.executeTapAction('forward'); break;
-          default: this.executeTapAction('tabOverview'); break;
+          default: this.executeTapAction('gesture'); break;
         }
         this.tapCount = 0;
       }, this.TAP_TIMEOUT);
     }
   }
 
+  setGestureActivator(fn: GestureActivator): void {
+    this.onGestureActivate = fn;
+  }
+
+  setUsageTracker(tracker: UsageTracker): void {
+    this.usageTracker = tracker;
+  }
+
   private executeTapAction(action: ButtonAction): void {
+    // 사용량 기록 (가이드 제외, 비동기 — 블로킹 없음)
+    if (action !== 'gestureGuide' && this.usageTracker) {
+      this.usageTracker.recordUse();
+    }
+
     switch (action) {
+      case 'gesture':
+        this.onGestureActivate?.();
+        break;
       case 'back':
         browser.runtime.sendMessage({ action: 'navigate', direction: 'back' });
         break;
       case 'forward':
         browser.runtime.sendMessage({ action: 'navigate', direction: 'forward' });
         break;
-      case 'tabOverview':
-        browser.runtime.sendMessage({ action: 'navigate', direction: 'back' });
-        break;
       case 'gestureGuide':
         this.showGestureGuide();
         break;
     }
-    browser.runtime.sendMessage({ action: 'logGesture', gestureType: `button_${action}` });
   }
 
   private updatePosition(): void {
@@ -386,45 +409,47 @@ export class FloatingButton {
     const existing = this.host.querySelector('.swift-guide');
     if (existing) { existing.remove(); return; }
 
+    const k = (navigator.language || '').startsWith('ko');
     this.guideOverlay = document.createElement('div');
     this.guideOverlay.className = 'swift-guide';
     this.guideOverlay.innerHTML = `
-      <h2>Swift Gesture Guide</h2>
-      <div class="swift-guide-item">
-        <div class="swift-guide-icon" style="color:#FF453A">V</div>
+      <h2>SWIFT ${k ? '제스처 가이드' : 'Gesture Guide'}</h2>
+      <div class="swift-guide-item" style="background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);">
+        <div class="swift-guide-icon">👆×3</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">V 모양</div>
-          <div class="swift-guide-desc">현재 탭 닫기</div>
+          <div class="swift-guide-label">${k ? '버튼 3번 탭 → 제스처 모드' : '3 taps → Gesture mode'}</div>
+          <div class="swift-guide-desc">${k ? '파란 테두리가 나타나면 제스처를 그리세요' : 'Draw gestures when blue border appears'}</div>
+        </div>
+      </div>
+      <div class="swift-guide-item">
+        <div class="swift-guide-icon" style="color:#FF453A">✕</div>
+        <div class="swift-guide-text">
+          <div class="swift-guide-label">${k ? 'X 모양' : 'X Shape'}</div>
+          <div class="swift-guide-desc">${k ? '현재 탭 닫기' : 'Close current tab'}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#30D158">L</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">L 모양</div>
-          <div class="swift-guide-desc">닫은 탭 복구</div>
+          <div class="swift-guide-label">${k ? 'L 모양' : 'L Shape'}</div>
+          <div class="swift-guide-desc">${k ? '새 탭 열기' : 'Open new tab'}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#0A84FF">○</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">원 그리기</div>
-          <div class="swift-guide-desc">페이지 내 텍스트 검색</div>
+          <div class="swift-guide-label">${k ? '원 그리기' : 'Circle'}</div>
+          <div class="swift-guide-desc">${k ? '페이지 내 텍스트 검색' : 'Find text on page'}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#FF9F0A">C</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">C 모양</div>
-          <div class="swift-guide-desc">쿠키/캐시 삭제 및 새로고침</div>
+          <div class="swift-guide-label">${k ? 'C 모양' : 'C Shape'}</div>
+          <div class="swift-guide-desc">${k ? '새로고침 (캐시 무시)' : 'Hard refresh'}</div>
         </div>
       </div>
-      <div class="swift-guide-item">
-        <div class="swift-guide-icon" style="color:#AF52DE">↗</div>
-        <div class="swift-guide-text">
-          <div class="swift-guide-label">대각선 위로</div>
-          <div class="swift-guide-desc">새 빈 탭 열기</div>
-        </div>
-      </div>
+      <div style="margin-top:8px;color:rgba(255,255,255,0.85);font-size:11px;text-align:center;">${k ? '1탭: 뒤로 · 2탭: 앞으로 · 3탭: 제스처 모드 · 꾹: 가이드' : '1 tap: back · 2 taps: forward · 3 taps: gesture · hold: guide'}</div>
     `;
 
     this.guideOverlay.addEventListener('click', () => {

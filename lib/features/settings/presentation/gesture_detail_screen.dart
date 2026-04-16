@@ -213,70 +213,48 @@ class GestureDetailScreen extends ConsumerWidget {
 
   _GestureInfo _gestureInfo(String key, AppLocalizations l10n) {
     switch (key) {
-      case 'swipe':
+      case 'xshape':
         return _GestureInfo(
-          name: l10n.get('swipeBackForward'),
-          description: l10n.get('swipeDesc'),
-          icon: Icons.swipe,
-          steps: [
-            'Place your finger in the center of the screen',
-            'Swipe left to go back',
-            'Swipe right to go forward',
-          ],
-        );
-      case 'vshape':
-        return _GestureInfo(
-          name: l10n.get('vShapeCloseTab'),
-          description: l10n.get('vShapeDesc'),
+          name: l10n.get('xShapeCloseTab'),
+          description: l10n.get('xShapeDesc'),
           icon: Icons.close,
           steps: [
-            'Start from top-left area',
-            'Drag diagonally down-right',
-            'Then drag diagonally down-left to complete V shape',
+            l10n.get('stepGestureMode'),
+            l10n.get('stepDrawFirst'),
+            l10n.get('stepDrawSecond'),
           ],
         );
       case 'lshape':
         return _GestureInfo(
-          name: l10n.get('lShapeRestoreTab'),
+          name: l10n.get('lShapeNewTab'),
           description: l10n.get('lShapeDesc'),
-          icon: Icons.restore,
+          icon: Icons.subdirectory_arrow_right,
           steps: [
-            'Start from top area',
-            'Drag straight down',
-            'Then drag horizontally right to complete L shape',
+            l10n.get('stepGestureMode'),
+            l10n.get('stepDrawDown'),
+            l10n.get('stepDrawRight'),
           ],
         );
-      case 'doubletap':
+      case 'circle':
         return _GestureInfo(
-          name: l10n.get('doubleTapSearch'),
-          description: l10n.get('doubleTapDesc'),
-          icon: Icons.search,
+          name: l10n.get('circleSearch'),
+          description: l10n.get('circleDesc'),
+          icon: Icons.circle_outlined,
           steps: [
-            'Quickly tap twice on the screen',
-            'Search bar will appear',
-            'Type your search query',
+            l10n.get('stepGestureMode'),
+            l10n.get('stepDrawCircle'),
+            l10n.get('stepSearchAppears'),
           ],
         );
-      case 'longpress':
+      case 'cshape':
         return _GestureInfo(
-          name: l10n.get('longPressScroll'),
-          description: l10n.get('longPressDesc'),
-          icon: Icons.touch_app,
-          steps: [
-            'Press and hold on the screen',
-            'A menu will appear',
-            'Choose scroll to top or bottom',
-          ],
-        );
-      case 'twofinger':
-        return _GestureInfo(
-          name: l10n.get('twoFingerFlick'),
-          description: l10n.get('twoFingerDesc'),
+          name: l10n.get('cShapeRefresh'),
+          description: l10n.get('cShapeDesc'),
           icon: Icons.refresh,
           steps: [
-            'Place two fingers on the screen',
-            'Flick downward to refresh',
-            'Flick upward to toggle fullscreen',
+            l10n.get('stepGestureMode'),
+            l10n.get('stepDrawC'),
+            l10n.get('stepRefreshDone'),
           ],
         );
       default:
@@ -384,23 +362,25 @@ class _GesturePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     switch (gestureKey) {
-      case 'swipe':
-        _paintSwipe(canvas, size, paint, dotPaint);
-        break;
-      case 'vshape':
-        _paintVShape(canvas, size, paint, dotPaint);
+      case 'xshape':
+        // X shape: two crossing lines
+        final cx = size.width / 2;
+        final cy = size.height / 2;
+        final d = size.width * 0.25;
+        canvas.drawLine(Offset(cx - d, cy - d), Offset(cx + d, cy + d), paint);
+        canvas.drawLine(Offset(cx + d, cy - d), Offset(cx - d, cy + d), paint);
         break;
       case 'lshape':
         _paintLShape(canvas, size, paint, dotPaint);
         break;
-      case 'doubletap':
-        _paintDoubleTap(canvas, size, paint, dotPaint);
+      case 'circle':
+        // Circle shape
+        canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width * 0.25, paint);
         break;
-      case 'longpress':
-        _paintLongPress(canvas, size, dotPaint);
-        break;
-      case 'twofinger':
-        _paintTwoFinger(canvas, size, paint, dotPaint);
+      case 'cshape':
+        // C shape: arc
+        final rect = Rect.fromCenter(center: Offset(size.width / 2, size.height / 2), width: size.width * 0.5, height: size.height * 0.5);
+        canvas.drawArc(rect, -2.0, 4.0, false, paint);
         break;
     }
   }

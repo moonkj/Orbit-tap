@@ -26,23 +26,25 @@ async function init(): Promise<void> {
 init();
 
 browser.runtime.onMessage.addListener((message: any, sender: any) => {
+  // 보안: extension 내부 메시지만 허용 (외부 웹페이지 차단)
+  const isInternal = !sender.tab || sender.url?.startsWith('safari-web-extension://');
+  const isContentScript = sender.tab && sender.tab.id;
+
+  if (!isInternal && !isContentScript) {
+    return Promise.resolve({ success: false, error: 'Unauthorized' });
+  }
+
   switch (message.action) {
     case 'navigate':
       return handleNavigation(message.direction, sender);
     case 'closeTab':
       return handleCloseTab(sender);
-    case 'restoreTab':
-      return handleRestoreTab();
     case 'getSubscriptionStatus':
       return handleGetSubscription();
-    case 'logGesture':
-      return handleLogGesture(message.gestureType);
     case 'getConfig':
       return handleGetConfig();
     case 'saveConfig':
       return handleSaveConfig(message.swiftSettings, message.gestureConfig);
-    case 'getPopupSettings':
-      return handleGetPopupSettings();
     case 'newTab':
       return handleNewTab();
     case 'clearSiteData':
@@ -72,10 +74,10 @@ async function handleNavigation(direction: 'back' | 'forward', sender: any): Pro
 async function handleCloseTab(sender: any): Promise<{ success: boolean }> {
   try {
     const tabId = sender?.tab?.id;
-    let tab;
+    let tab: any;
     if (tabId) {
-      const tabs = await browser.tabs.query({});
-      tab = tabs.find(t => t.id === tabId);
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      tab = tabs.find((t: any) => t.id === tabId) ?? tabs[0];
     } else {
       const tabs = await browser.tabs.query({ active: true, currentWindow: true });
       tab = tabs[0];
@@ -187,30 +189,6 @@ async function handleNewTab(): Promise<{ success: boolean }> {
 async function handleClearSiteData(sender: any): Promise<{ success: boolean }> {
   try {
     const tabId = sender?.tab?.id;
-    let url: string | undefined;
-    if (tabId) {
-      const tabs = await browser.tabs.query({});
-      const tab = tabs.find((t: any) => t.id === tabId);
-      url = tab?.url;
-    } else {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-      url = tabs[0]?.url;
-    }
-
-    if (url) {
-      const origin = new URL(url).origin;
-      // 쿠키 삭제 시도
-      try {
-        const cookies = await browser.cookies?.getAll({ url: origin });
-        if (cookies) {
-          for (const cookie of cookies) {
-            await browser.cookies.remove({ url: origin + cookie.path, name: cookie.name });
-          }
-        }
-      } catch {}
-    }
-
-    // 탭 새로고침
     const targetId = tabId ?? (await browser.tabs.query({ active: true, currentWindow: true }))[0]?.id;
     if (targetId) {
       await browser.tabs.reload(targetId, { bypassCache: true });

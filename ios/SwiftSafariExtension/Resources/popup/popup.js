@@ -6,27 +6,29 @@
 
   const SETTINGS_KEY = 'swiftSettings';
   const SETTINGS_KEYS = [
-    'masterEnabled','vShape','lShape','circle','cShape','diagonalSwipeUp',
+    'masterEnabled','xShape','lShape','circle','cShape',
     'floatingEnabled','buttonSize','buttonOpacity','sensitivity'
   ];
 
   let settings = {
     masterEnabled: true,
-    vShape: true, lShape: true, circle: true, cShape: true, diagonalSwipeUp: true,
+    xShape: true, lShape: true, circle: true, cShape: true,
     floatingEnabled: true,
     buttonSize: 'medium', buttonOpacity: 90, sensitivity: 50
   };
 
   // ── i18n ──────────────────────────────────────────────────
   const I18N = {
-    ko: { tagline:'Safari 제스처 컨트롤', master_label:'SWIFT Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', gestures_title:'제스처', vshape_label:'V — 탭 닫기', lshape_label:'L — 탭 복구', circle_label:'○ — 페이지 내 검색', cshape_label:'C — 캐시 삭제 및 새로고침', diagonal_label:'↗ — 새 탭 열기', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_size:'크기', opacity:'투명도', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'SWIFT v1.0.0' },
-    en: { tagline:'Gesture control for Safari', master_label:'SWIFT Extension', master_desc:'Enable all gestures & floating button', gestures_title:'GESTURES', vshape_label:'V — Close Tab', lshape_label:'L — Restore Tab', circle_label:'○ — Find on Page', cshape_label:'C — Clear & Refresh', diagonal_label:'↗ — New Tab', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'SWIFT v1.0.0' }
+    ko: { tagline:'Safari 제스처 컨트롤', master_label:'SWIFT Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', howto_title:'제스처 사용법', usage_label:'오늘', gestures_title:'제스처', xshape_label:'탭 닫기', lshape_label:'새 탭 열기', circle_label:'페이지 내 검색', cshape_label:'새로고침 (캐시 무시)', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_size:'크기', opacity:'투명도', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'SWIFT v1.0.0' },
+    en: { tagline:'Gesture control for Safari', master_label:'SWIFT Extension', master_desc:'Enable all gestures & floating button', howto_title:'GESTURE USAGE', usage_label:'Today', gestures_title:'GESTURES', xshape_label:'Close Tab', lshape_label:'New Tab', circle_label:'Find on Page', cshape_label:'Hard Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'SWIFT v1.0.0' }
   };
   const lang = (() => { const l = (navigator.language || 'en').toLowerCase(); return l.startsWith('ko') ? 'ko' : 'en'; })();
   const t = (key) => (I18N[lang] || I18N.en)[key] || I18N.en[key] || key;
+  // i18n helper: 한국어/영어 선택
+  function i18n(ko, en) { return lang === 'ko' ? ko : en; }
 
   function applyI18n() {
-    const map = { txt_tagline:'tagline', txt_master_label:'master_label', txt_master_desc:'master_desc', txt_gestures_title:'gestures_title', txt_vshape_label:'vshape_label', txt_lshape_label:'lshape_label', txt_circle_label:'circle_label', txt_cshape_label:'cshape_label', txt_diagonal_label:'diagonal_label', txt_floating_title:'floating_title', txt_show_button:'show_button', txt_show_button_desc:'show_button_desc', txt_btn_size:'btn_size', txt_opacity:'opacity', txt_sensitivity_title:'sensitivity_title', txt_less_sensitive:'less_sensitive', txt_more_sensitive:'more_sensitive', txt_footer:'footer' };
+    const map = { txt_tagline:'tagline', txt_master_label:'master_label', txt_master_desc:'master_desc', txt_howto_title:'howto_title', txt_usage_label:'usage_label', txt_gestures_title:'gestures_title', txt_xshape_label:'xshape_label', txt_lshape_label:'lshape_label', txt_circle_label:'circle_label', txt_cshape_label:'cshape_label', txt_floating_title:'floating_title', txt_show_button:'show_button', txt_show_button_desc:'show_button_desc', txt_btn_size:'btn_size', txt_opacity:'opacity', txt_sensitivity_title:'sensitivity_title', txt_less_sensitive:'less_sensitive', txt_more_sensitive:'more_sensitive', txt_footer:'footer' };
     for (const [id, key] of Object.entries(map)) {
       const el = document.getElementById(id);
       if (el) el.textContent = t(key);
@@ -52,11 +54,10 @@
       buttonSize: settings.buttonSize,
       buttonOpacity: settings.buttonOpacity,
       gesturesEnabled: {
-        vShape: settings.masterEnabled ? settings.vShape : false,
+        xShape: settings.masterEnabled ? settings.xShape : false,
         lShape: settings.masterEnabled ? settings.lShape : false,
         circle: settings.masterEnabled ? settings.circle : false,
         cShape: settings.masterEnabled ? settings.cShape : false,
-        diagonalSwipeUp: settings.masterEnabled ? settings.diagonalSwipeUp : false,
       }
     };
   }
@@ -64,9 +65,19 @@
   // ── pushSettings (Scrolly pattern) ────────────────────────
   function pushSettings() {
     const gestureConfig = buildGestureConfig();
-    send('configUpdated', { config: gestureConfig, swiftSettings: { ...settings } });
+    const snap = { ...settings };
+
+    // Path 1: content script 직접 전달
+    send('configUpdated', { config: gestureConfig, swiftSettings: snap });
+
+    // Path 2: storage 직접 저장
     try {
-      browser.storage?.local?.set({ [SETTINGS_KEY]: { ...settings }, gestureConfig })?.catch(() => {});
+      browser.storage?.local?.set({ [SETTINGS_KEY]: snap, gestureConfig })?.catch(() => {});
+    } catch (_) {}
+
+    // Path 3: background relay (가장 안정적)
+    try {
+      browser.runtime?.sendMessage?.({ action: 'saveConfig', swiftSettings: snap, gestureConfig })?.catch(() => {});
     } catch (_) {}
   }
 
@@ -77,11 +88,10 @@
     if (settings.masterEnabled) sub.classList.remove('dimmed');
     else sub.classList.add('dimmed');
 
-    document.getElementById('vshapeToggle').checked = settings.vShape;
+    document.getElementById('xshapeToggle').checked = settings.xShape;
     document.getElementById('lshapeToggle').checked = settings.lShape;
     document.getElementById('circleToggle').checked = settings.circle;
     document.getElementById('cshapeToggle').checked = settings.cShape;
-    document.getElementById('diagonalToggle').checked = settings.diagonalSwipeUp;
     document.getElementById('floatingToggle').checked = settings.floatingEnabled;
 
     ['small','medium','large'].forEach(s => {
@@ -99,9 +109,9 @@
     document.getElementById(id).addEventListener('change', function () {
       settings[key] = this.checked;
       if (key === 'masterEnabled' && this.checked) {
-        settings.vShape = true; settings.lShape = true;
+        settings.xShape = true; settings.lShape = true;
         settings.circle = true; settings.cShape = true;
-        settings.diagonalSwipeUp = true; settings.floatingEnabled = true;
+        settings.floatingEnabled = true;
       }
       if (key === 'masterEnabled') renderUI();
       pushSettings();
@@ -119,11 +129,10 @@
   applyI18n();
 
   bindToggle('masterToggle', 'masterEnabled');
-  bindToggle('vshapeToggle', 'vShape');
+  bindToggle('xshapeToggle', 'xShape');
   bindToggle('lshapeToggle', 'lShape');
   bindToggle('circleToggle', 'circle');
   bindToggle('cshapeToggle', 'cShape');
-  bindToggle('diagonalToggle', 'diagonalSwipeUp');
   bindToggle('floatingToggle', 'floatingEnabled');
 
   ['small','medium','large'].forEach(v => {
@@ -144,17 +153,181 @@
     pushSettings();
   });
 
-  // Load + getState
+  // Load from storage — swiftSettings 우선, gestureConfig fallback
   try {
-    browser.storage?.local?.get(SETTINGS_KEY)?.then(result => {
+    browser.storage?.local?.get([SETTINGS_KEY, 'gestureConfig'])?.then(result => {
+      // Path 1: swiftSettings 직접 로드
       if (result?.[SETTINGS_KEY]) {
         const stored = result[SETTINGS_KEY];
         for (const k of SETTINGS_KEYS) { if (k in stored) settings[k] = stored[k]; }
+      }
+      // Path 2: gestureConfig에서 역변환 (swiftSettings 누락 시 보완)
+      if (result?.gestureConfig) {
+        const gc = result.gestureConfig;
+        if (gc.masterEnabled !== undefined) settings.masterEnabled = gc.masterEnabled;
+        if (gc.floatingButtonEnabled !== undefined) settings.floatingEnabled = gc.floatingButtonEnabled;
+        if (gc.sensitivity !== undefined) settings.sensitivity = gc.sensitivity;
+        if (gc.buttonSize !== undefined) settings.buttonSize = gc.buttonSize;
+        if (gc.buttonOpacity !== undefined) settings.buttonOpacity = gc.buttonOpacity;
+        if (gc.gesturesEnabled) {
+          const ge = gc.gesturesEnabled;
+          if (ge.xShape !== undefined) settings.xShape = ge.xShape;
+          if (ge.lShape !== undefined) settings.lShape = ge.lShape;
+          if (ge.circle !== undefined) settings.circle = ge.circle;
+          if (ge.cShape !== undefined) settings.cShape = ge.cShape;
+        }
       }
       renderUI();
     })?.catch(() => { renderUI(); });
   } catch (_) { renderUI(); }
 
-  send('getState', {});
   renderUI();
+
+  // ── Usage Display ──────────────────────────────────────────
+  function loadUsage() {
+    try {
+      browser.storage?.local?.get('swiftUsage')?.then(result => {
+        const data = result?.swiftUsage || {};
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const count = (data.date === todayStr) ? (data.count || 0) : 0;
+        const isSub = data.isSubscribed || false;
+
+        document.getElementById('usageCount').textContent = count;
+        const card = document.getElementById('usageCard');
+        const btn = document.getElementById('subscribeBtn');
+
+        if (isSub) {
+          const parent = card.querySelector('span[id="usageCount"]').parentElement;
+          parent.textContent = '';
+          const pro = document.createElement('span');
+          pro.style.cssText = 'color:var(--green);font-weight:700;';
+          pro.textContent = 'Pro';
+          const unlimited = document.createElement('span');
+          unlimited.style.cssText = 'color:var(--sub);margin-left:4px;';
+          unlimited.textContent = i18n('무제한', 'Unlimited');
+          parent.appendChild(pro);
+          parent.appendChild(unlimited);
+          btn.style.display = 'none';
+        }
+      })?.catch(() => {});
+    } catch(_) {}
+  }
+  loadUsage();
+
+  document.getElementById('subscribeBtn').addEventListener('click', () => {
+    // ShieldMail 패턴: URL scheme으로 앱의 구독 화면 열기
+    try {
+      const p = browser.tabs?.create({ url: 'swiftgesture://subscribe' });
+      if (!p) window.open('swiftgesture://subscribe');
+      else p.catch(() => window.open('swiftgesture://subscribe'));
+    } catch(_) {
+      window.open('swiftgesture://subscribe');
+    }
+  });
+
+  // ── Admin Mode ────────────────────────────────────────────
+  const USAGE_KEY = 'swiftUsage';
+  let versionTaps = 0;
+  let versionTimer = null;
+
+  // SHA-256 해시 (비번 비교용)
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // 로그인 시도 제한
+  let loginAttempts = 0;
+  const MAX_LOGIN_ATTEMPTS = 5;
+
+  // 버전 5번 탭 → 관리자 패널 표시
+  document.getElementById('txt_footer').addEventListener('click', () => {
+    versionTaps++;
+    if (versionTimer) clearTimeout(versionTimer);
+    versionTimer = setTimeout(() => { versionTaps = 0; }, 1500);
+
+    if (versionTaps >= 5) {
+      versionTaps = 0;
+      document.getElementById('adminPanel').style.display = 'block';
+      document.getElementById('adminLogin').style.display = 'block';
+      document.getElementById('adminDash').style.display = 'none';
+      document.getElementById('adminPw').value = '';
+    }
+  });
+
+  // 관리자 로그인 — SHA-256 해시로만 비교, 평문 없음
+  document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+    if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+      document.getElementById('adminPw').placeholder = 'Locked';
+      return;
+    }
+
+    const pw = document.getElementById('adminPw').value;
+    const expectedHash = window.__SWIFT_ADMIN_HASH || '';
+
+    if (!expectedHash) { return; }
+
+    const inputHash = await sha256(pw);
+    if (inputHash === expectedHash) {
+      loginAttempts = 0;
+      document.getElementById('adminLogin').style.display = 'none';
+      document.getElementById('adminDash').style.display = 'block';
+      loadAdminStats();
+    } else {
+      loginAttempts++;
+      document.getElementById('adminPw').style.borderColor = '#FF453A';
+      document.getElementById('adminPw').value = '';
+      if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        document.getElementById('adminPw').placeholder = 'Locked (5 attempts)';
+      }
+    }
+  });
+
+  function loadAdminStats() {
+    try {
+      browser.storage?.local?.get(USAGE_KEY)?.then(result => {
+        const data = result?.[USAGE_KEY] || {};
+        document.getElementById('statToday').textContent = data.count || 0;
+        document.getElementById('statWeekFree').textContent = data.weekFreeCount || 0;
+        document.getElementById('statTotalFree').textContent = data.totalFreeCount || 0;
+        document.getElementById('statMonthSub').textContent = data.monthSubDays || 0;
+
+        const toggle = document.getElementById('adminSubToggle');
+        toggle.checked = data.isSubscribed || false;
+      })?.catch(() => {});
+    } catch(_) {}
+  }
+
+  // 구독 전환
+  document.getElementById('adminSubToggle').addEventListener('change', function() {
+    const isSub = this.checked;
+    try {
+      browser.storage?.local?.get(USAGE_KEY)?.then(result => {
+        const data = result?.[USAGE_KEY] || {};
+        data.isSubscribed = isSub;
+        if (isSub) data.monthSubDays = (data.monthSubDays || 0) + 1;
+        browser.storage?.local?.set({ [USAGE_KEY]: data })?.then(() => {
+          loadUsage();
+          loadAdminStats();
+          // content script에도 알림
+          send('subscriptionChanged', { isSubscribed: isSub });
+        })?.catch(() => {});
+      })?.catch(() => {});
+    } catch(_) {}
+  });
+
+  // 통계 초기화
+  document.getElementById('adminResetBtn').addEventListener('click', () => {
+    if (!confirm('Reset all stats?')) return;
+    const emptyData = {
+      date: new Date().toISOString().slice(0,10),
+      count: 0, isSubscribed: false,
+      totalFreeCount: 0, weekStart: '', weekFreeCount: 0,
+      monthKey: '', monthSubDays: 0
+    };
+    try {
+      browser.storage?.local?.set({ [USAGE_KEY]: emptyData })?.catch(() => {});
+    } catch(_) {}
+    loadAdminStats();
+  });
 })();

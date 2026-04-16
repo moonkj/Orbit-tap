@@ -21,7 +21,7 @@ class PaywallScreen extends ConsumerWidget {
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Swift Premium'),
+        title: const Text(l10n.get('swiftPremium')),
       ),
       body: SafeArea(
         child: Padding(
@@ -42,7 +42,7 @@ class PaywallScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Swift Premium',
+                l10n.get('swiftPremium'),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -60,12 +60,10 @@ class PaywallScreen extends ConsumerWidget {
               Expanded(
                 child: ListView(
                   children: [
-                    _FeatureRow(name: l10n.get('swipeBackForward'), free: true, premium: true),
-                    _FeatureRow(name: l10n.get('vShapeCloseTab'), free: false, premium: true),
-                    _FeatureRow(name: l10n.get('lShapeRestoreTab'), free: false, premium: true),
-                    _FeatureRow(name: l10n.get('doubleTapSearch'), free: false, premium: true),
-                    _FeatureRow(name: l10n.get('longPressScroll'), free: false, premium: true),
-                    _FeatureRow(name: l10n.get('twoFingerFlick'), free: false, premium: true),
+                    _FeatureRow(name: l10n.get('xShapeCloseTab'), free: true, premium: true),
+                    _FeatureRow(name: l10n.get('lShapeNewTab'), free: true, premium: true),
+                    _FeatureRow(name: l10n.get('circleSearch'), free: true, premium: true),
+                    _FeatureRow(name: l10n.get('cShapeRefresh'), free: true, premium: true),
                     _FeatureRow(name: l10n.get('floatingButton'), free: true, premium: true),
                     _FeatureRow(name: l10n.get('gestureSettings'), free: false, premium: true),
                     _FeatureRow(name: l10n.get('exclusionList'), free: false, premium: true),
@@ -138,7 +136,7 @@ class PaywallScreen extends ConsumerWidget {
           context.pop();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchase cancelled or failed')),
+            SnackBar(content: Text(l10n.get('purchaseFailed'))),
           );
         }
       }
@@ -154,7 +152,7 @@ class PaywallScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Purchases restored!' : 'No purchases to restore'),
+            content: Text(success ? l10n.get('purchaseRestored') : l10n.get('noRestore')),
             backgroundColor: success ? Colors.green : null,
           ),
         );

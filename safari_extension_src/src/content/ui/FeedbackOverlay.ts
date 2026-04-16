@@ -98,11 +98,10 @@ export class FeedbackOverlay {
 
   private getColor(gesture: GestureType): string {
     const colors: Record<string, string> = {
-      [GestureType.V_SHAPE]: 'rgba(255, 69, 58, ALPHA)',      // 레드
+      [GestureType.X_SHAPE]: 'rgba(255, 69, 58, ALPHA)',      // 레드
       [GestureType.L_SHAPE]: 'rgba(48, 209, 88, ALPHA)',      // 그린
       [GestureType.CIRCLE]: 'rgba(10, 132, 255, ALPHA)',      // 블루
       [GestureType.C_SHAPE]: 'rgba(255, 159, 10, ALPHA)',     // 오렌지
-      [GestureType.DIAGONAL_SWIPE_UP]: 'rgba(175, 82, 222, ALPHA)', // 퍼플
     };
     return colors[gesture] ?? 'rgba(255, 255, 255, ALPHA)';
   }

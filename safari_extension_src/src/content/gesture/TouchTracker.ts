@@ -122,6 +122,19 @@ export class TouchTracker {
     };
   }
 
+  getSession(): TouchSession | null {
+    if (this.length < 2) return null;
+    const endTime = performance.now();
+    return {
+      points: this.getPoints(),
+      secondFingerPoints: this.getSecondFingerPoints(),
+      fingerCount: this.fingerCount,
+      startTime: this.startTime,
+      endTime,
+      duration: endTime - this.startTime,
+    };
+  }
+
   reset(): void {
     this.head = 0;
     this.length = 0;

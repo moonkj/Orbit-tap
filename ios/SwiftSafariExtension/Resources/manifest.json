@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "SWIFT",
   "version": "1.0.0",
-  "description": "The Swift Gestures for Safari",
+  "description": "SWIFT - Gesture control for Safari",
   "permissions": ["activeTab", "storage", "tabs"],
   "background": {
     "scripts": ["background/background.js"],

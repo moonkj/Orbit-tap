@@ -28,3 +28,4 @@ safari_extension_src/dist/
 
 # Misc
 *.log
+ios/SwiftSafariExtension/Resources/popup/admin_secret.js
