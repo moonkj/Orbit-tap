@@ -77,6 +77,16 @@
     }
     .seg-btn.active { background: var(--primary); color: #fff; }
 
+    /* Gesture icon animation */
+    .gesture-icon { width: 22px; height: 22px; vertical-align: middle; margin-right: 6px; }
+    .option-label { display: flex; align-items: center; font-size: 14px; }
+    .anim-path {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawPath 0.6s ease forwards;
+    }
+    @keyframes drawPath { to { stroke-dashoffset: 0; } }
+
     /* Footer */
     .footer { margin-top: 12px; text-align: center; font-size: 11px; color: var(--sub); }
   </style>
@@ -109,33 +119,53 @@
       <div class="card-title" id="txt_gestures_title">GESTURES</div>
 
       <div class="option-row">
-        <div><div class="option-label" id="txt_swipe_label">Swipe Back/Forward</div></div>
-        <label class="toggle"><input type="checkbox" id="swipeToggle"><span class="track"></span></label>
-      </div>
-
-      <div class="option-row">
-        <div><div class="option-label" id="txt_vshape_label">V Shape - Close Tab</div></div>
+        <div>
+          <div class="option-label">
+            <svg class="gesture-icon" viewBox="0 0 28 28"><path class="anim-path" d="M8 22 L14 10 L20 22" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="txt_vshape_label">V — Close Tab</span>
+          </div>
+        </div>
         <label class="toggle"><input type="checkbox" id="vshapeToggle"><span class="track"></span></label>
       </div>
 
       <div class="option-row">
-        <div><div class="option-label" id="txt_lshape_label">L Shape - Restore Tab</div></div>
+        <div>
+          <div class="option-label">
+            <svg class="gesture-icon" viewBox="0 0 28 28"><path class="anim-path" d="M8 8 L8 20 L20 20" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="txt_lshape_label">L — Restore Tab</span>
+          </div>
+        </div>
         <label class="toggle"><input type="checkbox" id="lshapeToggle"><span class="track"></span></label>
       </div>
 
       <div class="option-row">
-        <div><div class="option-label" id="txt_doubletap_label">Double Tap - Search</div></div>
-        <label class="toggle"><input type="checkbox" id="doubletapToggle"><span class="track"></span></label>
+        <div>
+          <div class="option-label">
+            <svg class="gesture-icon" viewBox="0 0 28 28"><circle class="anim-path" cx="14" cy="14" r="8" fill="none" stroke="var(--primary)" stroke-width="2.2"/></svg>
+            <span id="txt_circle_label">○ — Find on Page</span>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="circleToggle"><span class="track"></span></label>
       </div>
 
       <div class="option-row">
-        <div><div class="option-label" id="txt_longpress_label">Long Press - Scroll</div></div>
-        <label class="toggle"><input type="checkbox" id="longpressToggle"><span class="track"></span></label>
+        <div>
+          <div class="option-label">
+            <svg class="gesture-icon" viewBox="0 0 28 28"><path class="anim-path" d="M20 8 A9 9 0 1 0 20 20" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round"/></svg>
+            <span id="txt_cshape_label">C — Clear &amp; Refresh</span>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="cshapeToggle"><span class="track"></span></label>
       </div>
 
       <div class="option-row">
-        <div><div class="option-label" id="txt_twofinger_label">Two Finger - Refresh</div></div>
-        <label class="toggle"><input type="checkbox" id="twofingerToggle"><span class="track"></span></label>
+        <div>
+          <div class="option-label">
+            <svg class="gesture-icon" viewBox="0 0 28 28"><path class="anim-path" d="M6 22 L22 6" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round"/><path d="M15 6 L22 6 L22 13" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="txt_diagonal_label">↗ — New Tab</span>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="diagonalToggle"><span class="track"></span></label>
       </div>
     </div>
 
@@ -186,10 +216,9 @@
 
   <div class="footer" id="txt_footer">SWIFT v1.0.0</div>
 
-<script>
-(function() {
-  // ============================================================
-  // 1. DEFAULTS - single source of truth
+<script src="popup.js"></script>
+<!-- REMOVED: inline script moved to popup.js -->
+<script>/*
   // ============================================================
   var DEFAULTS = {
     masterEnabled: true,
@@ -415,71 +444,76 @@
   }
 
   // ============================================================
-  // 6. Load settings from browser.storage.local (Scrolly pattern)
+  // 6. Load settings (Scrolly pattern: optional chaining + whitelist merge)
   // ============================================================
-  function loadSettings() {
-    try {
-      browser.storage.local.get('swiftSettings').then(function(data) {
-        if (data && data.swiftSettings) {
-          var stored = data.swiftSettings;
-          var keys = Object.keys(DEFAULTS);
-          for (var i = 0; i < keys.length; i++) {
-            var k = keys[i];
-            if (stored.hasOwnProperty(k)) {
-              settings[k] = stored[k];
-            }
-          }
-        }
-        renderUI();
-      }).catch(function() {
-        renderUI();
-      });
-    } catch(e) {
-      renderUI();
+  var SETTINGS_KEYS = Object.keys(DEFAULTS);
+
+  function mergeStored(stored) {
+    for (var i = 0; i < SETTINGS_KEYS.length; i++) {
+      var k = SETTINGS_KEYS[i];
+      if (k in stored) settings[k] = stored[k];
     }
   }
 
-  // ============================================================
-  // 7. Save settings to browser.storage.local (Scrolly pattern)
-  // ============================================================
-  function saveSettings() {
-    // Save raw settings object
+  function loadSettings() {
     try {
-      browser.storage.local.set({ swiftSettings: settings }).catch(function(){});
-    } catch(e) {}
+      var p = browser.storage?.local?.get('swiftSettings');
+      if (p) p.then(function(result) {
+        if (result && result.swiftSettings) {
+          mergeStored(result.swiftSettings);
+        }
+        renderUI();
+      })?.catch(function() { renderUI(); });
+      else renderUI();
+    } catch(_) { renderUI(); }
+  }
 
-    // Also save the processed gestureConfig that content_script expects
-    var config = {
+  // ============================================================
+  // 7. Save settings (Scrolly pattern: tabs.sendMessage + storage)
+  // ============================================================
+  function buildGestureConfig() {
+    return {
       masterEnabled: settings.masterEnabled,
       floatingButtonEnabled: settings.masterEnabled && settings.floatingEnabled,
       sensitivity: settings.sensitivity,
       buttonSize: settings.buttonSize,
       buttonOpacity: settings.buttonOpacity,
       gesturesEnabled: {
-        swipeBack: settings.masterEnabled && settings.swipeBack,
-        swipeForward: settings.masterEnabled && settings.swipeForward,
-        vShape: settings.masterEnabled && settings.vShape,
-        lShape: settings.masterEnabled && settings.lShape,
-        doubleTap: settings.masterEnabled && settings.doubleTap,
-        longPress: settings.masterEnabled && settings.longPress,
-        twoFingerFlick: settings.masterEnabled && settings.twoFingerFlick
+        swipeBack: settings.masterEnabled ? settings.swipeBack : false,
+        swipeForward: settings.masterEnabled ? settings.swipeForward : false,
+        vShape: settings.masterEnabled ? settings.vShape : false,
+        lShape: settings.masterEnabled ? settings.lShape : false,
+        doubleTap: settings.masterEnabled ? settings.doubleTap : false,
+        longPress: settings.masterEnabled ? settings.longPress : false,
+        twoFingerFlick: settings.masterEnabled ? settings.twoFingerFlick : false
       }
     };
-    try {
-      browser.storage.local.set({ gestureConfig: config }).catch(function(){});
-    } catch(e) {}
+  }
 
-    // Notify active tab content script
+  function pushSettings() {
+    var gestureConfig = buildGestureConfig();
+
+    // 1. content script에 직접 전달 — swiftSettings도 함께 보내서 content script가 저장
+    var settingsCopy = JSON.parse(JSON.stringify(settings));
     try {
-      browser.tabs.query({active: true, currentWindow: true}).then(function(tabs) {
-        if (tabs && tabs[0] && tabs[0].id) {
+      browser.tabs?.query({ active: true, currentWindow: true })?.then(function(tabs) {
+        if (tabs && tabs.length > 0 && tabs[0].id) {
           browser.tabs.sendMessage(tabs[0].id, {
             action: 'configUpdated',
-            config: config
-          }).catch(function(){});
+            config: gestureConfig,
+            swiftSettings: settingsCopy
+          })?.catch(function(){});
         }
-      }).catch(function(){});
-    } catch(e) {}
+      })?.catch(function(){});
+    } catch(_) {}
+
+    // 2. popup에서도 직접 저장 시도 (backup)
+    try {
+      browser.storage?.local?.set({
+        swiftSettings: settingsCopy,
+        gestureConfig: gestureConfig
+      })?.catch(function(){});
+    } catch(_) {}
   }
 
   // ============================================================
@@ -543,63 +577,65 @@
         }
         renderUI();
       }
-      saveSettings();
+      pushSettings();
     });
   }
 
   function bindSegment(btnId, key, value) {
-    document.getElementById(btnId).addEventListener('click', function() {
+    var handler = function(e) {
+      e.preventDefault();
       settings[key] = value;
       renderUI();
-      saveSettings();
-    });
+      pushSettings();
+    };
+    var el = document.getElementById(btnId);
+    el.addEventListener('touchend', handler);
+    el.addEventListener('click', handler);
   }
 
   // ============================================================
-  // 10. DOMContentLoaded - bind all events
+  // 10. Init — 즉시 실행 (DOMContentLoaded 미사용, Scrolly pattern)
+  // script가 body 끝에 있으므로 DOM 이미 준비됨
   // ============================================================
-  document.addEventListener('DOMContentLoaded', function() {
-    applyI18n();
-    loadSettings();
+  applyI18n();
 
-    // Master toggle
-    bindToggle('masterToggle', 'masterEnabled');
+  // Master toggle
+  bindToggle('masterToggle', 'masterEnabled');
 
-    // Gesture toggles - swipe controls both back and forward
-    document.getElementById('swipeToggle').addEventListener('change', function() {
-      settings.swipeBack = this.checked;
-      settings.swipeForward = this.checked;
-      saveSettings();
-    });
-    bindToggle('vshapeToggle', 'vShape');
-    bindToggle('lshapeToggle', 'lShape');
-    bindToggle('doubletapToggle', 'doubleTap');
-    bindToggle('longpressToggle', 'longPress');
-    bindToggle('twofingerToggle', 'twoFingerFlick');
-
-    // Floating button toggle
-    bindToggle('floatingToggle', 'floatingEnabled');
-
-    // Size segments
-    bindSegment('size_small', 'buttonSize', 'small');
-    bindSegment('size_medium', 'buttonSize', 'medium');
-    bindSegment('size_large', 'buttonSize', 'large');
-
-    // Opacity slider
-    document.getElementById('opacitySlider').addEventListener('input', function() {
-      settings.buttonOpacity = parseInt(this.value, 10);
-      document.getElementById('opacityValue').textContent = this.value + '%';
-      saveSettings();
-    });
-
-    // Sensitivity slider
-    document.getElementById('sensitivitySlider').addEventListener('input', function() {
-      settings.sensitivity = parseInt(this.value, 10);
-      document.getElementById('sensitivityValue').textContent = this.value + '%';
-      saveSettings();
-    });
+  // Gesture toggles - swipe controls both back and forward
+  document.getElementById('swipeToggle').addEventListener('change', function() {
+    settings.swipeBack = this.checked;
+    settings.swipeForward = this.checked;
+    pushSettings();
   });
-})();
-</script>
+  bindToggle('vshapeToggle', 'vShape');
+  bindToggle('lshapeToggle', 'lShape');
+  bindToggle('doubletapToggle', 'doubleTap');
+  bindToggle('longpressToggle', 'longPress');
+  bindToggle('twofingerToggle', 'twoFingerFlick');
+
+  // Floating button toggle
+  bindToggle('floatingToggle', 'floatingEnabled');
+
+  // Size segments
+  bindSegment('size_small', 'buttonSize', 'small');
+  bindSegment('size_medium', 'buttonSize', 'medium');
+  bindSegment('size_large', 'buttonSize', 'large');
+
+  // Opacity slider
+  document.getElementById('opacitySlider').addEventListener('input', function() {
+    settings.buttonOpacity = parseInt(this.value, 10);
+    document.getElementById('opacityValue').textContent = this.value + '%';
+    pushSettings();
+  });
+
+  // Sensitivity slider
+  document.getElementById('sensitivitySlider').addEventListener('input', function() {
+    settings.sensitivity = parseInt(this.value, 10);
+    document.getElementById('sensitivityValue').textContent = this.value + '%';
+    pushSettings();
+  });
+
+*/</script>
 </body>
 </html>

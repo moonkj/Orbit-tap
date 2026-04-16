@@ -27,6 +27,14 @@
                 return handleLogGesture(message.gestureType);
             case 'getConfig':
                 return handleGetConfig();
+            case 'saveConfig':
+                return handleSaveConfig(message.swiftSettings, message.gestureConfig);
+            case 'getPopupSettings':
+                return handleGetPopupSettings();
+            case 'newTab':
+                return handleNewTab();
+            case 'clearSiteData':
+                return handleClearSiteData(sender);
             default:
                 return Promise.resolve({ success: false, error: 'Unknown action' });
         }
@@ -126,16 +134,88 @@
             return { success: false };
         }
     }
-    async function handleGetConfig() {
+    async function handleSaveConfig(swiftSettings, gestureConfig) {
         try {
-            const result = await browser.runtime.sendNativeMessage('com.swift.app', { action: 'getConfig' });
-            // Cache in storage for offline access
-            await browser.storage.local.set({ cachedConfig: result });
-            return result;
+            await browser.storage.local.set({ swiftSettings, gestureConfig });
+            // Broadcast to active tab content script
+            try {
+                const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+                if (tabs?.[0]?.id) {
+                    browser.tabs.sendMessage(tabs[0].id, {
+                        action: 'configUpdated',
+                        config: gestureConfig
+                    }).catch(() => { });
+                }
+            }
+            catch { }
+            return { success: true };
         }
         catch {
-            const stored = await browser.storage.local.get('cachedConfig');
-            return stored.cachedConfig ?? {};
+            return { success: false };
+        }
+    }
+    async function handleGetPopupSettings() {
+        try {
+            const stored = await browser.storage.local.get('swiftSettings');
+            return { swiftSettings: stored.swiftSettings ?? null };
+        }
+        catch {
+            return { swiftSettings: null };
+        }
+    }
+    async function handleNewTab() {
+        try {
+            await browser.tabs.create({ active: true });
+            return { success: true };
+        }
+        catch {
+            return { success: false };
+        }
+    }
+    async function handleClearSiteData(sender) {
+        try {
+            const tabId = sender?.tab?.id;
+            let url;
+            if (tabId) {
+                const tabs = await browser.tabs.query({});
+                const tab = tabs.find((t) => t.id === tabId);
+                url = tab?.url;
+            }
+            else {
+                const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+                url = tabs[0]?.url;
+            }
+            if (url) {
+                const origin = new URL(url).origin;
+                // 쿠키 삭제 시도
+                try {
+                    const cookies = await browser.cookies?.getAll({ url: origin });
+                    if (cookies) {
+                        for (const cookie of cookies) {
+                            await browser.cookies.remove({ url: origin + cookie.path, name: cookie.name });
+                        }
+                    }
+                }
+                catch { }
+            }
+            // 탭 새로고침
+            const targetId = tabId ?? (await browser.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+            if (targetId) {
+                await browser.tabs.reload(targetId, { bypassCache: true });
+            }
+            return { success: true };
+        }
+        catch {
+            return { success: false };
+        }
+    }
+    async function handleGetConfig() {
+        try {
+            const stored = await browser.storage.local.get('gestureConfig');
+            return stored.gestureConfig ?? {};
+        }
+        catch {
+            return {};
         }
     }
 

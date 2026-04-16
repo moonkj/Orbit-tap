@@ -1,22 +1,13 @@
 import type { TouchSession, TouchPoint } from './TouchTracker';
 import type { GestureConfig } from '../config/ConfigBridge';
 
-// Two Finger Flick 임계값 상수
-const TWO_FINGER_MIN_SPEED = 400;       // px/s
-const TWO_FINGER_ANGLE_THRESHOLD = 30;  // 두 손가락 방향 차이 최대 허용 각도 (deg)
-const TWO_FINGER_FLICK_RATIO = 0.15;    // 거리 비율 ≤ 이 값이면 Flick
-const TWO_FINGER_PINCH_RATIO = 0.3;     // 거리 비율 ≥ 이 값이면 Pinch (무시)
-
 export enum GestureType {
   UNKNOWN = 'UNKNOWN',
-  SWIPE_BACK = 'SWIPE_BACK',
-  SWIPE_FORWARD = 'SWIPE_FORWARD',
   V_SHAPE = 'V_SHAPE',
   L_SHAPE = 'L_SHAPE',
-  DOUBLE_TAP = 'DOUBLE_TAP',
-  LONG_PRESS = 'LONG_PRESS',
-  TWO_FINGER_FLICK_UP = 'TWO_FINGER_FLICK_UP',
-  TWO_FINGER_FLICK_DOWN = 'TWO_FINGER_FLICK_DOWN',
+  CIRCLE = 'CIRCLE',
+  C_SHAPE = 'C_SHAPE',
+  DIAGONAL_SWIPE_UP = 'DIAGONAL_SWIPE_UP',
 }
 
 interface Segment {
@@ -46,26 +37,26 @@ export class ShapeDetector {
 
   detect(session: TouchSession): GestureType {
     const { points } = session;
-    if (points.length < 3) return GestureType.UNKNOWN;
-
-    // Two Finger Flick: 단일 손가락 경로 분석보다 먼저 시도
-    if (session.fingerCount >= 2 && session.secondFingerPoints.length >= 2) {
-      const twoFingerResult = this.detectTwoFingerFlick(session);
-      if (twoFingerResult !== GestureType.UNKNOWN) return twoFingerResult;
-    }
+    if (points.length < 5) return GestureType.UNKNOWN;
 
     const start = points[0];
 
-    // Reject gestures starting in edge zone (Safari native gesture area)
+    // Safari 네이티브 제스처 영역 회피
     if (start.x < this.edgeZone || start.x > this.screenWidth - this.edgeZone) {
       return GestureType.UNKNOWN;
     }
 
-    // Stage 1: Quick classify by segment count
+    // 1. 원형/C형 먼저 감지 (포인트 수가 많아야 함)
+    if (points.length >= 10) {
+      const curveResult = this.detectCurve(points, session);
+      if (curveResult !== GestureType.UNKNOWN) return curveResult;
+    }
+
+    // 2. 세그먼트 기반 감지 (V, L, 대각선 스와이프)
     const segments = this.extractSegments(points);
 
     if (segments.length === 1) {
-      return this.classifySwipe(segments[0], session);
+      return this.classifyDiagonalSwipe(segments[0], session);
     }
 
     if (segments.length === 2) {
@@ -75,65 +66,119 @@ export class ShapeDetector {
     return GestureType.UNKNOWN;
   }
 
-  /**
-   * Two Finger Flick 감지
-   *
-   * 두 손가락의 전체 이동 벡터를 비교해 방향 차가 30° 미만이고
-   * 평균 속도가 400px/s 이상이면 Flick 으로 판단한다.
-   * 두 손가락 사이 거리 변화율이 0.3 이상이면 Pinch 로 간주하고 무시한다.
-   */
-  private detectTwoFingerFlick(session: TouchSession): GestureType {
-    const { points, secondFingerPoints, duration } = session;
+  // ── 원형/C형 감지 ──────────────────────────────────────────
+  private detectCurve(points: TouchPoint[], session: TouchSession): GestureType {
+    if (session.duration < 200 || session.duration > 2000) return GestureType.UNKNOWN;
 
-    // 각 손가락의 첫/끝 좌표
-    const f1Start = points[0];
-    const f1End = points[points.length - 1];
-    const f2Start = secondFingerPoints[0];
-    const f2End = secondFingerPoints[secondFingerPoints.length - 1];
+    // 중심점 계산
+    let cx = 0, cy = 0;
+    for (const p of points) { cx += p.x; cy += p.y; }
+    cx /= points.length;
+    cy /= points.length;
 
-    const dx1 = f1End.x - f1Start.x;
-    const dy1 = f1End.y - f1Start.y;
-    const dx2 = f2End.x - f2Start.x;
-    const dy2 = f2End.y - f2Start.y;
+    // 각 포인트의 중심 대비 각도 계산
+    const angles: number[] = [];
+    let totalRadius = 0;
+    for (const p of points) {
+      const dx = p.x - cx;
+      const dy = p.y - cy;
+      angles.push(Math.atan2(dy, dx));
+      totalRadius += Math.sqrt(dx * dx + dy * dy);
+    }
+    const avgRadius = totalRadius / points.length;
 
-    const dist1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-    const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+    // 반지름이 너무 작으면 무시
+    if (avgRadius < 30) return GestureType.UNKNOWN;
 
-    if (dist1 < 20 || dist2 < 20) return GestureType.UNKNOWN;
+    // 반지름 편차 체크 (원형인지)
+    let radiusVariance = 0;
+    for (const p of points) {
+      const r = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
+      radiusVariance += ((r - avgRadius) / avgRadius) ** 2;
+    }
+    radiusVariance /= points.length;
+    if (radiusVariance > 0.15) return GestureType.UNKNOWN; // 원에서 너무 벗어남
 
-    // 평균 속도 검사 (px/s)
-    const avgDist = (dist1 + dist2) / 2;
-    const durationSec = duration / 1000;
-    if (durationSec <= 0 || avgDist / durationSec < TWO_FINGER_MIN_SPEED) {
-      return GestureType.UNKNOWN;
+    // 각도 커버리지 계산 (총 회전각)
+    let totalAngle = 0;
+    for (let i = 1; i < angles.length; i++) {
+      let diff = angles[i] - angles[i - 1];
+      // -π ~ π 범위로 정규화
+      if (diff > Math.PI) diff -= 2 * Math.PI;
+      if (diff < -Math.PI) diff += 2 * Math.PI;
+      totalAngle += diff;
+    }
+    const coverage = Math.abs(totalAngle);
+    const coverageDeg = coverage * (180 / Math.PI);
+
+    // 시작점과 끝점 거리
+    const startEnd = Math.sqrt(
+      (points[0].x - points[points.length - 1].x) ** 2 +
+      (points[0].y - points[points.length - 1].y) ** 2
+    );
+    const closedRatio = startEnd / avgRadius;
+
+    // 원: 300°+ 커버리지 + 시작/끝점 근접 (반지름의 60% 이내)
+    if (coverageDeg >= 300 && closedRatio < 0.6) {
+      return GestureType.CIRCLE;
     }
 
-    // 두 손가락 간 거리 변화율 → Pinch 여부 판별
-    const initialSpan = Math.sqrt(
-      (f2Start.x - f1Start.x) ** 2 + (f2Start.y - f1Start.y) ** 2
-    );
-    const finalSpan = Math.sqrt(
-      (f2End.x - f1End.x) ** 2 + (f2End.y - f1End.y) ** 2
-    );
-    const spanDelta = Math.abs(finalSpan - initialSpan);
-    const distanceRatio = avgDist > 0 ? spanDelta / avgDist : 1;
+    // C형: 150~300° 커버리지 + 열린 형태 (시작/끝점 떨어져있음)
+    if (coverageDeg >= 150 && coverageDeg < 300 && closedRatio >= 0.4) {
+      return GestureType.C_SHAPE;
+    }
 
-    if (distanceRatio > TWO_FINGER_PINCH_RATIO) return GestureType.UNKNOWN; // Pinch 무시
-    if (distanceRatio > TWO_FINGER_FLICK_RATIO) return GestureType.UNKNOWN; // 애매한 중간 영역 무시
-
-    // 두 이동 벡터 사이의 각도 차이
-    const angle1 = Math.atan2(dy1, dx1) * (180 / Math.PI);
-    const angle2 = Math.atan2(dy2, dx2) * (180 / Math.PI);
-    let angleDiff = Math.abs(angle1 - angle2);
-    if (angleDiff > 180) angleDiff = 360 - angleDiff;
-
-    if (angleDiff >= TWO_FINGER_ANGLE_THRESHOLD) return GestureType.UNKNOWN;
-
-    // 평균 Y 방향으로 위/아래 판별
-    const avgDy = (dy1 + dy2) / 2;
-    return avgDy < 0 ? GestureType.TWO_FINGER_FLICK_UP : GestureType.TWO_FINGER_FLICK_DOWN;
+    return GestureType.UNKNOWN;
   }
 
+  // ── 대각선 위 스와이프 ──────────────────────────────────────
+  private classifyDiagonalSwipe(segment: Segment, session: TouchSession): GestureType {
+    if (segment.distance < this.config.swipeMinDistance) return GestureType.UNKNOWN;
+    if (session.duration > 800) return GestureType.UNKNOWN;
+
+    // 대각선 위: dy < 0 (위로), 각도 -20° ~ -70° 범위
+    const angle = segment.angle; // atan2 기반: 위 = 음수
+    if (segment.dy < -40 && angle >= -70 && angle <= -20) {
+      return GestureType.DIAGONAL_SWIPE_UP;
+    }
+
+    return GestureType.UNKNOWN;
+  }
+
+  // ── V/L 형태 감지 (기존 유지) ──────────────────────────────
+  private classifyShape(segments: Segment[], session: TouchSession): GestureType {
+    const [seg1, seg2] = segments;
+    const angleDiff = Math.abs(seg2.angle - seg1.angle);
+    const normalizedAngle = angleDiff > 180 ? 360 - angleDiff : angleDiff;
+
+    // V Shape
+    if (
+      seg1.distance >= this.config.vShapeMinSegment &&
+      seg2.distance >= this.config.vShapeMinSegment &&
+      normalizedAngle >= this.config.vShapeAngleMin &&
+      normalizedAngle <= this.config.vShapeAngleMax &&
+      session.duration >= 200 &&
+      session.duration <= 800
+    ) {
+      return GestureType.V_SHAPE;
+    }
+
+    // L Shape
+    if (
+      seg1.distance >= 80 &&
+      seg2.distance >= 60 &&
+      normalizedAngle >= this.config.lShapeAngleMin &&
+      normalizedAngle <= this.config.lShapeAngleMax &&
+      session.duration >= 300 &&
+      session.duration <= 1000
+    ) {
+      return GestureType.L_SHAPE;
+    }
+
+    return GestureType.UNKNOWN;
+  }
+
+  // ── 유틸리티 ────────────────────────────────────────────────
   private extractSegments(points: TouchPoint[]): Segment[] {
     const simplified = this.douglasPeucker(points, 15);
     const segments: Segment[] = [];
@@ -150,52 +195,7 @@ export class ShapeDetector {
         segments.push({ start, end, dx, dy, distance, angle });
       }
     }
-
     return segments;
-  }
-
-  private classifySwipe(segment: Segment, session: TouchSession): GestureType {
-    if (segment.distance < this.config.swipeMinDistance) return GestureType.UNKNOWN;
-
-    const verticalDeviation = Math.abs(segment.dy);
-    if (verticalDeviation > 50) return GestureType.UNKNOWN;
-
-    if (segment.dx > 0 && session.duration < 1000) return GestureType.SWIPE_BACK;
-    if (segment.dx < 0 && session.duration < 1000) return GestureType.SWIPE_FORWARD;
-
-    return GestureType.UNKNOWN;
-  }
-
-  private classifyShape(segments: Segment[], session: TouchSession): GestureType {
-    const [seg1, seg2] = segments;
-    const angleDiff = Math.abs(seg2.angle - seg1.angle);
-    const normalizedAngle = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-
-    // V Shape: two segments going down then up (or vice versa)
-    if (
-      seg1.distance >= this.config.vShapeMinSegment &&
-      seg2.distance >= this.config.vShapeMinSegment &&
-      normalizedAngle >= this.config.vShapeAngleMin &&
-      normalizedAngle <= this.config.vShapeAngleMax &&
-      session.duration >= 200 &&
-      session.duration <= 800
-    ) {
-      return GestureType.V_SHAPE;
-    }
-
-    // L Shape: vertical then horizontal
-    if (
-      seg1.distance >= 80 &&
-      seg2.distance >= 60 &&
-      normalizedAngle >= this.config.lShapeAngleMin &&
-      normalizedAngle <= this.config.lShapeAngleMax &&
-      session.duration >= 300 &&
-      session.duration <= 1000
-    ) {
-      return GestureType.L_SHAPE;
-    }
-
-    return GestureType.UNKNOWN;
   }
 
   private douglasPeucker(points: TouchPoint[], epsilon: number): TouchPoint[] {

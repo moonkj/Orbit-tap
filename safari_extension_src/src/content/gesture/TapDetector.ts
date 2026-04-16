@@ -33,10 +33,10 @@ export class TapDetector {
       (endX - this.touchStartX) ** 2 + (endY - this.touchStartY) ** 2
     );
 
-    // Long Press
+    // Long Press — no longer a gesture type, skip
     if (duration >= this.config.longPressMinDuration && moveDistance < 10) {
       this.resetTaps();
-      return GestureType.LONG_PRESS;
+      return null;
     }
 
     // Not a tap if moved too much or held too long
@@ -70,9 +70,8 @@ export class TapDetector {
     // Wait to see if more taps come
     // For now, return double tap immediately when 2 taps detected
     if (this.tapCount >= 2) {
-      const result = GestureType.DOUBLE_TAP;
       this.resetTaps();
-      return result;
+      return null; // double tap no longer a gesture type
     }
 
     return null;

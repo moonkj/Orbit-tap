@@ -1,20 +1,10 @@
 export class IntentDetector {
-  private _isScrolling = false;
   private _isInputFocused = false;
-  private scrollTimer: number | null = null;
   private abortController: AbortController;
 
   constructor() {
     this.abortController = new AbortController();
     const signal = this.abortController.signal;
-
-    document.addEventListener('scroll', () => {
-      this._isScrolling = true;
-      if (this.scrollTimer) clearTimeout(this.scrollTimer);
-      this.scrollTimer = window.setTimeout(() => {
-        this._isScrolling = false;
-      }, 150);
-    }, { passive: true, signal });
 
     document.addEventListener('focusin', (e) => {
       const target = e.target as HTMLElement;
@@ -26,8 +16,9 @@ export class IntentDetector {
     }, { signal });
   }
 
+  // 스크롤 중에도 제스처 허용 — 스크롤로 차단하면 일반 웹에서 제스처 불가
   isScrolling(): boolean {
-    return this._isScrolling;
+    return false;
   }
 
   isInputFocused(): boolean {
@@ -35,12 +26,11 @@ export class IntentDetector {
   }
 
   isIdle(): boolean {
-    return !this._isScrolling && !this._isInputFocused;
+    return !this._isInputFocused;
   }
 
   dispose(): void {
     this.abortController.abort();
-    if (this.scrollTimer) clearTimeout(this.scrollTimer);
   }
 
   private isEditableElement(el: HTMLElement): boolean {

@@ -135,22 +135,14 @@
         }
     }
 
-    // Two Finger Flick 임계값 상수
-    const TWO_FINGER_MIN_SPEED = 400; // px/s
-    const TWO_FINGER_ANGLE_THRESHOLD = 30; // 두 손가락 방향 차이 최대 허용 각도 (deg)
-    const TWO_FINGER_FLICK_RATIO = 0.15; // 거리 비율 ≤ 이 값이면 Flick
-    const TWO_FINGER_PINCH_RATIO = 0.3; // 거리 비율 ≥ 이 값이면 Pinch (무시)
     var GestureType;
     (function (GestureType) {
         GestureType["UNKNOWN"] = "UNKNOWN";
-        GestureType["SWIPE_BACK"] = "SWIPE_BACK";
-        GestureType["SWIPE_FORWARD"] = "SWIPE_FORWARD";
         GestureType["V_SHAPE"] = "V_SHAPE";
         GestureType["L_SHAPE"] = "L_SHAPE";
-        GestureType["DOUBLE_TAP"] = "DOUBLE_TAP";
-        GestureType["LONG_PRESS"] = "LONG_PRESS";
-        GestureType["TWO_FINGER_FLICK_UP"] = "TWO_FINGER_FLICK_UP";
-        GestureType["TWO_FINGER_FLICK_DOWN"] = "TWO_FINGER_FLICK_DOWN";
+        GestureType["CIRCLE"] = "CIRCLE";
+        GestureType["C_SHAPE"] = "C_SHAPE";
+        GestureType["DIAGONAL_SWIPE_UP"] = "DIAGONAL_SWIPE_UP";
     })(GestureType || (GestureType = {}));
     class ShapeDetector {
         constructor(config) {
@@ -164,78 +156,129 @@
         }
         detect(session) {
             const { points } = session;
-            if (points.length < 3)
+            if (points.length < 5)
                 return GestureType.UNKNOWN;
-            // Two Finger Flick: 단일 손가락 경로 분석보다 먼저 시도
-            if (session.fingerCount >= 2 && session.secondFingerPoints.length >= 2) {
-                const twoFingerResult = this.detectTwoFingerFlick(session);
-                if (twoFingerResult !== GestureType.UNKNOWN)
-                    return twoFingerResult;
-            }
             const start = points[0];
-            // Reject gestures starting in edge zone (Safari native gesture area)
+            // Safari 네이티브 제스처 영역 회피
             if (start.x < this.edgeZone || start.x > this.screenWidth - this.edgeZone) {
                 return GestureType.UNKNOWN;
             }
-            // Stage 1: Quick classify by segment count
+            // 1. 원형/C형 먼저 감지 (포인트 수가 많아야 함)
+            if (points.length >= 10) {
+                const curveResult = this.detectCurve(points, session);
+                if (curveResult !== GestureType.UNKNOWN)
+                    return curveResult;
+            }
+            // 2. 세그먼트 기반 감지 (V, L, 대각선 스와이프)
             const segments = this.extractSegments(points);
             if (segments.length === 1) {
-                return this.classifySwipe(segments[0], session);
+                return this.classifyDiagonalSwipe(segments[0], session);
             }
             if (segments.length === 2) {
                 return this.classifyShape(segments, session);
             }
             return GestureType.UNKNOWN;
         }
-        /**
-         * Two Finger Flick 감지
-         *
-         * 두 손가락의 전체 이동 벡터를 비교해 방향 차가 30° 미만이고
-         * 평균 속도가 400px/s 이상이면 Flick 으로 판단한다.
-         * 두 손가락 사이 거리 변화율이 0.3 이상이면 Pinch 로 간주하고 무시한다.
-         */
-        detectTwoFingerFlick(session) {
-            const { points, secondFingerPoints, duration } = session;
-            // 각 손가락의 첫/끝 좌표
-            const f1Start = points[0];
-            const f1End = points[points.length - 1];
-            const f2Start = secondFingerPoints[0];
-            const f2End = secondFingerPoints[secondFingerPoints.length - 1];
-            const dx1 = f1End.x - f1Start.x;
-            const dy1 = f1End.y - f1Start.y;
-            const dx2 = f2End.x - f2Start.x;
-            const dy2 = f2End.y - f2Start.y;
-            const dist1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-            const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-            if (dist1 < 20 || dist2 < 20)
+        // ── 원형/C형 감지 ──────────────────────────────────────────
+        detectCurve(points, session) {
+            if (session.duration < 200 || session.duration > 2000)
                 return GestureType.UNKNOWN;
-            // 평균 속도 검사 (px/s)
-            const avgDist = (dist1 + dist2) / 2;
-            const durationSec = duration / 1000;
-            if (durationSec <= 0 || avgDist / durationSec < TWO_FINGER_MIN_SPEED) {
-                return GestureType.UNKNOWN;
+            // 중심점 계산
+            let cx = 0, cy = 0;
+            for (const p of points) {
+                cx += p.x;
+                cy += p.y;
             }
-            // 두 손가락 간 거리 변화율 → Pinch 여부 판별
-            const initialSpan = Math.sqrt((f2Start.x - f1Start.x) ** 2 + (f2Start.y - f1Start.y) ** 2);
-            const finalSpan = Math.sqrt((f2End.x - f1End.x) ** 2 + (f2End.y - f1End.y) ** 2);
-            const spanDelta = Math.abs(finalSpan - initialSpan);
-            const distanceRatio = avgDist > 0 ? spanDelta / avgDist : 1;
-            if (distanceRatio > TWO_FINGER_PINCH_RATIO)
-                return GestureType.UNKNOWN; // Pinch 무시
-            if (distanceRatio > TWO_FINGER_FLICK_RATIO)
-                return GestureType.UNKNOWN; // 애매한 중간 영역 무시
-            // 두 이동 벡터 사이의 각도 차이
-            const angle1 = Math.atan2(dy1, dx1) * (180 / Math.PI);
-            const angle2 = Math.atan2(dy2, dx2) * (180 / Math.PI);
-            let angleDiff = Math.abs(angle1 - angle2);
-            if (angleDiff > 180)
-                angleDiff = 360 - angleDiff;
-            if (angleDiff >= TWO_FINGER_ANGLE_THRESHOLD)
+            cx /= points.length;
+            cy /= points.length;
+            // 각 포인트의 중심 대비 각도 계산
+            const angles = [];
+            let totalRadius = 0;
+            for (const p of points) {
+                const dx = p.x - cx;
+                const dy = p.y - cy;
+                angles.push(Math.atan2(dy, dx));
+                totalRadius += Math.sqrt(dx * dx + dy * dy);
+            }
+            const avgRadius = totalRadius / points.length;
+            // 반지름이 너무 작으면 무시
+            if (avgRadius < 30)
                 return GestureType.UNKNOWN;
-            // 평균 Y 방향으로 위/아래 판별
-            const avgDy = (dy1 + dy2) / 2;
-            return avgDy < 0 ? GestureType.TWO_FINGER_FLICK_UP : GestureType.TWO_FINGER_FLICK_DOWN;
+            // 반지름 편차 체크 (원형인지)
+            let radiusVariance = 0;
+            for (const p of points) {
+                const r = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
+                radiusVariance += ((r - avgRadius) / avgRadius) ** 2;
+            }
+            radiusVariance /= points.length;
+            if (radiusVariance > 0.15)
+                return GestureType.UNKNOWN; // 원에서 너무 벗어남
+            // 각도 커버리지 계산 (총 회전각)
+            let totalAngle = 0;
+            for (let i = 1; i < angles.length; i++) {
+                let diff = angles[i] - angles[i - 1];
+                // -π ~ π 범위로 정규화
+                if (diff > Math.PI)
+                    diff -= 2 * Math.PI;
+                if (diff < -Math.PI)
+                    diff += 2 * Math.PI;
+                totalAngle += diff;
+            }
+            const coverage = Math.abs(totalAngle);
+            const coverageDeg = coverage * (180 / Math.PI);
+            // 시작점과 끝점 거리
+            const startEnd = Math.sqrt((points[0].x - points[points.length - 1].x) ** 2 +
+                (points[0].y - points[points.length - 1].y) ** 2);
+            const closedRatio = startEnd / avgRadius;
+            // 원: 300°+ 커버리지 + 시작/끝점 근접 (반지름의 60% 이내)
+            if (coverageDeg >= 300 && closedRatio < 0.6) {
+                return GestureType.CIRCLE;
+            }
+            // C형: 150~300° 커버리지 + 열린 형태 (시작/끝점 떨어져있음)
+            if (coverageDeg >= 150 && coverageDeg < 300 && closedRatio >= 0.4) {
+                return GestureType.C_SHAPE;
+            }
+            return GestureType.UNKNOWN;
         }
+        // ── 대각선 위 스와이프 ──────────────────────────────────────
+        classifyDiagonalSwipe(segment, session) {
+            if (segment.distance < this.config.swipeMinDistance)
+                return GestureType.UNKNOWN;
+            if (session.duration > 800)
+                return GestureType.UNKNOWN;
+            // 대각선 위: dy < 0 (위로), 각도 -20° ~ -70° 범위
+            const angle = segment.angle; // atan2 기반: 위 = 음수
+            if (segment.dy < -40 && angle >= -70 && angle <= -20) {
+                return GestureType.DIAGONAL_SWIPE_UP;
+            }
+            return GestureType.UNKNOWN;
+        }
+        // ── V/L 형태 감지 (기존 유지) ──────────────────────────────
+        classifyShape(segments, session) {
+            const [seg1, seg2] = segments;
+            const angleDiff = Math.abs(seg2.angle - seg1.angle);
+            const normalizedAngle = angleDiff > 180 ? 360 - angleDiff : angleDiff;
+            // V Shape
+            if (seg1.distance >= this.config.vShapeMinSegment &&
+                seg2.distance >= this.config.vShapeMinSegment &&
+                normalizedAngle >= this.config.vShapeAngleMin &&
+                normalizedAngle <= this.config.vShapeAngleMax &&
+                session.duration >= 200 &&
+                session.duration <= 800) {
+                return GestureType.V_SHAPE;
+            }
+            // L Shape
+            if (seg1.distance >= 80 &&
+                seg2.distance >= 60 &&
+                normalizedAngle >= this.config.lShapeAngleMin &&
+                normalizedAngle <= this.config.lShapeAngleMax &&
+                session.duration >= 300 &&
+                session.duration <= 1000) {
+                return GestureType.L_SHAPE;
+            }
+            return GestureType.UNKNOWN;
+        }
+        // ── 유틸리티 ────────────────────────────────────────────────
         extractSegments(points) {
             const simplified = this.douglasPeucker(points, 15);
             const segments = [];
@@ -251,42 +294,6 @@
                 }
             }
             return segments;
-        }
-        classifySwipe(segment, session) {
-            if (segment.distance < this.config.swipeMinDistance)
-                return GestureType.UNKNOWN;
-            const verticalDeviation = Math.abs(segment.dy);
-            if (verticalDeviation > 50)
-                return GestureType.UNKNOWN;
-            if (segment.dx > 0 && session.duration < 1000)
-                return GestureType.SWIPE_BACK;
-            if (segment.dx < 0 && session.duration < 1000)
-                return GestureType.SWIPE_FORWARD;
-            return GestureType.UNKNOWN;
-        }
-        classifyShape(segments, session) {
-            const [seg1, seg2] = segments;
-            const angleDiff = Math.abs(seg2.angle - seg1.angle);
-            const normalizedAngle = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-            // V Shape: two segments going down then up (or vice versa)
-            if (seg1.distance >= this.config.vShapeMinSegment &&
-                seg2.distance >= this.config.vShapeMinSegment &&
-                normalizedAngle >= this.config.vShapeAngleMin &&
-                normalizedAngle <= this.config.vShapeAngleMax &&
-                session.duration >= 200 &&
-                session.duration <= 800) {
-                return GestureType.V_SHAPE;
-            }
-            // L Shape: vertical then horizontal
-            if (seg1.distance >= 80 &&
-                seg2.distance >= 60 &&
-                normalizedAngle >= this.config.lShapeAngleMin &&
-                normalizedAngle <= this.config.lShapeAngleMax &&
-                session.duration >= 300 &&
-                session.duration <= 1000) {
-                return GestureType.L_SHAPE;
-            }
-            return GestureType.UNKNOWN;
         }
         douglasPeucker(points, epsilon) {
             if (points.length <= 2)
@@ -319,180 +326,314 @@
         }
     }
 
-    class TapDetector {
-        constructor(config) {
-            this.tapCount = 0;
-            this.lastTapTime = 0;
-            this.lastTapX = 0;
-            this.lastTapY = 0;
-            this.touchStartTime = 0;
-            this.touchStartX = 0;
-            this.touchStartY = 0;
-            this.tapTimer = null;
-            this.pendingResolve = null;
-            this.config = config;
-        }
-        onTouchStart(e) {
-            this.touchStartTime = performance.now();
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-        }
-        onTouchEnd(e) {
-            const endTime = performance.now();
-            const duration = endTime - this.touchStartTime;
-            const endX = e.changedTouches[0].clientX;
-            const endY = e.changedTouches[0].clientY;
-            const moveDistance = Math.sqrt((endX - this.touchStartX) ** 2 + (endY - this.touchStartY) ** 2);
-            // Long Press
-            if (duration >= this.config.longPressMinDuration && moveDistance < 10) {
-                this.resetTaps();
-                return GestureType.LONG_PRESS;
-            }
-            // Not a tap if moved too much or held too long
-            if (moveDistance > 20 || duration > 300) {
-                this.resetTaps();
-                return null;
-            }
-            // Check proximity to last tap
-            const tapDistance = Math.sqrt((endX - this.lastTapX) ** 2 + (endY - this.lastTapY) ** 2);
-            const timeSinceLastTap = endTime - this.lastTapTime;
-            if (timeSinceLastTap < this.config.doubleTapMaxInterval && tapDistance < 30) {
-                this.tapCount++;
-            }
-            else {
-                this.tapCount = 1;
-            }
-            this.lastTapTime = endTime;
-            this.lastTapX = endX;
-            this.lastTapY = endY;
-            // Clear pending timer
-            if (this.tapTimer) {
-                clearTimeout(this.tapTimer);
-                this.tapTimer = null;
-            }
-            // Wait to see if more taps come
-            // For now, return double tap immediately when 2 taps detected
-            if (this.tapCount >= 2) {
-                const result = GestureType.DOUBLE_TAP;
-                this.resetTaps();
-                return result;
-            }
-            return null;
-        }
-        resetTaps() {
-            this.tapCount = 0;
-            if (this.tapTimer) {
-                clearTimeout(this.tapTimer);
-                this.tapTimer = null;
-            }
-        }
-    }
-
+    /**
+     * 제스처 인식 시 손가락 궤적을 따라 그려지는 트레일 애니메이션
+     * Apple 스타일: 70% 투명도, 0.3~0.5초 표시 후 페이드아웃
+     */
     class FeedbackOverlay {
         constructor() {
-            this.overlay = null;
+            this.canvas = null;
+            this.styleEl = null;
+            this.animId = null;
         }
-        show(gesture) {
+        show(gesture, points) {
             this.hide();
-            const label = this.getLabel(gesture);
-            const icon = this.getIcon(gesture);
-            this.overlay = document.createElement('div');
-            this.overlay.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      z-index: 2147483646;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+            if (!points || points.length < 3)
+                return;
+            // Canvas 생성
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            this.canvas.style.cssText = `
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 2147483645;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.15s ease;
     `;
-            this.overlay.textContent = `${icon} ${label}`;
-            document.body.appendChild(this.overlay);
+            document.documentElement.appendChild(this.canvas);
+            // 페이드인
             requestAnimationFrame(() => {
-                if (this.overlay)
-                    this.overlay.style.opacity = '1';
+                if (this.canvas)
+                    this.canvas.style.opacity = '1';
             });
-            setTimeout(() => this.hide(), 300);
+            const ctx = this.canvas.getContext('2d');
+            if (!ctx)
+                return;
+            const color = this.getColor(gesture);
+            // 궤적 애니메이션 (포인트를 순차적으로 그림)
+            const totalDuration = 350; // ms
+            const startTime = performance.now();
+            const totalPoints = points.length;
+            const animate = (now) => {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / totalDuration, 1);
+                const drawCount = Math.floor(progress * totalPoints);
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                if (drawCount < 2) {
+                    this.animId = requestAnimationFrame(animate);
+                    return;
+                }
+                // 그라데이션 트레일
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                for (let i = 1; i < drawCount; i++) {
+                    const t = i / totalPoints;
+                    ctx.beginPath();
+                    ctx.moveTo(points[i - 1].x, points[i - 1].y);
+                    ctx.lineTo(points[i].x, points[i].y);
+                    // 뒤쪽은 얇고 투명, 앞쪽은 굵고 선명
+                    const alpha = 0.3 + t * 0.4;
+                    const width = 2 + t * 3;
+                    ctx.strokeStyle = color.replace('ALPHA', String(alpha));
+                    ctx.lineWidth = width;
+                    ctx.stroke();
+                }
+                if (progress < 1) {
+                    this.animId = requestAnimationFrame(animate);
+                }
+                else {
+                    // 완료 후 페이드아웃
+                    setTimeout(() => {
+                        if (this.canvas) {
+                            this.canvas.style.opacity = '0';
+                            setTimeout(() => this.hide(), 200);
+                        }
+                    }, 150);
+                }
+            };
+            this.animId = requestAnimationFrame(animate);
         }
         hide() {
-            this.overlay?.remove();
-            this.overlay = null;
+            if (this.animId) {
+                cancelAnimationFrame(this.animId);
+                this.animId = null;
+            }
+            this.canvas?.remove();
+            this.canvas = null;
         }
-        getLabel(gesture) {
-            const labels = {
-                [GestureType.SWIPE_BACK]: 'Back',
-                [GestureType.SWIPE_FORWARD]: 'Forward',
-                [GestureType.V_SHAPE]: 'Close Tab',
-                [GestureType.L_SHAPE]: 'Restore Tab',
-                [GestureType.DOUBLE_TAP]: 'Search',
-                [GestureType.LONG_PRESS]: 'Scroll',
-                [GestureType.TWO_FINGER_FLICK_UP]: 'Refresh',
-                [GestureType.TWO_FINGER_FLICK_DOWN]: 'Fullscreen',
+        getColor(gesture) {
+            const colors = {
+                [GestureType.V_SHAPE]: 'rgba(255, 69, 58, ALPHA)', // 레드
+                [GestureType.L_SHAPE]: 'rgba(48, 209, 88, ALPHA)', // 그린
+                [GestureType.CIRCLE]: 'rgba(10, 132, 255, ALPHA)', // 블루
+                [GestureType.C_SHAPE]: 'rgba(255, 159, 10, ALPHA)', // 오렌지
+                [GestureType.DIAGONAL_SWIPE_UP]: 'rgba(175, 82, 222, ALPHA)', // 퍼플
             };
-            return labels[gesture] ?? '';
-        }
-        getIcon(gesture) {
-            const icons = {
-                [GestureType.SWIPE_BACK]: '\u2190',
-                [GestureType.SWIPE_FORWARD]: '\u2192',
-                [GestureType.V_SHAPE]: '\u2715',
-                [GestureType.L_SHAPE]: '\u21B6',
-                [GestureType.DOUBLE_TAP]: '\uD83D\uDD0D',
-                [GestureType.LONG_PRESS]: '\u2195',
-                [GestureType.TWO_FINGER_FLICK_UP]: '\u21BB',
-                [GestureType.TWO_FINGER_FLICK_DOWN]: '\u2922',
-            };
-            return icons[gesture] ?? '';
+            return colors[gesture] ?? 'rgba(255, 255, 255, ALPHA)';
         }
     }
 
-    /** GestureType → gesturesEnabled キー のマッピング */
+    /**
+     * 페이지 내 텍스트 검색 오버레이 (Circle 제스처로 호출)
+     */
+    class SearchOverlay {
+        constructor() {
+            this.overlay = null;
+            this.input = null;
+            this.countEl = null;
+            this.styleEl = null;
+            this.matches = [];
+            this.currentIdx = -1;
+        }
+        show() {
+            if (this.overlay) {
+                this.focus();
+                return;
+            }
+            this.styleEl = document.createElement('style');
+            this.styleEl.setAttribute('data-swift-search', '1');
+            this.styleEl.textContent = `
+      .swift-search-bar {
+        position: fixed; top: 0; left: 0; right: 0;
+        z-index: 2147483645;
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px;
+        background: rgba(28,28,30,0.92);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        backdrop-filter: saturate(180%) blur(20px);
+        border-bottom: 0.5px solid rgba(255,255,255,0.1);
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        transform: translateY(-100%);
+        transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+      }
+      .swift-search-bar.visible { transform: translateY(0); }
+      .swift-search-bar input {
+        flex: 1; border: none; outline: none;
+        background: rgba(255,255,255,0.1);
+        color: #fff; font-size: 15px;
+        padding: 8px 12px; border-radius: 8px;
+        -webkit-appearance: none;
+      }
+      .swift-search-bar input::placeholder { color: rgba(255,255,255,0.4); }
+      .swift-search-count { color: rgba(255,255,255,0.5); font-size: 12px; min-width: 40px; text-align: center; }
+      .swift-search-btn {
+        background: none; border: none; color: rgba(255,255,255,0.7);
+        font-size: 18px; padding: 4px 8px; cursor: pointer;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      mark[data-swift-hl] { background: rgba(255, 214, 10, 0.4); color: inherit; border-radius: 2px; }
+      mark[data-swift-hl].current { background: rgba(255, 149, 0, 0.6); }
+    `;
+            document.head.appendChild(this.styleEl);
+            this.overlay = document.createElement('div');
+            this.overlay.className = 'swift-search-bar';
+            this.input = document.createElement('input');
+            this.input.type = 'text';
+            this.input.placeholder = 'Search on page...';
+            this.input.autocomplete = 'off';
+            this.input.autocapitalize = 'off';
+            this.countEl = document.createElement('span');
+            this.countEl.className = 'swift-search-count';
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'swift-search-btn';
+            prevBtn.textContent = '▲';
+            prevBtn.addEventListener('click', () => this.navigate(-1));
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'swift-search-btn';
+            nextBtn.textContent = '▼';
+            nextBtn.addEventListener('click', () => this.navigate(1));
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'swift-search-btn';
+            closeBtn.textContent = '✕';
+            closeBtn.addEventListener('click', () => this.hide());
+            this.overlay.append(this.input, this.countEl, prevBtn, nextBtn, closeBtn);
+            document.documentElement.appendChild(this.overlay);
+            this.input.addEventListener('input', () => this.search(this.input.value));
+            requestAnimationFrame(() => {
+                this.overlay?.classList.add('visible');
+                this.input?.focus();
+            });
+        }
+        hide() {
+            this.clearHighlights();
+            this.overlay?.classList.remove('visible');
+            setTimeout(() => {
+                this.overlay?.remove();
+                this.styleEl?.remove();
+                this.overlay = null;
+                this.styleEl = null;
+                this.input = null;
+                this.countEl = null;
+            }, 250);
+            this.matches = [];
+            this.currentIdx = -1;
+        }
+        focus() {
+            this.input?.focus();
+            this.input?.select();
+        }
+        search(query) {
+            this.clearHighlights();
+            this.matches = [];
+            this.currentIdx = -1;
+            if (!query || query.length < 1) {
+                this.updateCount();
+                return;
+            }
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            const textNodes = [];
+            let node;
+            while ((node = walker.nextNode())) {
+                if (node.textContent?.toLowerCase().includes(query.toLowerCase())) {
+                    textNodes.push(node);
+                }
+            }
+            for (const textNode of textNodes) {
+                const text = textNode.textContent ?? '';
+                const lowerText = text.toLowerCase();
+                const lowerQuery = query.toLowerCase();
+                let idx = 0;
+                while ((idx = lowerText.indexOf(lowerQuery, idx)) !== -1) {
+                    const range = document.createRange();
+                    range.setStart(textNode, idx);
+                    range.setEnd(textNode, idx + query.length);
+                    this.matches.push(range);
+                    idx += query.length;
+                    break; // 같은 텍스트 노드에서 하나만 (분할 방지)
+                }
+            }
+            // 하이라이트 적용
+            for (const range of this.matches) {
+                try {
+                    const mark = document.createElement('mark');
+                    mark.setAttribute('data-swift-hl', '');
+                    range.surroundContents(mark);
+                }
+                catch { }
+            }
+            if (this.matches.length > 0) {
+                this.currentIdx = 0;
+                this.scrollToCurrent();
+            }
+            this.updateCount();
+        }
+        navigate(dir) {
+            if (this.matches.length === 0)
+                return;
+            const marks = document.querySelectorAll('mark[data-swift-hl]');
+            marks.forEach(m => m.classList.remove('current'));
+            this.currentIdx = (this.currentIdx + dir + this.matches.length) % this.matches.length;
+            this.scrollToCurrent();
+            this.updateCount();
+        }
+        scrollToCurrent() {
+            const marks = document.querySelectorAll('mark[data-swift-hl]');
+            if (marks[this.currentIdx]) {
+                marks[this.currentIdx].classList.add('current');
+                marks[this.currentIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        updateCount() {
+            if (!this.countEl)
+                return;
+            if (this.matches.length === 0) {
+                this.countEl.textContent = '';
+            }
+            else {
+                this.countEl.textContent = `${this.currentIdx + 1}/${this.matches.length}`;
+            }
+        }
+        clearHighlights() {
+            document.querySelectorAll('mark[data-swift-hl]').forEach(mark => {
+                const parent = mark.parentNode;
+                if (parent) {
+                    parent.replaceChild(document.createTextNode(mark.textContent ?? ''), mark);
+                    parent.normalize();
+                }
+            });
+        }
+    }
+
     const GESTURE_CONFIG_KEY = {
-        [GestureType.SWIPE_BACK]: 'swipeBack',
-        [GestureType.SWIPE_FORWARD]: 'swipeForward',
         [GestureType.V_SHAPE]: 'vShape',
         [GestureType.L_SHAPE]: 'lShape',
-        [GestureType.DOUBLE_TAP]: 'doubleTap',
-        [GestureType.LONG_PRESS]: 'longPress',
-        [GestureType.TWO_FINGER_FLICK_UP]: 'twoFingerFlick',
-        [GestureType.TWO_FINGER_FLICK_DOWN]: 'twoFingerFlick',
+        [GestureType.CIRCLE]: 'circle',
+        [GestureType.C_SHAPE]: 'cShape',
+        [GestureType.DIAGONAL_SWIPE_UP]: 'diagonalSwipeUp',
     };
-    /** 배터리 최적화: idle 판정까지의 무터치 대기 시간 (ms) */
     const IDLE_TIMEOUT_MS = 30000;
-    /** SUPPRESSED → IDLE 복귀를 위해 scrollend 후 대기하는 시간 (ms) */
-    const SUPPRESSED_RECOVERY_DELAY_MS = 150;
     class GestureEngine {
         constructor(config, intentDetector) {
             this.state = 'IDLE';
-            // 타이머 핸들
             this.cooldownTimer = null;
             this.idleTimer = null;
-            this.suppressedRecoveryTimer = null;
-            // AbortController: 활성/idle 모드 각각 관리
             this.activeAbort = null;
             this.visibilityAbort = null;
-            /** idle 모드에서 등록되는 touchstart 단일 리스너 — 활성 모드 복귀용 */
-            this.onIdleTouchStart = () => {
-                this.enterActiveMode();
-            };
+            // 스크롤 vs 제스처 판별용
+            this.moveCount = 0;
+            this.startX = 0;
+            this.startY = 0;
+            this.isGestureLocked = false; // true면 스크롤 차단, 제스처 캡처 중
+            this.onIdleTouchStart = () => { this.enterActiveMode(); };
             this.config = config;
             this.intentDetector = intentDetector;
             this.touchTracker = new TouchTracker();
             this.shapeDetector = new ShapeDetector(config);
-            this.tapDetector = new TapDetector(config);
             this.feedback = new FeedbackOverlay();
+            this.searchOverlay = new SearchOverlay();
         }
-        // ── 공개 수명주기 ────────────────────────────────────────────────────────
         start() {
             this.registerVisibilityListener();
             this.enterActiveMode();
@@ -505,68 +646,49 @@
             this.clearAllTimers();
             document.removeEventListener('touchstart', this.onIdleTouchStart);
         }
-        pause() {
-            this.state = 'SUPPRESSED';
-        }
-        resume() {
-            if (this.state === 'SUPPRESSED') {
-                this.state = 'IDLE';
-            }
-        }
-        // ── visibilitychange 리스너 ───────────────────────────────────────────────
+        pause() { this.state = 'IDLE'; }
+        resume() { this.state = 'IDLE'; }
         registerVisibilityListener() {
             this.visibilityAbort = new AbortController();
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) {
-                    // 탭이 백그라운드로 전환 → 모든 입력 리스너 해제로 배터리 절약
                     this.activeAbort?.abort();
                     this.activeAbort = null;
                     this.clearIdleTimer();
                     document.removeEventListener('touchstart', this.onIdleTouchStart);
                 }
                 else {
-                    // 탭이 다시 보이면 활성 모드로 복귀
                     this.enterActiveMode();
                 }
             }, { signal: this.visibilityAbort.signal });
         }
-        // ── 활성/idle 모드 전환 ──────────────────────────────────────────────────
-        /**
-         * 완전 활성 모드: 4개 touch 이벤트 리스너를 모두 등록하고 idle 타이머를 시작.
-         */
         enterActiveMode() {
             if (this.activeAbort)
-                return; // 이미 활성 상태
+                return;
             document.removeEventListener('touchstart', this.onIdleTouchStart);
             this.activeAbort = new AbortController();
             const signal = this.activeAbort.signal;
+            // touchstart: passive로 시작 (스크롤 차단 안 함)
             document.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: true, signal });
-            document.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: true, signal });
+            // touchmove: passive: FALSE → 제스처 감지 시 preventDefault 가능
+            document.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
             document.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
+            // touchcancel도 제스처 분석 시도
             document.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: true, signal });
             this.state = 'IDLE';
             this.resetIdleTimer();
         }
-        /**
-         * idle 모드: 3개 이동성 리스너를 해제하고 touchstart 단일 리스너만 유지.
-         * GC 및 배터리 절약을 위해 touch 이벤트 처리를 최소화한다.
-         */
         enterIdleMode() {
             if (!this.activeAbort)
-                return; // 이미 idle 또는 stopped
+                return;
             this.activeAbort.abort();
             this.activeAbort = null;
             this.clearIdleTimer();
-            // 다음 터치가 오면 즉시 활성 모드로 복귀
             document.addEventListener('touchstart', this.onIdleTouchStart, { passive: true });
         }
-        // ── Idle 타이머 ──────────────────────────────────────────────────────────
         resetIdleTimer() {
             this.clearIdleTimer();
-            this.idleTimer = window.setTimeout(() => {
-                this.idleTimer = null;
-                this.enterIdleMode();
-            }, IDLE_TIMEOUT_MS);
+            this.idleTimer = window.setTimeout(() => { this.idleTimer = null; this.enterIdleMode(); }, IDLE_TIMEOUT_MS);
         }
         clearIdleTimer() {
             if (this.idleTimer !== null) {
@@ -574,146 +696,110 @@
                 this.idleTimer = null;
             }
         }
-        // ── Touch 이벤트 핸들러 ──────────────────────────────────────────────────
+        // ── Touch Handlers ──────────────────────────────────────────
         onTouchStart(e) {
-            // 활성 모드이므로 idle 타이머 재시작
             this.resetIdleTimer();
-            if (this.state === 'COOLDOWN' || this.state === 'SUPPRESSED')
+            if (this.state === 'COOLDOWN')
                 return;
-            if (this.intentDetector.isScrolling() || this.intentDetector.isInputFocused()) {
-                this.state = 'SUPPRESSED';
-                this.scheduleSuppressedRecovery();
+            if (this.intentDetector.isInputFocused())
                 return;
-            }
+            if (e.touches.length > 1)
+                return; // 멀티터치 무시
             this.touchTracker.onTouchStart(e);
-            this.tapDetector.onTouchStart(e);
             this.state = 'DETECTING';
+            this.moveCount = 0;
+            this.isGestureLocked = false;
+            this.startX = e.touches[0].clientX;
+            this.startY = e.touches[0].clientY;
         }
         onTouchMove(e) {
-            if (this.state !== 'DETECTING')
+            if (this.state !== 'DETECTING' && this.state !== 'GESTURE_LOCKED')
                 return;
             this.touchTracker.onTouchMove(e);
+            this.moveCount++;
+            const dx = e.touches[0].clientX - this.startX;
+            const dy = e.touches[0].clientY - this.startY;
+            // 3번째 touchmove 이후 스크롤 vs 제스처 판별
+            if (!this.isGestureLocked && this.moveCount >= 3) {
+                const absDx = Math.abs(dx);
+                const absDy = Math.abs(dy);
+                const totalDist = Math.sqrt(dx * dx + dy * dy);
+                // 순수 세로 스크롤이면 제스처 포기 (세로 이동이 가로의 3배 이상)
+                if (absDy > absDx * 3 && totalDist > 15) {
+                    this.state = 'IDLE';
+                    this.touchTracker.reset();
+                    return;
+                }
+                // 비스크롤 패턴이면 제스처 잠금 (스크롤 차단)
+                if (totalDist > 15) {
+                    this.isGestureLocked = true;
+                    this.state = 'GESTURE_LOCKED';
+                }
+            }
+            // 제스처 잠금 상태면 스크롤 차단
+            if (this.isGestureLocked) {
+                e.preventDefault();
+            }
         }
         onTouchEnd(e) {
-            // 터치가 끝날 때마다 idle 타이머 재시작
             this.resetIdleTimer();
-            if (this.state === 'COOLDOWN' || this.state === 'SUPPRESSED') {
-                // SUPPRESSED 상태에서 스크롤이 끝났으면 즉시 복귀 시도
-                if (this.state === 'SUPPRESSED' &&
-                    !this.intentDetector.isScrolling() &&
-                    !this.intentDetector.isInputFocused()) {
-                    this.state = 'IDLE';
-                    this.clearSuppressedRecoveryTimer();
-                }
+            if (this.state !== 'DETECTING' && this.state !== 'GESTURE_LOCKED')
                 return;
+            this.analyzeAndExecute(e);
+        }
+        onTouchCancel(e) {
+            this.resetIdleTimer();
+            // touchcancel도 포인트 분석 시도 (브라우저가 스크롤로 가져갔을 때)
+            if (this.state === 'DETECTING' || this.state === 'GESTURE_LOCKED') {
+                this.analyzeAndExecute(e);
             }
+            else {
+                this.touchTracker.reset();
+                this.state = 'IDLE';
+            }
+        }
+        analyzeAndExecute(e) {
             const session = this.touchTracker.onTouchEnd(e);
-            const tapResult = this.tapDetector.onTouchEnd(e);
-            if (session && session.points.length >= 3) {
+            this.state = 'IDLE';
+            this.isGestureLocked = false;
+            if (session && session.points.length >= 4) {
                 const gesture = this.shapeDetector.detect(session);
                 if (gesture !== GestureType.UNKNOWN) {
-                    this.executeGesture(gesture);
-                    return;
+                    this.executeGesture(gesture, session.points);
                 }
             }
-            if (tapResult) {
-                this.executeGesture(tapResult);
-            }
         }
-        onTouchCancel(_e) {
-            this.touchTracker.reset();
-            this.state = 'IDLE';
-            this.resetIdleTimer();
-        }
-        // ── SUPPRESSED 자동 복귀 (scrollend 후 150ms) ────────────────────────────
-        scheduleSuppressedRecovery() {
-            this.clearSuppressedRecoveryTimer();
-            const tryRecover = () => {
-                if (this.state !== 'SUPPRESSED')
-                    return;
-                if (this.intentDetector.isScrolling() || this.intentDetector.isInputFocused()) {
-                    // 아직 스크롤 중 — scrollend 이벤트를 한 번 더 기다림
-                    document.addEventListener('scrollend', tryRecover, { once: true, passive: true });
-                    return;
-                }
-                this.suppressedRecoveryTimer = window.setTimeout(() => {
-                    this.suppressedRecoveryTimer = null;
-                    if (this.state === 'SUPPRESSED') {
-                        this.state = 'IDLE';
-                    }
-                }, SUPPRESSED_RECOVERY_DELAY_MS);
-            };
-            // scrollend 이벤트가 발생하면 복귀 시도
-            document.addEventListener('scrollend', tryRecover, { once: true, passive: true });
-        }
-        clearSuppressedRecoveryTimer() {
-            if (this.suppressedRecoveryTimer !== null) {
-                clearTimeout(this.suppressedRecoveryTimer);
-                this.suppressedRecoveryTimer = null;
-            }
-        }
-        // ── 제스처 실행 ──────────────────────────────────────────────────────────
-        executeGesture(gesture) {
-            // gesturesEnabled 체크: config에서 해당 제스처가 비활성이면 무시
+        // ── 제스처 실행 ─────────────────────────────────────────────
+        executeGesture(gesture, points) {
             const configKey = GESTURE_CONFIG_KEY[gesture];
             if (configKey && this.config.gesturesEnabled[configKey] === false) {
                 this.state = 'IDLE';
                 return;
             }
             this.state = 'RECOGNIZED';
-            this.feedback.show(gesture);
-            const cooldownMs = this.getCooldown(gesture);
+            this.feedback.show(gesture, points);
             switch (gesture) {
-                case GestureType.SWIPE_BACK:
-                    browser.runtime.sendMessage({ action: 'navigate', direction: 'back' });
-                    break;
-                case GestureType.SWIPE_FORWARD:
-                    browser.runtime.sendMessage({ action: 'navigate', direction: 'forward' });
-                    break;
                 case GestureType.V_SHAPE:
                     browser.runtime.sendMessage({ action: 'closeTab' });
                     break;
                 case GestureType.L_SHAPE:
                     browser.runtime.sendMessage({ action: 'restoreTab' });
                     break;
-                case GestureType.DOUBLE_TAP:
-                    this.showSearchBar();
+                case GestureType.CIRCLE:
+                    this.searchOverlay.show();
                     break;
-                case GestureType.LONG_PRESS:
-                    this.scrollToEdge();
+                case GestureType.C_SHAPE:
+                    browser.runtime.sendMessage({ action: 'clearSiteData' });
                     break;
-                case GestureType.TWO_FINGER_FLICK_UP:
-                    location.reload();
-                    break;
-                case GestureType.TWO_FINGER_FLICK_DOWN:
-                    document.documentElement.requestFullscreen?.();
+                case GestureType.DIAGONAL_SWIPE_UP:
+                    browser.runtime.sendMessage({ action: 'newTab' });
                     break;
             }
-            this.enterCooldown(cooldownMs);
-        }
-        getCooldown(gesture) {
-            switch (gesture) {
-                case GestureType.SWIPE_BACK:
-                case GestureType.SWIPE_FORWARD:
-                    return this.config.cooldownSwipe;
-                case GestureType.V_SHAPE:
-                case GestureType.L_SHAPE:
-                    return this.config.cooldownShape;
-                case GestureType.DOUBLE_TAP:
-                    return this.config.cooldownTap;
-                case GestureType.TWO_FINGER_FLICK_UP:
-                case GestureType.TWO_FINGER_FLICK_DOWN:
-                    return this.config.cooldownTwoFinger;
-                default:
-                    return 300;
-            }
+            this.enterCooldown(500);
         }
         enterCooldown(ms) {
             this.state = 'COOLDOWN';
-            this.cooldownTimer = window.setTimeout(() => {
-                this.state = 'IDLE';
-                this.cooldownTimer = null;
-            }, ms);
+            this.cooldownTimer = window.setTimeout(() => { this.state = 'IDLE'; this.cooldownTimer = null; }, ms);
         }
         clearAllTimers() {
             if (this.cooldownTimer !== null) {
@@ -721,24 +807,14 @@
                 this.cooldownTimer = null;
             }
             this.clearIdleTimer();
-            this.clearSuppressedRecoveryTimer();
-        }
-        // ── 유틸리티 ─────────────────────────────────────────────────────────────
-        showSearchBar() {
-            // TODO: Implement in-page search bar
-        }
-        scrollToEdge() {
-            const scrollY = window.scrollY;
-            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            if (scrollY < maxScroll / 2) {
-                window.scrollTo({ top: maxScroll, behavior: 'smooth' });
-            }
-            else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
         }
     }
 
+    const SIZE_MAP = {
+        small: 42,
+        medium: 52,
+        large: 64,
+    };
     class FloatingButton {
         constructor(config) {
             this.host = null;
@@ -746,7 +822,7 @@
             this.styleEl = null;
             this.guideOverlay = null;
             this.isDragging = false;
-            this.isHidden = false;
+            this.dragReady = false; // long-press 완료 후 드래그 가능 상태
             this.dragStartX = 0;
             this.dragStartY = 0;
             this.dragStartTime = 0;
@@ -756,28 +832,46 @@
             this.tapTimer = null;
             this.longPressTimer = null;
             this.TAP_TIMEOUT = 350;
-            this.LONG_PRESS_DURATION = 500;
-            this.EDGE_THRESHOLD = 30;
-            this.BUTTON_SIZE = 48;
+            this.LONG_PRESS_DURATION = 5000;
             this.abortController = null;
             this.config = config;
             this.currentX = window.innerWidth - 60;
             this.currentY = window.innerHeight * 0.7;
         }
+        getButtonSize() {
+            return SIZE_MAP[this.config.buttonSize] ?? 48;
+        }
+        getOpacity() {
+            return (this.config.buttonOpacity ?? 90) / 100;
+        }
         async mount() {
             // Guard: already mounted
             if (this.host)
                 return;
+            // 기존 DOM 잔존물 제거 (이전 인스턴스 / 페이지 캐시 / 확장 리로드 대응)
+            const existing = document.getElementById('swift-gesture-host');
+            if (existing)
+                existing.remove();
+            const existingStyles = document.querySelectorAll('style[data-swift-fb]');
+            existingStyles.forEach(el => el.remove());
+            const size = this.getButtonSize();
+            const opacity = this.getOpacity();
             // Inject scoped styles via <style> tag (no Shadow DOM — iOS Safari compatible)
             this.styleEl = document.createElement('style');
+            this.styleEl.setAttribute('data-swift-fb', '1');
+            const rad = Math.round(size * 0.22);
             this.styleEl.textContent = `
       #swift-gesture-host { all: initial; display: block; position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none; }
       .swift-fb {
         position: fixed;
-        width: ${this.BUTTON_SIZE}px;
-        height: ${this.BUTTON_SIZE}px;
-        border-radius: ${this.BUTTON_SIZE / 2}px;
-        background: rgba(10, 132, 255, 0.9);
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: ${rad}px;
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.12), transparent 60%),
+                    linear-gradient(145deg, rgba(60,60,68,0.7), rgba(28,28,30,0.75));
+        -webkit-backdrop-filter: saturate(180%) blur(24px);
+        backdrop-filter: saturate(180%) blur(24px);
+        border: 0.5px solid rgba(255, 255, 255, 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -787,30 +881,43 @@
         transform: translate3d(0, 0, 0);
         touch-action: none;
         -webkit-backface-visibility: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-        transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+                    0 4px 14px rgba(0,0,0,0.18),
+                    inset 0 0.5px 0 rgba(255,255,255,0.08);
+        transition: opacity 0.2s ease;
         user-select: none;
         -webkit-user-select: none;
         pointer-events: auto;
+        opacity: ${opacity};
+      }
+      .swift-fb.ready {
+        transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s ease;
+      }
+      .swift-fb.drag-ready {
+        transform: scale(1.12);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15),
+                    0 8px 28px rgba(0,0,0,0.25),
+                    inset 0 0.5px 0 rgba(255,255,255,0.12);
+      }
+      .swift-fb.pressed {
+        transform: scale(0.88);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2),
+                    inset 0 1px 3px rgba(0,0,0,0.15);
+      }
+      .swift-fb.pressed svg circle {
+        transform: scale(0.85);
+        transform-origin: center;
+        transition: transform 0.1s ease;
       }
       .swift-fb.dragging {
         transition: none !important;
-        opacity: 0.7;
-        transform: scale(1.1);
-      }
-      .swift-fb.hidden-edge {
-        opacity: 0.15;
-        pointer-events: auto;
-      }
-      .swift-fb.hidden-full {
-        opacity: 0;
-        pointer-events: none;
+        opacity: 0.6;
       }
       .swift-fb svg {
-        width: 22px;
-        height: 22px;
-        fill: white;
+        width: 70%;
+        height: 70%;
         pointer-events: none;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
       }
       .swift-guide {
         position: fixed;
@@ -846,7 +953,7 @@
             this.host.id = 'swift-gesture-host';
             this.button = document.createElement('div');
             this.button.className = 'swift-fb';
-            this.button.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>`;
+            this.button.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="sr" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="rgba(255,255,255,0.95)"/><stop offset="100%" stop-color="rgba(255,255,255,0.4)"/></linearGradient><radialGradient id="sf" cx="40%" cy="38%" r="50%"><stop offset="0%" stop-color="rgba(255,255,255,0.12)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="12" cy="12" r="8" stroke="url(#sr)" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="url(#sf)"/></svg>`;
             this.host.appendChild(this.button);
             document.documentElement.appendChild(this.host);
             this.abortController = new AbortController();
@@ -863,7 +970,15 @@
                 }
             }
             catch { }
-            this.updatePosition(false);
+            // Clamp position to viewport
+            const btnSize = this.getButtonSize();
+            this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - btnSize));
+            this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - btnSize));
+            this.updatePosition();
+            // 위치 설정 후 다음 프레임에서 transition 활성화 (날아오는 효과 방지)
+            requestAnimationFrame(() => {
+                this.button?.classList.add('ready');
+            });
         }
         unmount() {
             this.abortController?.abort();
@@ -879,21 +994,54 @@
             if (this.rafId)
                 cancelAnimationFrame(this.rafId);
         }
+        /**
+         * 외부에서 config 변경 시 호출 — 크기/투명도 실시간 반영
+         */
+        updateConfig(config) {
+            const oldSize = this.getButtonSize();
+            this.config = config;
+            const newSize = this.getButtonSize();
+            const newOpacity = this.getOpacity();
+            if (!this.button || !this.styleEl)
+                return;
+            // 크기 변경 시 스타일 재생성
+            if (oldSize !== newSize) {
+                this.button.style.width = `${newSize}px`;
+                this.button.style.height = `${newSize}px`;
+                this.button.style.borderRadius = `${newSize / 2}px`;
+                const svg = this.button.querySelector('svg');
+                if (svg) {
+                    const svgSize = Math.round(newSize * 0.46);
+                    svg.style.width = `${svgSize}px`;
+                    svg.style.height = `${svgSize}px`;
+                }
+            }
+            // 투명도 변경
+            this.button.style.opacity = `${newOpacity}`;
+            // 위치 재조정 (화면 밖으로 나가지 않도록)
+            this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - newSize));
+            this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - newSize));
+            this.updatePosition();
+        }
         onTouchStart(e) {
             e.preventDefault();
             e.stopPropagation();
-            if (this.isHidden) {
-                this.showFromEdge();
-                return;
-            }
             this.isDragging = false;
+            this.dragReady = false;
             this.totalDragDistance = 0;
             this.dragStartX = e.touches[0].clientX;
             this.dragStartY = e.touches[0].clientY;
             this.dragStartTime = performance.now();
+            // 눌림 효과
+            this.button?.classList.add('pressed');
+            // 꾹 누르기 감지: LONG_PRESS_DURATION 후 드래그 가능 상태로 전환
             this.longPressTimer = window.setTimeout(() => {
-                if (!this.isDragging && this.totalDragDistance < 10) {
-                    this.executeTapAction('gestureGuide');
+                if (this.totalDragDistance < 25) {
+                    this.dragReady = true;
+                    this.button?.classList.add('drag-ready');
+                    // 햅틱 피드백 (지원 시)
+                    if (navigator.vibrate)
+                        navigator.vibrate(30);
                 }
             }, this.LONG_PRESS_DURATION);
         }
@@ -903,21 +1051,31 @@
             const dx = e.touches[0].clientX - this.dragStartX;
             const dy = e.touches[0].clientY - this.dragStartY;
             this.totalDragDistance = Math.sqrt(dx * dx + dy * dy);
-            if (this.totalDragDistance > 8) {
-                this.isDragging = true;
+            // 드래그 준비 전에 많이 움직이면 long press 취소
+            if (!this.dragReady && this.totalDragDistance > 25) {
                 if (this.longPressTimer) {
                     clearTimeout(this.longPressTimer);
                     this.longPressTimer = null;
                 }
+                return;
+            }
+            // 꾹 누른 후에만 드래그 시작
+            if (this.dragReady && this.totalDragDistance > 5) {
+                this.isDragging = true;
                 e.preventDefault();
-                this.currentX = e.touches[0].clientX - this.BUTTON_SIZE / 2;
-                this.currentY = e.touches[0].clientY - this.BUTTON_SIZE / 2;
+                const size = this.getButtonSize();
+                this.currentX = e.touches[0].clientX - size / 2;
+                this.currentY = e.touches[0].clientY - size / 2;
+                // Clamp to viewport
+                this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - size));
+                this.currentY = Math.max(60, Math.min(this.currentY, window.innerHeight - size - 60));
                 if (!this.button.classList.contains('dragging')) {
+                    this.button.classList.remove('drag-ready');
                     this.button.classList.add('dragging');
                 }
                 if (!this.rafId) {
                     this.rafId = requestAnimationFrame(() => {
-                        this.updatePosition(false);
+                        this.updatePosition();
                         this.rafId = null;
                     });
                 }
@@ -928,14 +1086,24 @@
                 clearTimeout(this.longPressTimer);
                 this.longPressTimer = null;
             }
+            this.button?.classList.remove('drag-ready');
+            this.button?.classList.remove('dragging');
+            this.button?.classList.remove('pressed');
             if (this.isDragging) {
                 this.isDragging = false;
-                this.button?.classList.remove('dragging');
-                this.snapToEdge();
+                this.dragReady = false;
+                // 자유 배치: 스냅 없이 현재 위치에 그대로 저장
+                this.updatePosition();
                 this.savePosition();
                 return;
             }
-            // Tap detection
+            // 꾹 눌러서 drag-ready 됐지만 안 움직인 경우 → 제스처 가이드
+            if (this.dragReady) {
+                this.dragReady = false;
+                this.executeTapAction('gestureGuide');
+                return;
+            }
+            // 탭 감지
             const duration = performance.now() - this.dragStartTime;
             if (duration < this.LONG_PRESS_DURATION && this.totalDragDistance < 10) {
                 this.tapCount++;
@@ -966,8 +1134,7 @@
                     browser.runtime.sendMessage({ action: 'navigate', direction: 'forward' });
                     break;
                 case 'tabOverview':
-                    // Show tab list in popup since native tab overview can't be triggered
-                    browser.runtime.sendMessage({ action: 'navigate', direction: 'back' }); // fallback
+                    browser.runtime.sendMessage({ action: 'navigate', direction: 'back' });
                     break;
                 case 'gestureGuide':
                     this.showGestureGuide();
@@ -975,60 +1142,13 @@
             }
             browser.runtime.sendMessage({ action: 'logGesture', gestureType: `button_${action}` });
         }
-        updatePosition(animate) {
+        updatePosition() {
             if (!this.button)
                 return;
-            const x = Math.max(0, Math.min(this.currentX, window.innerWidth - this.BUTTON_SIZE));
-            const y = Math.max(0, Math.min(this.currentY, window.innerHeight - this.BUTTON_SIZE));
-            if (!animate) {
-                this.button.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-            }
-            else {
-                this.button.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-            }
-        }
-        snapToEdge() {
-            const midX = window.innerWidth / 2;
-            const margin = 8;
-            if (this.currentX + this.BUTTON_SIZE / 2 < midX) {
-                this.currentX = margin;
-            }
-            else {
-                this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
-            }
-            // Check if dragged to extreme edge -> hide
-            if (this.currentX <= this.EDGE_THRESHOLD || this.currentX >= window.innerWidth - this.EDGE_THRESHOLD - this.BUTTON_SIZE) {
-                this.hideToEdge();
-                return;
-            }
-            // Clamp Y
-            this.currentY = Math.max(60, Math.min(this.currentY, window.innerHeight - this.BUTTON_SIZE - 60));
-            this.updatePosition(true);
-        }
-        hideToEdge() {
-            this.isHidden = true;
-            this.button?.classList.add('hidden-edge');
-            // Snap to the nearest edge
-            const margin = -this.BUTTON_SIZE / 2;
-            if (this.currentX < window.innerWidth / 2) {
-                this.currentX = margin;
-            }
-            else {
-                this.currentX = window.innerWidth - this.BUTTON_SIZE / 2;
-            }
-            this.updatePosition(true);
-        }
-        showFromEdge() {
-            this.isHidden = false;
-            this.button?.classList.remove('hidden-edge');
-            const margin = 8;
-            if (this.currentX < window.innerWidth / 2) {
-                this.currentX = margin;
-            }
-            else {
-                this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
-            }
-            this.updatePosition(true);
+            const size = this.getButtonSize();
+            const x = Math.max(0, Math.min(this.currentX, window.innerWidth - size));
+            const y = Math.max(0, Math.min(this.currentY, window.innerHeight - size));
+            this.button.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         }
         savePosition() {
             try {
@@ -1051,45 +1171,38 @@
             this.guideOverlay.innerHTML = `
       <h2>Swift Gesture Guide</h2>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u2190\u2192</div>
+        <div class="swift-guide-icon" style="color:#FF453A">V</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">Swipe Left/Right</div>
-          <div class="swift-guide-desc">Navigate back / forward</div>
+          <div class="swift-guide-label">V 모양</div>
+          <div class="swift-guide-desc">현재 탭 닫기</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">V</div>
+        <div class="swift-guide-icon" style="color:#30D158">L</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">V Shape</div>
-          <div class="swift-guide-desc">Close current tab</div>
+          <div class="swift-guide-label">L 모양</div>
+          <div class="swift-guide-desc">닫은 탭 복구</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">L</div>
+        <div class="swift-guide-icon" style="color:#0A84FF">○</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">L Shape</div>
-          <div class="swift-guide-desc">Restore closed tab</div>
+          <div class="swift-guide-label">원 그리기</div>
+          <div class="swift-guide-desc">페이지 내 텍스트 검색</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u00D7\u00D72</div>
+        <div class="swift-guide-icon" style="color:#FF9F0A">C</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">Double Tap</div>
-          <div class="swift-guide-desc">Page search</div>
+          <div class="swift-guide-label">C 모양</div>
+          <div class="swift-guide-desc">쿠키/캐시 삭제 및 새로고침</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u23F3</div>
+        <div class="swift-guide-icon" style="color:#AF52DE">↗</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">Long Press</div>
-          <div class="swift-guide-desc">Scroll to top / bottom</div>
-        </div>
-      </div>
-      <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u2191\u2191</div>
-        <div class="swift-guide-text">
-          <div class="swift-guide-label">Two Finger Flick</div>
-          <div class="swift-guide-desc">Up: Refresh / Down: Fullscreen</div>
+          <div class="swift-guide-label">대각선 위로</div>
+          <div class="swift-guide-desc">새 빈 탭 열기</div>
         </div>
       </div>
     `;
@@ -1104,19 +1217,9 @@
 
     class IntentDetector {
         constructor() {
-            this._isScrolling = false;
             this._isInputFocused = false;
-            this.scrollTimer = null;
             this.abortController = new AbortController();
             const signal = this.abortController.signal;
-            document.addEventListener('scroll', () => {
-                this._isScrolling = true;
-                if (this.scrollTimer)
-                    clearTimeout(this.scrollTimer);
-                this.scrollTimer = window.setTimeout(() => {
-                    this._isScrolling = false;
-                }, 150);
-            }, { passive: true, signal });
             document.addEventListener('focusin', (e) => {
                 const target = e.target;
                 this._isInputFocused = this.isEditableElement(target);
@@ -1125,19 +1228,18 @@
                 this._isInputFocused = false;
             }, { signal });
         }
+        // 스크롤 중에도 제스처 허용 — 스크롤로 차단하면 일반 웹에서 제스처 불가
         isScrolling() {
-            return this._isScrolling;
+            return false;
         }
         isInputFocused() {
             return this._isInputFocused;
         }
         isIdle() {
-            return !this._isScrolling && !this._isInputFocused;
+            return !this._isInputFocused;
         }
         dispose() {
             this.abortController.abort();
-            if (this.scrollTimer)
-                clearTimeout(this.scrollTimer);
         }
         isEditableElement(el) {
             const tag = el.tagName.toLowerCase();
@@ -1245,14 +1347,15 @@
         cooldownTwoFinger: 600,
         floatingButtonEnabled: true,
         gesturesEnabled: {
-            swipeBack: true,
-            swipeForward: true,
             vShape: true,
             lShape: true,
-            doubleTap: true,
-            longPress: true,
-            twoFingerFlick: true,
+            circle: true,
+            cShape: true,
+            diagonalSwipeUp: true,
         },
+        sensitivity: 50,
+        buttonSize: 'medium',
+        buttonOpacity: 90,
     };
     class ConfigBridge {
         constructor() {
@@ -1260,18 +1363,44 @@
             this.subscriptionActive = false;
             this.configChangeCallbacks = [];
         }
+        /**
+         * Storage에서 직접 읽기 (background sendNativeMessage 우회)
+         * 가장 신뢰성 높은 경로: content script → browser.storage.local → 직접 읽기
+         */
         async loadConfig() {
             try {
-                const result = await browser.runtime.sendMessage({ action: 'getConfig' });
-                this.config = { ...DEFAULT_CONFIG, ...result };
-            }
-            catch {
+                // 1차: storage에서 gestureConfig 직접 읽기
                 const stored = await browser.storage.local.get('gestureConfig');
-                this.config = stored.gestureConfig
-                    ? { ...DEFAULT_CONFIG, ...stored.gestureConfig }
-                    : { ...DEFAULT_CONFIG };
+                if (stored?.gestureConfig) {
+                    this.config = this.applySensitivity({ ...DEFAULT_CONFIG, ...stored.gestureConfig });
+                    return this.config;
+                }
             }
+            catch { }
+            try {
+                // 2차: background에 요청 (fallback)
+                const result = await browser.runtime.sendMessage({ action: 'getConfig' });
+                if (result && Object.keys(result).length > 0) {
+                    this.config = this.applySensitivity({ ...DEFAULT_CONFIG, ...result });
+                    return this.config;
+                }
+            }
+            catch { }
+            // 3차: defaults
+            this.config = { ...DEFAULT_CONFIG };
             return this.config;
+        }
+        /**
+         * sensitivity (20-100) → 실제 제스처 감지 임계값 매핑
+         */
+        applySensitivity(config) {
+            const s = (config.sensitivity ?? 50) / 100;
+            const factor = 1.6 - s * 1.2;
+            config.swipeMinDistance = Math.round(DEFAULT_CONFIG.swipeMinDistance * factor);
+            config.vShapeMinSegment = Math.round(DEFAULT_CONFIG.vShapeMinSegment * factor);
+            config.doubleTapMaxInterval = Math.round(DEFAULT_CONFIG.doubleTapMaxInterval * (2 - factor));
+            config.longPressMinDuration = Math.round(DEFAULT_CONFIG.longPressMinDuration * factor);
+            return config;
         }
         async loadSubscriptionStatus() {
             try {
@@ -1292,13 +1421,51 @@
         onConfigChange(callback) {
             this.configChangeCallbacks.push(callback);
         }
+        /**
+         * 2가지 경로로 config 변경 감지:
+         * 1. runtime.onMessage (popup → background → content script)
+         * 2. storage.onChanged (popup이 직접 storage에 쓸 때)
+         */
         startListening() {
-            browser.runtime.onMessage.addListener((message) => {
+            browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+                // getState: popup이 현재 상태 요청 (Scrolly pattern)
+                if (message.action === 'getState') {
+                    try {
+                        browser.storage.local.get('swiftSettings').then((data) => {
+                            const ss = data?.swiftSettings;
+                            if (ss) {
+                                sendResponse({ action: 'currentState', settings: ss });
+                            }
+                        }).catch(() => { });
+                    }
+                    catch { }
+                    return true; // async sendResponse
+                }
+                // configUpdated: popup이 설정 변경 전달
                 if (message.action === 'configUpdated' && message.config) {
-                    this.config = { ...DEFAULT_CONFIG, ...message.config };
+                    this.config = this.applySensitivity({ ...DEFAULT_CONFIG, ...message.config });
+                    // Scrolly autoSaveSettings: content script가 storage에 직접 저장
+                    const toSave = { gestureConfig: message.config };
+                    if (message.swiftSettings) {
+                        toSave.swiftSettings = message.swiftSettings;
+                    }
+                    try {
+                        browser.storage.local.set(toSave).catch(() => { });
+                    }
+                    catch { }
                     this.configChangeCallbacks.forEach(cb => cb(this.config));
                 }
             });
+            // 경로 2: storage.onChanged 기반
+            try {
+                browser.storage.onChanged.addListener((changes, areaName) => {
+                    if (areaName === 'local' && changes.gestureConfig?.newValue) {
+                        this.config = this.applySensitivity({ ...DEFAULT_CONFIG, ...changes.gestureConfig.newValue });
+                        this.configChangeCallbacks.forEach(cb => cb(this.config));
+                    }
+                });
+            }
+            catch { }
         }
         async saveConfig(config) {
             await browser.storage.local.set({ gestureConfig: config });
@@ -1321,14 +1488,14 @@
                 if (this.exclusionManager.shouldExclude())
                     return;
                 this.intentDetector = new IntentDetector();
-                // Start gesture engine only if master switch is on
-                if (config.masterEnabled !== false) {
+                // Start gesture engine if master is on
+                if (config.masterEnabled) {
                     this.gestureEngine = new GestureEngine(config, this.intentDetector);
                     this.gestureEngine.start();
                 }
-                // Floating button — mount only when master and floatingButtonEnabled are both on
-                this.floatingButton = new FloatingButton(config);
-                if (config.masterEnabled !== false && config.floatingButtonEnabled) {
+                // Floating button — mount only when both master and floating are on
+                if (config.masterEnabled && config.floatingButtonEnabled) {
+                    this.floatingButton = new FloatingButton(config);
                     this.floatingButton.mount();
                 }
                 // Listen for config changes broadcast by background
@@ -1342,21 +1509,18 @@
                             this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector);
                             this.gestureEngine.start();
                         }
-                        // Floating button: master OFF → always unmount
-                        if (updatedConfig.masterEnabled === false) {
-                            this.floatingButton?.unmount();
-                            this.floatingButton = null;
-                        }
-                        else if (updatedConfig.floatingButtonEnabled) {
-                            // master ON + floating ON → ensure mounted
+                        // Floating button 관리
+                        const shouldShow = updatedConfig.masterEnabled && updatedConfig.floatingButtonEnabled;
+                        if (shouldShow) {
                             if (!this.floatingButton) {
                                 this.floatingButton = new FloatingButton(updatedConfig);
                             }
                             this.floatingButton.mount();
+                            this.floatingButton.updateConfig(updatedConfig);
                         }
                         else {
-                            // master ON + floating OFF → unmount only
                             this.floatingButton?.unmount();
+                            this.floatingButton = null;
                         }
                     }
                     catch (err) {
@@ -1384,15 +1548,18 @@
             this.intentDetector?.dispose();
         }
     }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
+    // iframe 내에서는 실행하지 않음 (중복 플로팅 버튼 방지)
+    if (window.self === window.top) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                const ext = new SwiftExtension();
+                ext.init();
+            });
+        }
+        else {
             const ext = new SwiftExtension();
             ext.init();
-        });
-    }
-    else {
-        const ext = new SwiftExtension();
-        ext.init();
+        }
     }
 
 })();

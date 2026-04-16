@@ -2,6 +2,12 @@ import type { GestureConfig } from '../config/ConfigBridge';
 
 type ButtonAction = 'back' | 'forward' | 'tabOverview' | 'gestureGuide';
 
+const SIZE_MAP: Record<string, number> = {
+  small: 42,
+  medium: 52,
+  large: 64,
+};
+
 export class FloatingButton {
   private host: HTMLElement | null = null;
   private button: HTMLElement | null = null;
@@ -9,7 +15,7 @@ export class FloatingButton {
   private guideOverlay: HTMLElement | null = null;
   private config: GestureConfig;
   private isDragging = false;
-  private isHidden = false;
+  private dragReady = false; // long-press 완료 후 드래그 가능 상태
   private currentX: number;
   private currentY: number;
   private dragStartX = 0;
@@ -21,9 +27,7 @@ export class FloatingButton {
   private tapTimer: number | null = null;
   private longPressTimer: number | null = null;
   private readonly TAP_TIMEOUT = 350;
-  private readonly LONG_PRESS_DURATION = 500;
-  private readonly EDGE_THRESHOLD = 30;
-  private readonly BUTTON_SIZE = 48;
+  private readonly LONG_PRESS_DURATION = 5000;
   private abortController: AbortController | null = null;
 
   constructor(config: GestureConfig) {
@@ -32,20 +36,43 @@ export class FloatingButton {
     this.currentY = window.innerHeight * 0.7;
   }
 
+  private getButtonSize(): number {
+    return SIZE_MAP[this.config.buttonSize] ?? 48;
+  }
+
+  private getOpacity(): number {
+    return (this.config.buttonOpacity ?? 90) / 100;
+  }
+
   async mount(): Promise<void> {
     // Guard: already mounted
     if (this.host) return;
 
+    // 기존 DOM 잔존물 제거 (이전 인스턴스 / 페이지 캐시 / 확장 리로드 대응)
+    const existing = document.getElementById('swift-gesture-host');
+    if (existing) existing.remove();
+    const existingStyles = document.querySelectorAll('style[data-swift-fb]');
+    existingStyles.forEach(el => el.remove());
+
+    const size = this.getButtonSize();
+    const opacity = this.getOpacity();
+
     // Inject scoped styles via <style> tag (no Shadow DOM — iOS Safari compatible)
     this.styleEl = document.createElement('style');
+    this.styleEl.setAttribute('data-swift-fb', '1');
+    const rad = Math.round(size * 0.22);
     this.styleEl.textContent = `
       #swift-gesture-host { all: initial; display: block; position: fixed; top: 0; left: 0; width: 0; height: 0; z-index: 2147483647; pointer-events: none; }
       .swift-fb {
         position: fixed;
-        width: ${this.BUTTON_SIZE}px;
-        height: ${this.BUTTON_SIZE}px;
-        border-radius: ${this.BUTTON_SIZE / 2}px;
-        background: rgba(10, 132, 255, 0.9);
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: ${rad}px;
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.12), transparent 60%),
+                    linear-gradient(145deg, rgba(60,60,68,0.7), rgba(28,28,30,0.75));
+        -webkit-backdrop-filter: saturate(180%) blur(24px);
+        backdrop-filter: saturate(180%) blur(24px);
+        border: 0.5px solid rgba(255, 255, 255, 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -55,30 +82,43 @@ export class FloatingButton {
         transform: translate3d(0, 0, 0);
         touch-action: none;
         -webkit-backface-visibility: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-        transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12),
+                    0 4px 14px rgba(0,0,0,0.18),
+                    inset 0 0.5px 0 rgba(255,255,255,0.08);
+        transition: opacity 0.2s ease;
         user-select: none;
         -webkit-user-select: none;
         pointer-events: auto;
+        opacity: ${opacity};
+      }
+      .swift-fb.ready {
+        transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s ease;
+      }
+      .swift-fb.drag-ready {
+        transform: scale(1.12);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15),
+                    0 8px 28px rgba(0,0,0,0.25),
+                    inset 0 0.5px 0 rgba(255,255,255,0.12);
+      }
+      .swift-fb.pressed {
+        transform: scale(0.88);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2),
+                    inset 0 1px 3px rgba(0,0,0,0.15);
+      }
+      .swift-fb.pressed svg circle {
+        transform: scale(0.85);
+        transform-origin: center;
+        transition: transform 0.1s ease;
       }
       .swift-fb.dragging {
         transition: none !important;
-        opacity: 0.7;
-        transform: scale(1.1);
-      }
-      .swift-fb.hidden-edge {
-        opacity: 0.15;
-        pointer-events: auto;
-      }
-      .swift-fb.hidden-full {
-        opacity: 0;
-        pointer-events: none;
+        opacity: 0.6;
       }
       .swift-fb svg {
-        width: 22px;
-        height: 22px;
-        fill: white;
+        width: 70%;
+        height: 70%;
         pointer-events: none;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
       }
       .swift-guide {
         position: fixed;
@@ -116,7 +156,7 @@ export class FloatingButton {
 
     this.button = document.createElement('div');
     this.button.className = 'swift-fb';
-    this.button.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>`;
+    this.button.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><defs><linearGradient id="sr" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="rgba(255,255,255,0.95)"/><stop offset="100%" stop-color="rgba(255,255,255,0.4)"/></linearGradient><radialGradient id="sf" cx="40%" cy="38%" r="50%"><stop offset="0%" stop-color="rgba(255,255,255,0.12)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="12" cy="12" r="8" stroke="url(#sr)" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="url(#sf)"/></svg>`;
 
     this.host.appendChild(this.button);
     document.documentElement.appendChild(this.host);
@@ -137,7 +177,17 @@ export class FloatingButton {
       }
     } catch {}
 
-    this.updatePosition(false);
+    // Clamp position to viewport
+    const btnSize = this.getButtonSize();
+    this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - btnSize));
+    this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - btnSize));
+
+    this.updatePosition();
+
+    // 위치 설정 후 다음 프레임에서 transition 활성화 (날아오는 효과 방지)
+    requestAnimationFrame(() => {
+      this.button?.classList.add('ready');
+    });
   }
 
   unmount(): void {
@@ -152,24 +202,60 @@ export class FloatingButton {
     if (this.rafId) cancelAnimationFrame(this.rafId);
   }
 
+  /**
+   * 외부에서 config 변경 시 호출 — 크기/투명도 실시간 반영
+   */
+  updateConfig(config: GestureConfig): void {
+    const oldSize = this.getButtonSize();
+    this.config = config;
+    const newSize = this.getButtonSize();
+    const newOpacity = this.getOpacity();
+
+    if (!this.button || !this.styleEl) return;
+
+    // 크기 변경 시 스타일 재생성
+    if (oldSize !== newSize) {
+      this.button.style.width = `${newSize}px`;
+      this.button.style.height = `${newSize}px`;
+      this.button.style.borderRadius = `${newSize / 2}px`;
+      const svg = this.button.querySelector('svg') as unknown as HTMLElement | null;
+      if (svg) {
+        const svgSize = Math.round(newSize * 0.46);
+        svg.style.width = `${svgSize}px`;
+        svg.style.height = `${svgSize}px`;
+      }
+    }
+
+    // 투명도 변경
+    this.button.style.opacity = `${newOpacity}`;
+
+    // 위치 재조정 (화면 밖으로 나가지 않도록)
+    this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - newSize));
+    this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - newSize));
+    this.updatePosition();
+  }
+
   private onTouchStart(e: TouchEvent): void {
     e.preventDefault();
     e.stopPropagation();
 
-    if (this.isHidden) {
-      this.showFromEdge();
-      return;
-    }
-
     this.isDragging = false;
+    this.dragReady = false;
     this.totalDragDistance = 0;
     this.dragStartX = e.touches[0].clientX;
     this.dragStartY = e.touches[0].clientY;
     this.dragStartTime = performance.now();
 
+    // 눌림 효과
+    this.button?.classList.add('pressed');
+
+    // 꾹 누르기 감지: LONG_PRESS_DURATION 후 드래그 가능 상태로 전환
     this.longPressTimer = window.setTimeout(() => {
-      if (!this.isDragging && this.totalDragDistance < 10) {
-        this.executeTapAction('gestureGuide');
+      if (this.totalDragDistance < 25) {
+        this.dragReady = true;
+        this.button?.classList.add('drag-ready');
+        // 햅틱 피드백 (지원 시)
+        if (navigator.vibrate) navigator.vibrate(30);
       }
     }, this.LONG_PRESS_DURATION);
   }
@@ -181,24 +267,36 @@ export class FloatingButton {
     const dy = e.touches[0].clientY - this.dragStartY;
     this.totalDragDistance = Math.sqrt(dx * dx + dy * dy);
 
-    if (this.totalDragDistance > 8) {
-      this.isDragging = true;
+    // 드래그 준비 전에 많이 움직이면 long press 취소
+    if (!this.dragReady && this.totalDragDistance > 25) {
       if (this.longPressTimer) {
         clearTimeout(this.longPressTimer);
         this.longPressTimer = null;
       }
+      return;
+    }
+
+    // 꾹 누른 후에만 드래그 시작
+    if (this.dragReady && this.totalDragDistance > 5) {
+      this.isDragging = true;
       e.preventDefault();
 
-      this.currentX = e.touches[0].clientX - this.BUTTON_SIZE / 2;
-      this.currentY = e.touches[0].clientY - this.BUTTON_SIZE / 2;
+      const size = this.getButtonSize();
+      this.currentX = e.touches[0].clientX - size / 2;
+      this.currentY = e.touches[0].clientY - size / 2;
+
+      // Clamp to viewport
+      this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - size));
+      this.currentY = Math.max(60, Math.min(this.currentY, window.innerHeight - size - 60));
 
       if (!this.button.classList.contains('dragging')) {
+        this.button.classList.remove('drag-ready');
         this.button.classList.add('dragging');
       }
 
       if (!this.rafId) {
         this.rafId = requestAnimationFrame(() => {
-          this.updatePosition(false);
+          this.updatePosition();
           this.rafId = null;
         });
       }
@@ -211,15 +309,27 @@ export class FloatingButton {
       this.longPressTimer = null;
     }
 
+    this.button?.classList.remove('drag-ready');
+    this.button?.classList.remove('dragging');
+    this.button?.classList.remove('pressed');
+
     if (this.isDragging) {
       this.isDragging = false;
-      this.button?.classList.remove('dragging');
-      this.snapToEdge();
+      this.dragReady = false;
+      // 자유 배치: 스냅 없이 현재 위치에 그대로 저장
+      this.updatePosition();
       this.savePosition();
       return;
     }
 
-    // Tap detection
+    // 꾹 눌러서 drag-ready 됐지만 안 움직인 경우 → 제스처 가이드
+    if (this.dragReady) {
+      this.dragReady = false;
+      this.executeTapAction('gestureGuide');
+      return;
+    }
+
+    // 탭 감지
     const duration = performance.now() - this.dragStartTime;
     if (duration < this.LONG_PRESS_DURATION && this.totalDragDistance < 10) {
       this.tapCount++;
@@ -245,8 +355,7 @@ export class FloatingButton {
         browser.runtime.sendMessage({ action: 'navigate', direction: 'forward' });
         break;
       case 'tabOverview':
-        // Show tab list in popup since native tab overview can't be triggered
-        browser.runtime.sendMessage({ action: 'navigate', direction: 'back' }); // fallback
+        browser.runtime.sendMessage({ action: 'navigate', direction: 'back' });
         break;
       case 'gestureGuide':
         this.showGestureGuide();
@@ -255,62 +364,12 @@ export class FloatingButton {
     browser.runtime.sendMessage({ action: 'logGesture', gestureType: `button_${action}` });
   }
 
-  private updatePosition(animate: boolean): void {
+  private updatePosition(): void {
     if (!this.button) return;
-    const x = Math.max(0, Math.min(this.currentX, window.innerWidth - this.BUTTON_SIZE));
-    const y = Math.max(0, Math.min(this.currentY, window.innerHeight - this.BUTTON_SIZE));
-
-    if (!animate) {
-      this.button.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    } else {
-      this.button.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    }
-  }
-
-  private snapToEdge(): void {
-    const midX = window.innerWidth / 2;
-    const margin = 8;
-
-    if (this.currentX + this.BUTTON_SIZE / 2 < midX) {
-      this.currentX = margin;
-    } else {
-      this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
-    }
-
-    // Check if dragged to extreme edge -> hide
-    if (this.currentX <= this.EDGE_THRESHOLD || this.currentX >= window.innerWidth - this.EDGE_THRESHOLD - this.BUTTON_SIZE) {
-      this.hideToEdge();
-      return;
-    }
-
-    // Clamp Y
-    this.currentY = Math.max(60, Math.min(this.currentY, window.innerHeight - this.BUTTON_SIZE - 60));
-    this.updatePosition(true);
-  }
-
-  private hideToEdge(): void {
-    this.isHidden = true;
-    this.button?.classList.add('hidden-edge');
-    // Snap to the nearest edge
-    const margin = -this.BUTTON_SIZE / 2;
-    if (this.currentX < window.innerWidth / 2) {
-      this.currentX = margin;
-    } else {
-      this.currentX = window.innerWidth - this.BUTTON_SIZE / 2;
-    }
-    this.updatePosition(true);
-  }
-
-  private showFromEdge(): void {
-    this.isHidden = false;
-    this.button?.classList.remove('hidden-edge');
-    const margin = 8;
-    if (this.currentX < window.innerWidth / 2) {
-      this.currentX = margin;
-    } else {
-      this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
-    }
-    this.updatePosition(true);
+    const size = this.getButtonSize();
+    const x = Math.max(0, Math.min(this.currentX, window.innerWidth - size));
+    const y = Math.max(0, Math.min(this.currentY, window.innerHeight - size));
+    this.button.style.transform = `translate3d(${x}px, ${y}px, 0)`;
   }
 
   private savePosition(): void {
@@ -332,45 +391,38 @@ export class FloatingButton {
     this.guideOverlay.innerHTML = `
       <h2>Swift Gesture Guide</h2>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u2190\u2192</div>
+        <div class="swift-guide-icon" style="color:#FF453A">V</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">Swipe Left/Right</div>
-          <div class="swift-guide-desc">Navigate back / forward</div>
+          <div class="swift-guide-label">V 모양</div>
+          <div class="swift-guide-desc">현재 탭 닫기</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">V</div>
+        <div class="swift-guide-icon" style="color:#30D158">L</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">V Shape</div>
-          <div class="swift-guide-desc">Close current tab</div>
+          <div class="swift-guide-label">L 모양</div>
+          <div class="swift-guide-desc">닫은 탭 복구</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">L</div>
+        <div class="swift-guide-icon" style="color:#0A84FF">○</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">L Shape</div>
-          <div class="swift-guide-desc">Restore closed tab</div>
+          <div class="swift-guide-label">원 그리기</div>
+          <div class="swift-guide-desc">페이지 내 텍스트 검색</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u00D7\u00D72</div>
+        <div class="swift-guide-icon" style="color:#FF9F0A">C</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">Double Tap</div>
-          <div class="swift-guide-desc">Page search</div>
+          <div class="swift-guide-label">C 모양</div>
+          <div class="swift-guide-desc">쿠키/캐시 삭제 및 새로고침</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u23F3</div>
+        <div class="swift-guide-icon" style="color:#AF52DE">↗</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">Long Press</div>
-          <div class="swift-guide-desc">Scroll to top / bottom</div>
-        </div>
-      </div>
-      <div class="swift-guide-item">
-        <div class="swift-guide-icon">\u2191\u2191</div>
-        <div class="swift-guide-text">
-          <div class="swift-guide-label">Two Finger Flick</div>
-          <div class="swift-guide-desc">Up: Refresh / Down: Fullscreen</div>
+          <div class="swift-guide-label">대각선 위로</div>
+          <div class="swift-guide-desc">새 빈 탭 열기</div>
         </div>
       </div>
     `;

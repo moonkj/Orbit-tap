@@ -25,15 +25,15 @@ class SwiftExtension {
 
       this.intentDetector = new IntentDetector();
 
-      // Start gesture engine only if master switch is on
-      if (config.masterEnabled !== false) {
+      // Start gesture engine if master is on
+      if (config.masterEnabled) {
         this.gestureEngine = new GestureEngine(config, this.intentDetector);
         this.gestureEngine.start();
       }
 
-      // Floating button — mount only when master and floatingButtonEnabled are both on
-      this.floatingButton = new FloatingButton(config);
-      if (config.masterEnabled !== false && config.floatingButtonEnabled) {
+      // Floating button — mount only when both master and floating are on
+      if (config.masterEnabled && config.floatingButtonEnabled) {
+        this.floatingButton = new FloatingButton(config);
         this.floatingButton.mount();
       }
 
@@ -50,19 +50,17 @@ class SwiftExtension {
             this.gestureEngine.start();
           }
 
-          // Floating button: master OFF → always unmount
-          if (updatedConfig.masterEnabled === false) {
-            this.floatingButton?.unmount();
-            this.floatingButton = null;
-          } else if (updatedConfig.floatingButtonEnabled) {
-            // master ON + floating ON → ensure mounted
+          // Floating button 관리
+          const shouldShow = updatedConfig.masterEnabled && updatedConfig.floatingButtonEnabled;
+          if (shouldShow) {
             if (!this.floatingButton) {
               this.floatingButton = new FloatingButton(updatedConfig);
             }
             this.floatingButton.mount();
+            this.floatingButton.updateConfig(updatedConfig);
           } else {
-            // master ON + floating OFF → unmount only
             this.floatingButton?.unmount();
+            this.floatingButton = null;
           }
         } catch (err) {
           console.error('[SwiftExtension] Failed to apply config update:', err);
@@ -90,12 +88,15 @@ class SwiftExtension {
   }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// iframe 내에서는 실행하지 않음 (중복 플로팅 버튼 방지)
+if (window.self === window.top) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const ext = new SwiftExtension();
+      ext.init();
+    });
+  } else {
     const ext = new SwiftExtension();
     ext.init();
-  });
-} else {
-  const ext = new SwiftExtension();
-  ext.init();
+  }
 }
