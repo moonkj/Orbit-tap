@@ -5,23 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Swift Gestures</title>
   <style>
-    :root { --primary: #0A84FF; --bg: #1C1C1E; --card: #2C2C2E; --text: #fff; --sub: #98989D; --border: #3A3A3C; --green: #30D158; --red: #FF453A; }
+    :root {
+      --primary: #0A84FF;
+      --bg: #1C1C1E;
+      --card: #2C2C2E;
+      --text: #fff;
+      --sub: #98989D;
+      --border: #3A3A3C;
+      --green: #30D158;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); width: 100%; min-width: unset; max-width: unset; padding: 12px; margin: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      width: 100%;
+      min-width: unset;
+      max-width: unset;
+      padding: 12px;
+      margin: 0;
+    }
 
+    /* Header */
     .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
     .header-icon { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
     .header h1 { font-size: 17px; font-weight: 700; }
     .header p { font-size: 11px; color: var(--sub); }
 
-    .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+    /* Card */
+    .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; width: 100%; }
     .card-title { font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 
+    /* Option row */
     .option-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
     .option-row:last-child { border-bottom: none; }
     .option-label { font-size: 14px; }
     .option-desc { font-size: 11px; color: var(--sub); margin-top: 2px; }
 
+    /* Toggle switch */
     .toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .toggle .track { position: absolute; inset: 0; background: #636366; border-radius: 13px; transition: background 0.2s; cursor: pointer; }
@@ -29,334 +50,567 @@
     .toggle .track::after { content: ''; position: absolute; width: 22px; height: 22px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
     .toggle input:checked + .track::after { transform: translateX(18px); }
 
-    .slider-row { margin-top: 8px; }
-    .slider-row label { font-size: 12px; color: var(--sub); display: flex; justify-content: space-between; margin-bottom: 4px; }
+    /* Master card */
+    .master-card {
+      background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+    }
+    .master-label { font-size: 16px; font-weight: 700; }
+    .master-desc { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+    /* Sub controls dimmed state */
+    #subControls { transition: opacity 0.2s; }
+    #subControls.dimmed { opacity: 0.4; pointer-events: none; }
+
+    /* Slider row */
+    .slider-row { padding: 8px 0; }
+    .slider-header { font-size: 12px; color: var(--sub); display: flex; justify-content: space-between; margin-bottom: 6px; }
     input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--border); border-radius: 2px; outline: none; }
     input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
 
+    /* Segment control */
     .seg-control { display: flex; gap: 2px; background: var(--border); border-radius: 8px; padding: 2px; }
-    .seg-btn { border: none; background: transparent; color: var(--sub); font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+    .seg-btn {
+      border: none; background: transparent; color: var(--sub);
+      font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
     .seg-btn.active { background: var(--primary); color: #fff; }
 
-    .badge { font-size: 12px; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
-    .pro-badge { background: #FFD60A; color: #000; }
-
+    /* Footer */
     .footer { margin-top: 12px; text-align: center; font-size: 11px; color: var(--sub); }
-
-    /* Global on/off */
-    .master-card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; }
-    .master-label { font-size: 16px; font-weight: 700; }
-    .master-desc { font-size: 11px; color: var(--sub); margin-top: 2px; }
-    .toggle input:checked + .track { background: var(--green); }
-    .dimmed { opacity: 0.35; pointer-events: none; }
   </style>
 </head>
 <body>
+
+  <!-- Header -->
   <div class="header">
-    <div class="header-icon">⚡</div>
+    <div class="header-icon">&#9889;</div>
     <div>
       <h1>SWIFT</h1>
-      <p data-i18n="tagline">Gesture control for Safari</p>
+      <p id="txt_tagline">Gesture control for Safari</p>
     </div>
   </div>
 
   <!-- Master On/Off -->
-  <div class="master-card" id="masterCard">
+  <div class="master-card">
     <div>
-      <div class="master-label" data-i18n="master_label">SWIFT Extension</div>
-      <div class="master-desc" data-i18n="master_desc">Enable all gestures &amp; floating button</div>
+      <div class="master-label" id="txt_master_label">SWIFT Extension</div>
+      <div class="master-desc" id="txt_master_desc">Enable all gestures &amp; floating button</div>
     </div>
-    <label class="toggle"><input type="checkbox" id="masterToggle" checked><span class="track"></span></label>
+    <label class="toggle"><input type="checkbox" id="masterToggle"><span class="track"></span></label>
   </div>
 
-  <!-- Dimmed wrapper for all sub-controls -->
+  <!-- Sub controls wrapper -->
   <div id="subControls">
 
-  <!-- Gestures -->
-  <div class="card">
-    <div class="card-title" data-i18n="gestures_title">GESTURES</div>
+    <!-- GESTURES card -->
+    <div class="card">
+      <div class="card-title" id="txt_gestures_title">GESTURES</div>
 
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="swipe_label">↔ Swipe Back/Forward</div>
+      <div class="option-row">
+        <div><div class="option-label" id="txt_swipe_label">Swipe Back/Forward</div></div>
+        <label class="toggle"><input type="checkbox" id="swipeToggle"><span class="track"></span></label>
       </div>
-      <label class="toggle"><input type="checkbox" id="swipeToggle" checked><span class="track"></span></label>
-    </div>
 
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="vshape_label">✌ V Shape — Close Tab</div>
+      <div class="option-row">
+        <div><div class="option-label" id="txt_vshape_label">V Shape - Close Tab</div></div>
+        <label class="toggle"><input type="checkbox" id="vshapeToggle"><span class="track"></span></label>
       </div>
-      <label class="toggle"><input type="checkbox" id="vshapeToggle" checked><span class="track"></span></label>
-    </div>
 
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="lshape_label">↳ L Shape — Restore Tab</div>
+      <div class="option-row">
+        <div><div class="option-label" id="txt_lshape_label">L Shape - Restore Tab</div></div>
+        <label class="toggle"><input type="checkbox" id="lshapeToggle"><span class="track"></span></label>
       </div>
-      <label class="toggle"><input type="checkbox" id="lshapeToggle" checked><span class="track"></span></label>
-    </div>
 
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="doubletap_label">👆 Double Tap — Search</div>
+      <div class="option-row">
+        <div><div class="option-label" id="txt_doubletap_label">Double Tap - Search</div></div>
+        <label class="toggle"><input type="checkbox" id="doubletapToggle"><span class="track"></span></label>
       </div>
-      <label class="toggle"><input type="checkbox" id="doubletapToggle" checked><span class="track"></span></label>
-    </div>
 
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="longpress_label">👇 Long Press — Scroll</div>
+      <div class="option-row">
+        <div><div class="option-label" id="txt_longpress_label">Long Press - Scroll</div></div>
+        <label class="toggle"><input type="checkbox" id="longpressToggle"><span class="track"></span></label>
       </div>
-      <label class="toggle"><input type="checkbox" id="longpressToggle" checked><span class="track"></span></label>
-    </div>
 
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="twofinger_label">🔄 Two Finger — Refresh</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="twofingerToggle" checked><span class="track"></span></label>
-    </div>
-  </div>
-
-  <!-- Floating Button -->
-  <div class="card">
-    <div class="card-title" data-i18n="floating_title">FLOATING BUTTON</div>
-
-    <div class="option-row">
-      <div>
-        <div class="option-label" data-i18n="show_button">Show Floating Button</div>
-        <div class="option-desc" data-i18n="show_button_desc">Quick access on every page</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="floatingToggle" checked><span class="track"></span></label>
-    </div>
-
-    <div class="option-row">
-      <div><div class="option-label" data-i18n="btn_position">Position</div></div>
-      <div class="seg-control">
-        <button class="seg-btn active" data-value="right" id="posRight" data-i18n="right">Right</button>
-        <button class="seg-btn" data-value="left" id="posLeft" data-i18n="left">Left</button>
+      <div class="option-row">
+        <div><div class="option-label" id="txt_twofinger_label">Two Finger - Refresh</div></div>
+        <label class="toggle"><input type="checkbox" id="twofingerToggle"><span class="track"></span></label>
       </div>
     </div>
 
-    <div class="slider-row">
-      <label><span data-i18n="opacity">Opacity</span><span id="opacityValue">90%</span></label>
-      <input type="range" id="opacitySlider" min="20" max="100" step="5" value="90">
-    </div>
-  </div>
+    <!-- FLOATING BUTTON card -->
+    <div class="card">
+      <div class="card-title" id="txt_floating_title">FLOATING BUTTON</div>
 
-  <!-- Sensitivity -->
-  <div class="card">
-    <div class="card-title" data-i18n="sensitivity_title">SENSITIVITY</div>
-    <div class="slider-row">
-      <label><span data-i18n="less_sensitive">Less</span><span id="sensitivityValue">50%</span><span data-i18n="more_sensitive">More</span></label>
-      <input type="range" id="sensitivitySlider" min="20" max="100" step="5" value="50">
+      <div class="option-row">
+        <div>
+          <div class="option-label" id="txt_show_button">Show Floating Button</div>
+          <div class="option-desc" id="txt_show_button_desc">Quick access on every page</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="floatingToggle"><span class="track"></span></label>
+      </div>
+
+      <div class="option-row">
+        <div><div class="option-label" id="txt_btn_position">Position</div></div>
+        <div class="seg-control">
+          <button class="seg-btn" id="posLeft">Left</button>
+          <button class="seg-btn" id="posRight">Right</button>
+        </div>
+      </div>
+
+      <div class="option-row">
+        <div><div class="option-label" id="txt_btn_size">Size</div></div>
+        <div class="seg-control">
+          <button class="seg-btn" id="size_small">S</button>
+          <button class="seg-btn" id="size_medium">M</button>
+          <button class="seg-btn" id="size_large">L</button>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span id="txt_opacity">Opacity</span>
+          <span id="opacityValue">90%</span>
+        </div>
+        <input type="range" id="opacitySlider" min="20" max="100" step="5" value="90">
+      </div>
     </div>
-  </div>
+
+    <!-- SENSITIVITY card -->
+    <div class="card">
+      <div class="card-title" id="txt_sensitivity_title">SENSITIVITY</div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span id="txt_less_sensitive">Less</span>
+          <span id="sensitivityValue">50%</span>
+          <span id="txt_more_sensitive">More</span>
+        </div>
+        <input type="range" id="sensitivitySlider" min="20" max="100" step="5" value="50">
+      </div>
+    </div>
 
   </div><!-- /subControls -->
 
-  <div class="footer" data-i18n="footer">SWIFT v1.0.0</div>
+  <div class="footer" id="txt_footer">SWIFT v1.0.0</div>
 
-  <script>
+<script>
+(function() {
+  // ============================================================
+  // 1. DEFAULTS - single source of truth
+  // ============================================================
+  var DEFAULTS = {
+    masterEnabled: true,
+    swipeBack: true,
+    swipeForward: true,
+    vShape: true,
+    lShape: true,
+    doubleTap: true,
+    longPress: true,
+    twoFingerFlick: true,
+    floatingEnabled: true,
+    buttonPosition: 'right',
+    buttonSize: 'medium',
+    buttonOpacity: 90,
+    sensitivity: 50
+  };
+
+  // 2. Current settings (local copy)
+  var settings = {};
   (function() {
-    var STORAGE_KEY = 'gestureConfig';
+    var keys = Object.keys(DEFAULTS);
+    for (var i = 0; i < keys.length; i++) {
+      settings[keys[i]] = DEFAULTS[keys[i]];
+    }
+  })();
 
-    // Whitelist of allowed config keys (Scrolly pattern — prevents prototype pollution)
-    var CONFIG_KEYS = [
-      'masterEnabled','floatingButtonEnabled','sensitivity',
-      'buttonPosition','buttonOpacity','gesturesEnabled'
-    ];
+  // ============================================================
+  // 3. i18n (6 languages)
+  // ============================================================
+  var I18N = {
+    ko: {
+      tagline: 'Safari \uC81C\uC2A4\uCC98 \uCEE8\uD2B8\uB864',
+      master_label: 'SWIFT Extension',
+      master_desc: '\uBAA8\uB4E0 \uC81C\uC2A4\uCC98 \uBC0F \uD50C\uB85C\uD305 \uBC84\uD2BC \uD65C\uC131\uD654',
+      gestures_title: '\uC81C\uC2A4\uCC98',
+      swipe_label: '\u2194 \uC2A4\uC640\uC774\uD504 \uB4A4\uB85C/\uC55E\uC73C\uB85C',
+      vshape_label: '\u270C V \uBAA8\uC591 \u2014 \uD0ED \uB2EB\uAE30',
+      lshape_label: '\u21B3 L \uBAA8\uC591 \u2014 \uD0ED \uBCF5\uAD6C',
+      doubletap_label: '\uD83D\uDC46 \uB354\uBE14\uD0ED \u2014 \uAC80\uC0C9',
+      longpress_label: '\uD83D\uDC47 \uB871\uD504\uB808\uC2A4 \u2014 \uC2A4\uD06C\uB864',
+      twofinger_label: '\uD83D\uDD04 \uB450\uC190\uAC00\uB77D \u2014 \uC0C8\uB85C\uACE0\uCE68',
+      floating_title: '\uD50C\uB85C\uD305 \uBC84\uD2BC',
+      show_button: '\uD50C\uB85C\uD305 \uBC84\uD2BC \uD45C\uC2DC',
+      show_button_desc: '\uBAA8\uB4E0 \uD398\uC774\uC9C0\uC5D0\uC11C \uBE60\uB978 \uC811\uADFC',
+      btn_position: '\uC704\uCE58',
+      btn_size: '\uD06C\uAE30',
+      opacity: '\uD22C\uBA85\uB3C4',
+      left: '\uC67C\uCABD',
+      right: '\uC624\uB978\uCABD',
+      sensitivity_title: '\uBBFC\uAC10\uB3C4',
+      less_sensitive: '\uB0AE\uC74C',
+      more_sensitive: '\uB192\uC74C',
+      footer: 'SWIFT v1.0.0'
+    },
+    ja: {
+      tagline: 'Safari\u30B8\u30A7\u30B9\u30C1\u30E3\u30FC\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB',
+      master_label: 'SWIFT Extension',
+      master_desc: '\u5168\u30B8\u30A7\u30B9\u30C1\u30E3\u30FC\u3068\u30DC\u30BF\u30F3\u3092\u6709\u52B9\u5316',
+      gestures_title: '\u30B8\u30A7\u30B9\u30C1\u30E3\u30FC',
+      swipe_label: '\u2194 \u30B9\u30EF\u30A4\u30D7 \u623B\u308B/\u9032\u3080',
+      vshape_label: '\u270C V\u5B57 \u2014 \u30BF\u30D6\u3092\u9589\u3058\u308B',
+      lshape_label: '\u21B3 L\u5B57 \u2014 \u30BF\u30D6\u5FA9\u5143',
+      doubletap_label: '\uD83D\uDC46 \u30C0\u30D6\u30EB\u30BF\u30C3\u30D7 \u2014 \u691C\u7D22',
+      longpress_label: '\uD83D\uDC47 \u9577\u62BC\u3057 \u2014 \u30B9\u30AF\u30ED\u30FC\u30EB',
+      twofinger_label: '\uD83D\uDD04 2\u672C\u6307 \u2014 \u66F4\u65B0',
+      floating_title: '\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0\u30DC\u30BF\u30F3',
+      show_button: '\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0\u30DC\u30BF\u30F3\u8868\u793A',
+      show_button_desc: '\u3059\u3079\u3066\u306E\u30DA\u30FC\u30B8\u3067\u30AF\u30A4\u30C3\u30AF\u30A2\u30AF\u30BB\u30B9',
+      btn_position: '\u4F4D\u7F6E',
+      btn_size: '\u30B5\u30A4\u30BA',
+      opacity: '\u4E0D\u900F\u660E\u5EA6',
+      left: '\u5DE6',
+      right: '\u53F3',
+      sensitivity_title: '\u611F\u5EA6',
+      less_sensitive: '\u4F4E\u3044',
+      more_sensitive: '\u9AD8\u3044',
+      footer: 'SWIFT v1.0.0'
+    },
+    zh: {
+      tagline: 'Safari \u624B\u52BF\u63A7\u5236',
+      master_label: 'SWIFT Extension',
+      master_desc: '\u542F\u7528\u6240\u6709\u624B\u52BF\u548C\u60AC\u6D6E\u6309\u94AE',
+      gestures_title: '\u624B\u52BF',
+      swipe_label: '\u2194 \u6ED1\u52A8 \u8FD4\u56DE/\u524D\u8FDB',
+      vshape_label: '\u270C V\u5F62 \u2014 \u5173\u95ED\u6807\u7B7E',
+      lshape_label: '\u21B3 L\u5F62 \u2014 \u6062\u590D\u6807\u7B7E',
+      doubletap_label: '\uD83D\uDC46 \u53CC\u51FB \u2014 \u641C\u7D22',
+      longpress_label: '\uD83D\uDC47 \u957F\u6309 \u2014 \u6EDA\u52A8',
+      twofinger_label: '\uD83D\uDD04 \u53CC\u6307 \u2014 \u5237\u65B0',
+      floating_title: '\u60AC\u6D6E\u6309\u94AE',
+      show_button: '\u663E\u793A\u60AC\u6D6E\u6309\u94AE',
+      show_button_desc: '\u6BCF\u4E2A\u9875\u9762\u4E0A\u5FEB\u901F\u8BBF\u95EE',
+      btn_position: '\u4F4D\u7F6E',
+      btn_size: '\u5927\u5C0F',
+      opacity: '\u900F\u660E\u5EA6',
+      left: '\u5DE6',
+      right: '\u53F3',
+      sensitivity_title: '\u7075\u654F\u5EA6',
+      less_sensitive: '\u4F4E',
+      more_sensitive: '\u9AD8',
+      footer: 'SWIFT v1.0.0'
+    },
+    fr: {
+      tagline: 'Contr\u00F4le gestuel Safari',
+      master_label: 'SWIFT Extension',
+      master_desc: 'Activer tous les gestes et le bouton',
+      gestures_title: 'GESTES',
+      swipe_label: '\u2194 Glisser Retour/Avancer',
+      vshape_label: '\u270C V \u2014 Fermer onglet',
+      lshape_label: '\u21B3 L \u2014 Restaurer onglet',
+      doubletap_label: '\uD83D\uDC46 Double tap \u2014 Recherche',
+      longpress_label: '\uD83D\uDC47 Appui long \u2014 D\u00E9filer',
+      twofinger_label: '\uD83D\uDD04 Deux doigts \u2014 Rafra\u00EEchir',
+      floating_title: 'BOUTON FLOTTANT',
+      show_button: 'Afficher bouton flottant',
+      show_button_desc: 'Acc\u00E8s rapide sur chaque page',
+      btn_position: 'Position',
+      btn_size: 'Taille',
+      opacity: 'Opacit\u00E9',
+      left: 'Gauche',
+      right: 'Droite',
+      sensitivity_title: 'SENSIBILIT\u00C9',
+      less_sensitive: 'Moins',
+      more_sensitive: 'Plus',
+      footer: 'SWIFT v1.0.0'
+    },
+    hi: {
+      tagline: 'Safari \u091C\u0947\u0938\u094D\u091A\u0930 \u0915\u0902\u091F\u094D\u0930\u094B\u0932',
+      master_label: 'SWIFT Extension',
+      master_desc: '\u0938\u092D\u0940 \u091C\u0947\u0938\u094D\u091A\u0930 \u0914\u0930 \u092C\u091F\u0928 \u0938\u0915\u094D\u0937\u092E \u0915\u0930\u0947\u0902',
+      gestures_title: '\u091C\u0947\u0938\u094D\u091A\u0930',
+      swipe_label: '\u2194 \u0938\u094D\u0935\u093E\u0907\u092A \u092A\u0940\u091B\u0947/\u0906\u0917\u0947',
+      vshape_label: '\u270C V \u0906\u0915\u093E\u0930 \u2014 \u091F\u0948\u092C \u092C\u0902\u0926',
+      lshape_label: '\u21B3 L \u0906\u0915\u093E\u0930 \u2014 \u091F\u0948\u092C \u092A\u0941\u0928\u0930\u094D\u0938\u094D\u0925\u093E\u092A\u093F\u0924',
+      doubletap_label: '\uD83D\uDC46 \u0921\u092C\u0932 \u091F\u0948\u092A \u2014 \u0916\u094B\u091C',
+      longpress_label: '\uD83D\uDC47 \u0932\u0949\u0928\u094D\u0917 \u092A\u094D\u0930\u0947\u0938 \u2014 \u0938\u094D\u0915\u094D\u0930\u0949\u0932',
+      twofinger_label: '\uD83D\uDD04 \u0926\u094B \u0905\u0902\u0917\u0941\u0932\u0940 \u2014 \u0930\u093F\u092B\u094D\u0930\u0947\u0936',
+      floating_title: '\u092B\u094D\u0932\u094B\u091F\u093F\u0902\u0917 \u092C\u091F\u0928',
+      show_button: '\u092B\u094D\u0932\u094B\u091F\u093F\u0902\u0917 \u092C\u091F\u0928 \u0926\u093F\u0916\u093E\u090F\u0902',
+      show_button_desc: '\u0939\u0930 \u092A\u0947\u091C \u092A\u0930 \u0924\u094D\u0935\u0930\u093F\u0924 \u092A\u0939\u0941\u0902\u091A',
+      btn_position: '\u0938\u094D\u0925\u093F\u0924\u093F',
+      btn_size: '\u0906\u0915\u093E\u0930',
+      opacity: '\u0905\u092A\u093E\u0930\u0926\u0930\u094D\u0936\u093F\u0924\u093E',
+      left: '\u092C\u093E\u090F\u0902',
+      right: '\u0926\u093E\u090F\u0902',
+      sensitivity_title: '\u0938\u0902\u0935\u0947\u0926\u0928\u0936\u0940\u0932\u0924\u093E',
+      less_sensitive: '\u0915\u092E',
+      more_sensitive: '\u0905\u0927\u093F\u0915',
+      footer: 'SWIFT v1.0.0'
+    },
+    en: {
+      tagline: 'Gesture control for Safari',
+      master_label: 'SWIFT Extension',
+      master_desc: 'Enable all gestures & floating button',
+      gestures_title: 'GESTURES',
+      swipe_label: '\u2194 Swipe Back/Forward',
+      vshape_label: '\u270C V Shape \u2014 Close Tab',
+      lshape_label: '\u21B3 L Shape \u2014 Restore Tab',
+      doubletap_label: '\uD83D\uDC46 Double Tap \u2014 Search',
+      longpress_label: '\uD83D\uDC47 Long Press \u2014 Scroll',
+      twofinger_label: '\uD83D\uDD04 Two Finger \u2014 Refresh',
+      floating_title: 'FLOATING BUTTON',
+      show_button: 'Show Floating Button',
+      show_button_desc: 'Quick access on every page',
+      btn_position: 'Position',
+      btn_size: 'Size',
+      opacity: 'Opacity',
+      left: 'Left',
+      right: 'Right',
+      sensitivity_title: 'SENSITIVITY',
+      less_sensitive: 'Less',
+      more_sensitive: 'More',
+      footer: 'SWIFT v1.0.0'
+    }
+  };
 
-    var I18N = {
-      ko: { master_label:'SWIFT Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', tagline:'Safari 제스처 컨트롤', gestures_title:'제스처', swipe_label:'↔ 스와이프 뒤로/앞으로', vshape_label:'✌ V 모양 — 탭 닫기', lshape_label:'↳ L 모양 — 탭 복구', doubletap_label:'👆 더블탭 — 검색', longpress_label:'👇 롱프레스 — 스크롤', twofinger_label:'🔄 두손가락 — 새로고침', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_position:'위치', opacity:'투명도', right:'오른쪽', left:'왼쪽', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'SWIFT v1.0.0' },
-      ja: { master_label:'SWIFT Extension', master_desc:'全ジェスチャーとボタンを有効化', tagline:'Safariジェスチャーコントロール', gestures_title:'ジェスチャー', swipe_label:'↔ スワイプ 戻る/進む', vshape_label:'✌ V字 — タブを閉じる', lshape_label:'↳ L字 — タブ復元', doubletap_label:'👆 ダブルタップ — 検索', longpress_label:'👇 長押し — スクロール', twofinger_label:'🔄 2本指 — 更新', floating_title:'フローティングボタン', show_button:'フローティングボタン表示', show_button_desc:'すべてのページでクイックアクセス', btn_position:'位置', opacity:'不透明度', right:'右', left:'左', sensitivity_title:'感度', less_sensitive:'低い', more_sensitive:'高い', footer:'SWIFT v1.0.0' },
-      zh: { master_label:'SWIFT Extension', master_desc:'启用所有手势和悬浮按钮', tagline:'Safari 手势控制', gestures_title:'手势', swipe_label:'↔ 滑动 返回/前进', vshape_label:'✌ V形 — 关闭标签', lshape_label:'↳ L形 — 恢复标签', doubletap_label:'👆 双击 — 搜索', longpress_label:'👇 长按 — 滚动', twofinger_label:'🔄 双指 — 刷新', floating_title:'悬浮按钮', show_button:'显示悬浮按钮', show_button_desc:'每个页面上快速访问', btn_position:'位置', opacity:'透明度', right:'右', left:'左', sensitivity_title:'灵敏度', less_sensitive:'低', more_sensitive:'高', footer:'SWIFT v1.0.0' },
-      fr: { master_label:'SWIFT Extension', master_desc:'Activer tous les gestes et le bouton', tagline:'Contrôle gestuel Safari', gestures_title:'GESTES', swipe_label:'↔ Glisser Retour/Avancer', vshape_label:'✌ V — Fermer onglet', lshape_label:'↳ L — Restaurer onglet', doubletap_label:'👆 Double tap — Recherche', longpress_label:'👇 Appui long — Défiler', twofinger_label:'🔄 Deux doigts — Rafraîchir', floating_title:'BOUTON FLOTTANT', show_button:'Afficher bouton flottant', show_button_desc:'Accès rapide sur chaque page', btn_position:'Position', opacity:'Opacité', right:'Droite', left:'Gauche', sensitivity_title:'SENSIBILITE', less_sensitive:'Moins', more_sensitive:'Plus', footer:'SWIFT v1.0.0' },
-      hi: { master_label:'SWIFT Extension', master_desc:'सभी जेस्चर और बटन सक्षम करें', tagline:'Safari जेस्चर कंट्रोल', gestures_title:'जेस्चर', swipe_label:'↔ स्वाइप पीछे/आगे', vshape_label:'✌ V आकार — टैब बंद', lshape_label:'↳ L आकार — टैब पुनर्स्थापित', doubletap_label:'👆 डबल टैप — खोज', longpress_label:'👇 लॉन्ग प्रेस — स्क्रॉल', twofinger_label:'🔄 दो अंगुली — रिफ्रेश', floating_title:'फ्लोटिंग बटन', show_button:'फ्लोटिंग बटन दिखाएं', show_button_desc:'हर पेज पर त्वरित पहुंच', btn_position:'स्थिति', opacity:'अपारदर्शिता', right:'दाएं', left:'बाएं', sensitivity_title:'संवेदनशीलता', less_sensitive:'कम', more_sensitive:'अधिक', footer:'SWIFT v1.0.0' },
-      en: { master_label:'SWIFT Extension', master_desc:'Enable all gestures & floating button', tagline:'Gesture control for Safari', gestures_title:'GESTURES', swipe_label:'↔ Swipe Back/Forward', vshape_label:'✌ V Shape — Close Tab', lshape_label:'↳ L Shape — Restore Tab', doubletap_label:'👆 Double Tap — Search', longpress_label:'👇 Long Press — Scroll', twofinger_label:'🔄 Two Finger — Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_position:'Position', opacity:'Opacity', right:'Right', left:'Left', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'SWIFT v1.0.0' }
+  // ============================================================
+  // 4. Detect language
+  // ============================================================
+  var lang = (function() {
+    var l = (navigator.language || 'en').toLowerCase();
+    if (l.startsWith('ko')) return 'ko';
+    if (l.startsWith('ja')) return 'ja';
+    if (l.startsWith('zh')) return 'zh';
+    if (l.startsWith('fr')) return 'fr';
+    if (l.startsWith('hi')) return 'hi';
+    return 'en';
+  })();
+
+  function t(key) {
+    return (I18N[lang] || I18N.en)[key] || I18N.en[key] || key;
+  }
+
+  // ============================================================
+  // 5. Apply i18n text to DOM
+  // ============================================================
+  function applyI18n() {
+    var map = {
+      'txt_tagline': 'tagline',
+      'txt_master_label': 'master_label',
+      'txt_master_desc': 'master_desc',
+      'txt_gestures_title': 'gestures_title',
+      'txt_swipe_label': 'swipe_label',
+      'txt_vshape_label': 'vshape_label',
+      'txt_lshape_label': 'lshape_label',
+      'txt_doubletap_label': 'doubletap_label',
+      'txt_longpress_label': 'longpress_label',
+      'txt_twofinger_label': 'twofinger_label',
+      'txt_floating_title': 'floating_title',
+      'txt_show_button': 'show_button',
+      'txt_show_button_desc': 'show_button_desc',
+      'txt_btn_position': 'btn_position',
+      'txt_btn_size': 'btn_size',
+      'txt_opacity': 'opacity',
+      'txt_sensitivity_title': 'sensitivity_title',
+      'txt_less_sensitive': 'less_sensitive',
+      'txt_more_sensitive': 'more_sensitive',
+      'txt_footer': 'footer'
     };
+    var ids = Object.keys(map);
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el) el.textContent = t(map[ids[i]]);
+    }
+    // Segment button labels
+    document.getElementById('posLeft').textContent = t('left');
+    document.getElementById('posRight').textContent = t('right');
+  }
 
-    // ── Local state (single source of truth, Scrolly pattern) ──────────────────
-    var settings = {
-      masterEnabled: true,
-      floatingButtonEnabled: true,
-      sensitivity: 50,
-      buttonPosition: 'right',
-      buttonOpacity: 90,
+  // ============================================================
+  // 6. Load settings from browser.storage.local (Scrolly pattern)
+  // ============================================================
+  function loadSettings() {
+    try {
+      browser.storage.local.get('swiftSettings').then(function(data) {
+        if (data && data.swiftSettings) {
+          var stored = data.swiftSettings;
+          var keys = Object.keys(DEFAULTS);
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            if (stored.hasOwnProperty(k)) {
+              settings[k] = stored[k];
+            }
+          }
+        }
+        renderUI();
+      }).catch(function() {
+        renderUI();
+      });
+    } catch(e) {
+      renderUI();
+    }
+  }
+
+  // ============================================================
+  // 7. Save settings to browser.storage.local (Scrolly pattern)
+  // ============================================================
+  function saveSettings() {
+    // Save raw settings object
+    try {
+      browser.storage.local.set({ swiftSettings: settings }).catch(function(){});
+    } catch(e) {}
+
+    // Also save the processed gestureConfig that content_script expects
+    var config = {
+      masterEnabled: settings.masterEnabled,
+      floatingButtonEnabled: settings.masterEnabled && settings.floatingEnabled,
+      sensitivity: settings.sensitivity,
+      buttonPosition: settings.buttonPosition,
+      buttonSize: settings.buttonSize,
+      buttonOpacity: settings.buttonOpacity,
       gesturesEnabled: {
-        swipeBack: true,
-        swipeForward: true,
-        vShape: true,
-        lShape: true,
-        doubleTap: true,
-        longPress: true,
-        twoFingerFlick: true
+        swipeBack: settings.masterEnabled && settings.swipeBack,
+        swipeForward: settings.masterEnabled && settings.swipeForward,
+        vShape: settings.masterEnabled && settings.vShape,
+        lShape: settings.masterEnabled && settings.lShape,
+        doubleTap: settings.masterEnabled && settings.doubleTap,
+        longPress: settings.masterEnabled && settings.longPress,
+        twoFingerFlick: settings.masterEnabled && settings.twoFingerFlick
       }
     };
-
-    // ── i18n ───────────────────────────────────────────────────────────────────
-    var l = (navigator.language||'en').toLowerCase();
-    var lang = l.startsWith('ko')?'ko':l.startsWith('ja')?'ja':l.startsWith('zh')?'zh':l.startsWith('fr')?'fr':l.startsWith('hi')?'hi':'en';
-    var s = I18N[lang]||I18N.en;
-    document.querySelectorAll('[data-i18n]').forEach(function(el){ var k=el.getAttribute('data-i18n'); if(s[k]) el.textContent=s[k]; });
-
-    // ── Render UI from local state ─────────────────────────────────────────────
-    function renderUI() {
-      document.getElementById('masterToggle').checked = settings.masterEnabled;
-      document.getElementById('subControls').classList.toggle('dimmed', !settings.masterEnabled);
-
-      document.getElementById('swipeToggle').checked = settings.gesturesEnabled.swipeBack;
-      document.getElementById('vshapeToggle').checked = settings.gesturesEnabled.vShape;
-      document.getElementById('lshapeToggle').checked = settings.gesturesEnabled.lShape;
-      document.getElementById('doubletapToggle').checked = settings.gesturesEnabled.doubleTap;
-      document.getElementById('longpressToggle').checked = settings.gesturesEnabled.longPress;
-      document.getElementById('twofingerToggle').checked = settings.gesturesEnabled.twoFingerFlick;
-
-      document.getElementById('floatingToggle').checked = settings.floatingButtonEnabled;
-
-      // Position segment control
-      document.getElementById('posRight').classList.toggle('active', settings.buttonPosition === 'right');
-      document.getElementById('posLeft').classList.toggle('active', settings.buttonPosition === 'left');
-
-      // Opacity slider
-      document.getElementById('opacitySlider').value = settings.buttonOpacity;
-      document.getElementById('opacityValue').textContent = settings.buttonOpacity + '%';
-
-      // Sensitivity slider
-      document.getElementById('sensitivitySlider').value = settings.sensitivity;
-      document.getElementById('sensitivityValue').textContent = settings.sensitivity + '%';
-    }
-
-    // ── Push settings to storage + content scripts (Scrolly pattern) ───────────
-    function pushSettings() {
-      // Build the config object that content_script expects
-      var config = {
-        masterEnabled: settings.masterEnabled,
-        floatingButtonEnabled: settings.masterEnabled && settings.floatingButtonEnabled,
-        sensitivity: settings.sensitivity,
-        buttonPosition: settings.buttonPosition,
-        buttonOpacity: settings.buttonOpacity,
-        gesturesEnabled: {
-          swipeBack: settings.masterEnabled && settings.gesturesEnabled.swipeBack,
-          swipeForward: settings.masterEnabled && settings.gesturesEnabled.swipeBack,
-          vShape: settings.masterEnabled && settings.gesturesEnabled.vShape,
-          lShape: settings.masterEnabled && settings.gesturesEnabled.lShape,
-          doubleTap: settings.masterEnabled && settings.gesturesEnabled.doubleTap,
-          longPress: settings.masterEnabled && settings.gesturesEnabled.longPress,
-          twoFingerFlick: settings.masterEnabled && settings.gesturesEnabled.twoFingerFlick
-        }
-      };
-      // Save immediately to extension storage (Scrolly-safe optional chaining)
-      try {
-        browser.storage?.local?.set({ gestureConfig: config })?.catch(function() {});
-      } catch(_) {}
-      // Notify content scripts
-      try {
-        browser.tabs?.query({active:true,currentWindow:true})?.then(function(tabs) {
-          if (tabs && tabs[0] && tabs[0].id) {
-            browser.tabs.sendMessage(tabs[0].id, {action:'configUpdated', config:config}).catch(function() {});
-          }
-        })?.catch(function() {});
-      } catch(_) {}
-    }
-
-    // ── Load saved settings from extension storage (Scrolly pattern) ───────────
     try {
-      browser.storage?.local?.get(STORAGE_KEY)?.then(function(result) {
-        if (result && result[STORAGE_KEY]) {
-          var stored = result[STORAGE_KEY];
-          // Whitelist merge (Scrolly pattern — prevents prototype pollution)
-          if (typeof stored.masterEnabled === 'boolean') settings.masterEnabled = stored.masterEnabled;
-          if (typeof stored.floatingButtonEnabled === 'boolean') settings.floatingButtonEnabled = stored.floatingButtonEnabled;
-          if (typeof stored.sensitivity === 'number') settings.sensitivity = stored.sensitivity;
-          if (typeof stored.buttonPosition === 'string') settings.buttonPosition = stored.buttonPosition;
-          if (typeof stored.buttonOpacity === 'number') settings.buttonOpacity = stored.buttonOpacity;
-          if (stored.gesturesEnabled && typeof stored.gesturesEnabled === 'object') {
-            var ge = stored.gesturesEnabled;
-            if (typeof ge.swipeBack === 'boolean') settings.gesturesEnabled.swipeBack = ge.swipeBack;
-            if (typeof ge.swipeForward === 'boolean') settings.gesturesEnabled.swipeForward = ge.swipeForward;
-            if (typeof ge.vShape === 'boolean') settings.gesturesEnabled.vShape = ge.vShape;
-            if (typeof ge.lShape === 'boolean') settings.gesturesEnabled.lShape = ge.lShape;
-            if (typeof ge.doubleTap === 'boolean') settings.gesturesEnabled.doubleTap = ge.doubleTap;
-            if (typeof ge.longPress === 'boolean') settings.gesturesEnabled.longPress = ge.longPress;
-            if (typeof ge.twoFingerFlick === 'boolean') settings.gesturesEnabled.twoFingerFlick = ge.twoFingerFlick;
-          }
-          renderUI();
-        }
-      })?.catch(function() {});
-    } catch(_) {}
+      browser.storage.local.set({ gestureConfig: config }).catch(function(){});
+    } catch(e) {}
 
-    // ── Event listeners ────────────────────────────────────────────────────────
+    // Notify active tab content script
+    try {
+      browser.tabs.query({active: true, currentWindow: true}).then(function(tabs) {
+        if (tabs && tabs[0] && tabs[0].id) {
+          browser.tabs.sendMessage(tabs[0].id, {
+            action: 'configUpdated',
+            config: config
+          }).catch(function(){});
+        }
+      }).catch(function(){});
+    } catch(e) {}
+  }
+
+  // ============================================================
+  // 8. Render UI from settings
+  // ============================================================
+  function renderUI() {
     // Master toggle
-    document.getElementById('masterToggle').addEventListener('change', function() {
-      settings.masterEnabled = this.checked;
-      renderUI();
-      pushSettings();
-    });
+    document.getElementById('masterToggle').checked = settings.masterEnabled;
+
+    // Sub-controls dimmed state
+    var sub = document.getElementById('subControls');
+    if (settings.masterEnabled) {
+      sub.classList.remove('dimmed');
+    } else {
+      sub.classList.add('dimmed');
+    }
 
     // Gesture toggles
-    document.getElementById('swipeToggle').addEventListener('change', function() {
-      settings.gesturesEnabled.swipeBack = this.checked;
-      settings.gesturesEnabled.swipeForward = this.checked;
-      pushSettings();
-    });
-    document.getElementById('vshapeToggle').addEventListener('change', function() {
-      settings.gesturesEnabled.vShape = this.checked;
-      pushSettings();
-    });
-    document.getElementById('lshapeToggle').addEventListener('change', function() {
-      settings.gesturesEnabled.lShape = this.checked;
-      pushSettings();
-    });
-    document.getElementById('doubletapToggle').addEventListener('change', function() {
-      settings.gesturesEnabled.doubleTap = this.checked;
-      pushSettings();
-    });
-    document.getElementById('longpressToggle').addEventListener('change', function() {
-      settings.gesturesEnabled.longPress = this.checked;
-      pushSettings();
-    });
-    document.getElementById('twofingerToggle').addEventListener('change', function() {
-      settings.gesturesEnabled.twoFingerFlick = this.checked;
-      pushSettings();
-    });
+    document.getElementById('swipeToggle').checked = settings.swipeBack;
+    document.getElementById('vshapeToggle').checked = settings.vShape;
+    document.getElementById('lshapeToggle').checked = settings.lShape;
+    document.getElementById('doubletapToggle').checked = settings.doubleTap;
+    document.getElementById('longpressToggle').checked = settings.longPress;
+    document.getElementById('twofingerToggle').checked = settings.twoFingerFlick;
 
     // Floating button toggle
-    document.getElementById('floatingToggle').addEventListener('change', function() {
-      settings.floatingButtonEnabled = this.checked;
-      pushSettings();
-    });
+    document.getElementById('floatingToggle').checked = settings.floatingEnabled;
 
-    // Position segment control
-    document.getElementById('posRight').addEventListener('click', function() {
-      settings.buttonPosition = 'right';
-      renderUI();
-      pushSettings();
+    // Position segment
+    document.getElementById('posLeft').classList.toggle('active', settings.buttonPosition === 'left');
+    document.getElementById('posRight').classList.toggle('active', settings.buttonPosition === 'right');
+
+    // Size segment
+    var sizes = ['small', 'medium', 'large'];
+    for (var i = 0; i < sizes.length; i++) {
+      document.getElementById('size_' + sizes[i]).classList.toggle('active', settings.buttonSize === sizes[i]);
+    }
+
+    // Opacity slider
+    document.getElementById('opacitySlider').value = settings.buttonOpacity;
+    document.getElementById('opacityValue').textContent = settings.buttonOpacity + '%';
+
+    // Sensitivity slider
+    document.getElementById('sensitivitySlider').value = settings.sensitivity;
+    document.getElementById('sensitivityValue').textContent = settings.sensitivity + '%';
+  }
+
+  // ============================================================
+  // 9. Event binding helpers
+  // ============================================================
+  function bindToggle(id, key) {
+    document.getElementById(id).addEventListener('change', function() {
+      settings[key] = this.checked;
+      if (key === 'masterEnabled') {
+        renderUI();
+      }
+      saveSettings();
     });
-    document.getElementById('posLeft').addEventListener('click', function() {
-      settings.buttonPosition = 'left';
+  }
+
+  function bindSegment(btnId, key, value) {
+    document.getElementById(btnId).addEventListener('click', function() {
+      settings[key] = value;
       renderUI();
-      pushSettings();
+      saveSettings();
     });
+  }
+
+  // ============================================================
+  // 10. DOMContentLoaded - bind all events
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    applyI18n();
+    loadSettings();
+
+    // Master toggle
+    bindToggle('masterToggle', 'masterEnabled');
+
+    // Gesture toggles - swipe controls both back and forward
+    document.getElementById('swipeToggle').addEventListener('change', function() {
+      settings.swipeBack = this.checked;
+      settings.swipeForward = this.checked;
+      saveSettings();
+    });
+    bindToggle('vshapeToggle', 'vShape');
+    bindToggle('lshapeToggle', 'lShape');
+    bindToggle('doubletapToggle', 'doubleTap');
+    bindToggle('longpressToggle', 'longPress');
+    bindToggle('twofingerToggle', 'twoFingerFlick');
+
+    // Floating button toggle
+    bindToggle('floatingToggle', 'floatingEnabled');
+
+    // Position segments
+    bindSegment('posLeft', 'buttonPosition', 'left');
+    bindSegment('posRight', 'buttonPosition', 'right');
+
+    // Size segments
+    bindSegment('size_small', 'buttonSize', 'small');
+    bindSegment('size_medium', 'buttonSize', 'medium');
+    bindSegment('size_large', 'buttonSize', 'large');
 
     // Opacity slider
     document.getElementById('opacitySlider').addEventListener('input', function() {
       settings.buttonOpacity = parseInt(this.value, 10);
       document.getElementById('opacityValue').textContent = this.value + '%';
-      pushSettings();
+      saveSettings();
     });
 
     // Sensitivity slider
     document.getElementById('sensitivitySlider').addEventListener('input', function() {
       settings.sensitivity = parseInt(this.value, 10);
       document.getElementById('sensitivityValue').textContent = this.value + '%';
-      pushSettings();
+      saveSettings();
     });
-
-    // Initial render
-    renderUI();
-  })();
-  </script>
+  });
+})();
+</script>
 </body>
 </html>

@@ -761,7 +761,15 @@
             this.BUTTON_SIZE = 48;
             this.abortController = null;
             this.config = config;
-            this.currentX = window.innerWidth - 60;
+            // Apply button size from config (small=36, medium=48, large=60)
+            if (config.buttonSize === 'small') this.BUTTON_SIZE = 36;
+            else if (config.buttonSize === 'large') this.BUTTON_SIZE = 60;
+            else this.BUTTON_SIZE = 48;
+            // Apply button opacity from config
+            this.buttonOpacity = (typeof config.buttonOpacity === 'number') ? config.buttonOpacity / 100 : 0.9;
+            // Apply button position from config
+            this.initialPosition = config.buttonPosition || 'right';
+            this.currentX = this.initialPosition === 'left' ? 8 : window.innerWidth - this.BUTTON_SIZE - 8;
             this.currentY = window.innerHeight * 0.7;
         }
         mount() {
@@ -777,7 +785,7 @@
         width: ${this.BUTTON_SIZE}px;
         height: ${this.BUTTON_SIZE}px;
         border-radius: ${this.BUTTON_SIZE / 2}px;
-        background: rgba(10, 132, 255, 0.9);
+        background: rgba(10, 132, 255, ${this.buttonOpacity});
         display: flex;
         align-items: center;
         justify-content: center;
@@ -795,7 +803,7 @@
       }
       .swift-fb.dragging {
         transition: none !important;
-        opacity: 0.7;
+        opacity: ${Math.max(0.3, this.buttonOpacity - 0.2)};
         transform: scale(1.1);
       }
       .swift-fb.hidden-edge {
@@ -807,8 +815,8 @@
         pointer-events: none;
       }
       .swift-fb svg {
-        width: 22px;
-        height: 22px;
+        width: ${Math.round(this.BUTTON_SIZE * 0.46)}px;
+        height: ${Math.round(this.BUTTON_SIZE * 0.46)}px;
         fill: white;
         pointer-events: none;
       }
