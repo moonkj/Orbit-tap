@@ -2,21 +2,179 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swift Gestures</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; width: 280px; }
-    h1 { font-size: 18px; margin: 0 0 8px; }
-    p { color: #666; font-size: 13px; margin: 0 0 16px; }
-    .status { display: flex; align-items: center; gap: 8px; padding: 8px; background: #f5f5f5; border-radius: 8px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #30d158; }
+    :root { --primary: #0A84FF; --bg: #1C1C1E; --card: #2C2C2E; --text: #fff; --sub: #98989D; --border: #3A3A3C; --green: #30D158; --red: #FF453A; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); width: 320px; padding: 16px; }
+
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .header-icon { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .header h1 { font-size: 17px; font-weight: 700; }
+    .header p { font-size: 11px; color: var(--sub); }
+
+    .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .option-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .option-row:last-child { border-bottom: none; }
+    .option-label { font-size: 14px; }
+    .option-desc { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+    .toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .track { position: absolute; inset: 0; background: #636366; border-radius: 13px; transition: background 0.2s; cursor: pointer; }
+    .toggle input:checked + .track { background: var(--green); }
+    .toggle .track::after { content: ''; position: absolute; width: 22px; height: 22px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+    .toggle input:checked + .track::after { transform: translateX(18px); }
+
+    .slider-row { margin-top: 8px; }
+    .slider-row label { font-size: 12px; color: var(--sub); display: flex; justify-content: space-between; margin-bottom: 4px; }
+    input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--border); border-radius: 2px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+
+    .badge { font-size: 12px; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .pro-badge { background: #FFD60A; color: #000; }
+
+    .footer { margin-top: 12px; text-align: center; font-size: 11px; color: var(--sub); }
   </style>
 </head>
 <body>
-  <h1>Swift Gestures</h1>
-  <p>The Swift Gestures for Safari</p>
-  <div class="status">
-    <div class="dot"></div>
-    <span>Extension Active</span>
+  <div class="header">
+    <div class="header-icon">⚡</div>
+    <div>
+      <h1>Swift Gestures</h1>
+      <p data-i18n="tagline">Gesture control for Safari</p>
+    </div>
   </div>
+
+  <!-- Gestures -->
+  <div class="card">
+    <div class="card-title" data-i18n="gestures_title">GESTURES</div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="swipe_label">↔ Swipe Back/Forward</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="swipeToggle" checked><span class="track"></span></label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="vshape_label">✌ V Shape — Close Tab</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="vshapeToggle" checked><span class="track"></span></label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="lshape_label">↳ L Shape — Restore Tab</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="lshapeToggle" checked><span class="track"></span></label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="doubletap_label">👆 Double Tap — Search</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="doubletapToggle" checked><span class="track"></span></label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="longpress_label">👇 Long Press — Scroll</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="longpressToggle" checked><span class="track"></span></label>
+    </div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="twofinger_label">🔄 Two Finger — Refresh</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="twofingerToggle" checked><span class="track"></span></label>
+    </div>
+  </div>
+
+  <!-- Floating Button -->
+  <div class="card">
+    <div class="card-title" data-i18n="floating_title">FLOATING BUTTON</div>
+
+    <div class="option-row">
+      <div>
+        <div class="option-label" data-i18n="show_button">Show Floating Button</div>
+        <div class="option-desc" data-i18n="show_button_desc">Quick access on every page</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="floatingToggle" checked><span class="track"></span></label>
+    </div>
+  </div>
+
+  <!-- Sensitivity -->
+  <div class="card">
+    <div class="card-title" data-i18n="sensitivity_title">SENSITIVITY</div>
+    <div class="slider-row">
+      <label><span data-i18n="less_sensitive">Less</span><span id="sensitivityValue">50%</span><span data-i18n="more_sensitive">More</span></label>
+      <input type="range" id="sensitivitySlider" min="20" max="100" step="5" value="50">
+    </div>
+  </div>
+
+  <div class="footer" data-i18n="footer">Swift Gestures v1.0.0</div>
+
+  <script>
+  (function() {
+    var I18N = {
+      ko: { tagline:'Safari 제스처 컨트롤', gestures_title:'제스처', swipe_label:'↔ 스와이프 뒤로/앞으로', vshape_label:'✌ V 모양 — 탭 닫기', lshape_label:'↳ L 모양 — 탭 복구', doubletap_label:'👆 더블탭 — 검색', longpress_label:'👇 롱프레스 — 스크롤', twofinger_label:'🔄 두손가락 — 새로고침', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'Swift Gestures v1.0.0' },
+      ja: { tagline:'Safariジェスチャーコントロール', gestures_title:'ジェスチャー', swipe_label:'↔ スワイプ 戻る/進む', vshape_label:'✌ V字 — タブを閉じる', lshape_label:'↳ L字 — タブ復元', doubletap_label:'👆 ダブルタップ — 検索', longpress_label:'👇 長押し — スクロール', twofinger_label:'🔄 2本指 — 更新', floating_title:'フローティングボタン', show_button:'フローティングボタン表示', show_button_desc:'すべてのページでクイックアクセス', sensitivity_title:'感度', less_sensitive:'低い', more_sensitive:'高い', footer:'Swift Gestures v1.0.0' },
+      zh: { tagline:'Safari 手势控制', gestures_title:'手势', swipe_label:'↔ 滑动 返回/前进', vshape_label:'✌ V形 — 关闭标签', lshape_label:'↳ L形 — 恢复标签', doubletap_label:'👆 双击 — 搜索', longpress_label:'👇 长按 — 滚动', twofinger_label:'🔄 双指 — 刷新', floating_title:'悬浮按钮', show_button:'显示悬浮按钮', show_button_desc:'每个页面上快速访问', sensitivity_title:'灵敏度', less_sensitive:'低', more_sensitive:'高', footer:'Swift Gestures v1.0.0' },
+      fr: { tagline:'Contrôle gestuel Safari', gestures_title:'GESTES', swipe_label:'↔ Glisser Retour/Avancer', vshape_label:'✌ V — Fermer onglet', lshape_label:'↳ L — Restaurer onglet', doubletap_label:'👆 Double tap — Recherche', longpress_label:'👇 Appui long — Défiler', twofinger_label:'🔄 Deux doigts — Rafraîchir', floating_title:'BOUTON FLOTTANT', show_button:'Afficher bouton flottant', show_button_desc:'Accès rapide sur chaque page', sensitivity_title:'SENSIBILITÉ', less_sensitive:'Moins', more_sensitive:'Plus', footer:'Swift Gestures v1.0.0' },
+      hi: { tagline:'Safari जेस्चर कंट्रोल', gestures_title:'जेस्चर', swipe_label:'↔ स्वाइप पीछे/आगे', vshape_label:'✌ V आकार — टैब बंद', lshape_label:'↳ L आकार — टैब पुनर्स्थापित', doubletap_label:'👆 डबल टैप — खोज', longpress_label:'👇 लॉन्ग प्रेस — स्क्रॉल', twofinger_label:'🔄 दो अंगुली — रिफ्रेश', floating_title:'फ्लोटिंग बटन', show_button:'फ्लोटिंग बटन दिखाएं', show_button_desc:'हर पेज पर त्वरित पहुंच', sensitivity_title:'संवेदनशीलता', less_sensitive:'कम', more_sensitive:'अधिक', footer:'Swift Gestures v1.0.0' },
+      en: { tagline:'Gesture control for Safari', gestures_title:'GESTURES', swipe_label:'↔ Swipe Back/Forward', vshape_label:'✌ V Shape — Close Tab', lshape_label:'↳ L Shape — Restore Tab', doubletap_label:'👆 Double Tap — Search', longpress_label:'👇 Long Press — Scroll', twofinger_label:'🔄 Two Finger — Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'Swift Gestures v1.0.0' }
+    };
+    var l = (navigator.language||'en').toLowerCase();
+    var lang = l.startsWith('ko')?'ko':l.startsWith('ja')?'ja':l.startsWith('zh')?'zh':l.startsWith('fr')?'fr':l.startsWith('hi')?'hi':'en';
+    var s = I18N[lang]||I18N.en;
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ var k=el.getAttribute('data-i18n'); if(s[k]) el.textContent=s[k]; });
+
+    // Load settings from storage
+    browser.storage.local.get('gestureConfig').then(function(data) {
+      var c = data.gestureConfig || {};
+      if (c.gesturesEnabled) {
+        if (c.gesturesEnabled.swipeBack===false) document.getElementById('swipeToggle').checked=false;
+        if (c.gesturesEnabled.vShape===false) document.getElementById('vshapeToggle').checked=false;
+        if (c.gesturesEnabled.lShape===false) document.getElementById('lshapeToggle').checked=false;
+        if (c.gesturesEnabled.doubleTap===false) document.getElementById('doubletapToggle').checked=false;
+        if (c.gesturesEnabled.longPress===false) document.getElementById('longpressToggle').checked=false;
+        if (c.gesturesEnabled.twoFingerFlick===false) document.getElementById('twofingerToggle').checked=false;
+      }
+      if (c.floatingButtonEnabled===false) document.getElementById('floatingToggle').checked=false;
+    });
+
+    // Save on change
+    function saveConfig() {
+      var config = {
+        floatingButtonEnabled: document.getElementById('floatingToggle').checked,
+        gesturesEnabled: {
+          swipeBack: document.getElementById('swipeToggle').checked,
+          swipeForward: document.getElementById('swipeToggle').checked,
+          vShape: document.getElementById('vshapeToggle').checked,
+          lShape: document.getElementById('lshapeToggle').checked,
+          doubleTap: document.getElementById('doubletapToggle').checked,
+          longPress: document.getElementById('longpressToggle').checked,
+          twoFingerFlick: document.getElementById('twofingerToggle').checked
+        }
+      };
+      browser.storage.local.set({ gestureConfig: config });
+      // Notify content scripts
+      browser.tabs.query({active:true,currentWindow:true}).then(function(tabs) {
+        if (tabs[0]) browser.tabs.sendMessage(tabs[0].id, {action:'configUpdated', config:config});
+      });
+    }
+
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.addEventListener('change', saveConfig); });
+    document.getElementById('sensitivitySlider').addEventListener('input', function() {
+      document.getElementById('sensitivityValue').textContent = this.value+'%';
+    });
+  })();
+  </script>
 </body>
 </html>
