@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'Swift';
+  static const String appName = 'SWIFT';
   static const String appSlogan = 'The Swift Gestures for Safari';
   static const String appGroupId = 'group.com.swift.app';
   static const String subscriptionProductId = 'com.swift.app.monthly';

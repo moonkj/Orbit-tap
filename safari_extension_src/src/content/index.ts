@@ -34,9 +34,9 @@ class SwiftExtension {
         this.gestureEngine.start();
       }
 
-      // Floating button — respect the enabled toggle
+      // Floating button — always create instance, mount based on enabled toggle
+      this.floatingButton = new FloatingButton(config);
       if (config.floatingButtonEnabled) {
-        this.floatingButton = new FloatingButton(config);
         this.floatingButton.mount();
       }
 
@@ -48,18 +48,14 @@ class SwiftExtension {
             this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector!);
             this.gestureEngine.start();
           }
-          // Dynamically show/hide floating button based on config
+          // Dynamically show/hide floating button based on updated config
           if (updatedConfig.floatingButtonEnabled) {
             if (!this.floatingButton) {
-              this.floatingButton = new FloatingButton(updatedConfig);
-            } else {
-              this.floatingButton.unmount();
               this.floatingButton = new FloatingButton(updatedConfig);
             }
             this.floatingButton.mount();
           } else {
             this.floatingButton?.unmount();
-            this.floatingButton = null;
           }
         } catch (err) {
           console.error('[SwiftExtension] Failed to apply config update:', err);

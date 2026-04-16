@@ -33,7 +33,8 @@ export class FloatingButton {
   }
 
   mount(): void {
-    if (!this.config.floatingButtonEnabled) return;
+    // Guard: already mounted
+    if (this.host) return;
 
     this.host = document.createElement('div');
     this.host.id = 'swift-gesture-host';
