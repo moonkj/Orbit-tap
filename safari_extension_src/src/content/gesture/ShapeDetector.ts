@@ -160,8 +160,8 @@ export class ShapeDetector {
     const verticalDeviation = Math.abs(segment.dy);
     if (verticalDeviation > 50) return GestureType.UNKNOWN;
 
-    if (segment.dx < 0 && session.duration < 1000) return GestureType.SWIPE_BACK;
-    if (segment.dx > 0 && session.duration < 1000) return GestureType.SWIPE_FORWARD;
+    if (segment.dx > 0 && session.duration < 1000) return GestureType.SWIPE_BACK;
+    if (segment.dx < 0 && session.duration < 1000) return GestureType.SWIPE_FORWARD;
 
     return GestureType.UNKNOWN;
   }

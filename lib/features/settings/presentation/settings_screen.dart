@@ -1,41 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
-import '../../../core/utils/platform_channel.dart';
-
-final extensionEnabledProvider = FutureProvider<bool>((ref) async {
-  return await PlatformChannel.isExtensionEnabled();
-});
-
-final subscriptionActiveProvider = FutureProvider<bool>((ref) async {
-  return await PlatformChannel.isSubscriptionActive();
-});
-
-final floatingButtonEnabledProvider = StateNotifierProvider<FloatingButtonNotifier, bool>((ref) {
-  return FloatingButtonNotifier();
-});
-
-class FloatingButtonNotifier extends StateNotifier<bool> {
-  FloatingButtonNotifier() : super(true) {
-    _load();
-  }
-
-  Future<void> _load() async {
-    final config = await PlatformChannel.loadGestureConfig();
-    if (config != null && config.containsKey('floatingButtonEnabled')) {
-      state = config['floatingButtonEnabled'] as bool;
-    }
-  }
-
-  Future<void> toggle(bool value) async {
-    state = value;
-    final config = await PlatformChannel.loadGestureConfig() ?? {};
-    config['floatingButtonEnabled'] = value;
-    await PlatformChannel.saveGestureConfig(config);
-  }
-}
+import '../../../core/theme/app_colors.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -43,209 +10,104 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final extensionEnabled = ref.watch(extensionEnabledProvider);
-    final subscriptionActive = ref.watch(subscriptionActiveProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppConstants.appName)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Extension Status Card
-          extensionEnabled.when(
-            data: (enabled) => _StatusCard(
-              title: l10n.get('safariExtension'),
-              subtitle: enabled ? l10n.get('enabled') : l10n.get('notEnabled'),
-              icon: enabled ? Icons.check_circle : Icons.error,
-              color: enabled ? Colors.green : Colors.red,
-              onTap: enabled ? null : () => _showExtensionGuide(context, l10n),
-            ),
-            loading: () => _StatusCard(
-              title: l10n.get('safariExtension'),
-              subtitle: l10n.get('checking'),
-              icon: Icons.hourglass_empty,
-              color: Colors.grey,
-            ),
-            error: (e, s) => _StatusCard(
-              title: l10n.get('safariExtension'),
-              subtitle: l10n.get('unknown'),
-              icon: Icons.help,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Gestures Section
-          _SectionHeader(title: l10n.get('gestures')),
-          _GestureToggle(
-            name: l10n.get('swipeBackForward'),
-            subtitle: l10n.get('swipeDesc'),
-            gestureKey: 'swipe',
-            enabled: true,
-            isPremium: false,
-            onTap: () => context.push('/gesture-detail/swipe'),
-          ),
-          _GestureToggle(
-            name: l10n.get('vShapeCloseTab'),
-            subtitle: l10n.get('vShapeDesc'),
-            gestureKey: 'vshape',
-            enabled: true,
-            isPremium: true,
-            onTap: () => context.push('/gesture-detail/vshape'),
-          ),
-          _GestureToggle(
-            name: l10n.get('lShapeRestoreTab'),
-            subtitle: l10n.get('lShapeDesc'),
-            gestureKey: 'lshape',
-            enabled: true,
-            isPremium: true,
-            onTap: () => context.push('/gesture-detail/lshape'),
-          ),
-          _GestureToggle(
-            name: l10n.get('doubleTapSearch'),
-            subtitle: l10n.get('doubleTapDesc'),
-            gestureKey: 'doubletap',
-            enabled: true,
-            isPremium: true,
-            onTap: () => context.push('/gesture-detail/doubletap'),
-          ),
-          _GestureToggle(
-            name: l10n.get('longPressScroll'),
-            subtitle: l10n.get('longPressDesc'),
-            gestureKey: 'longpress',
-            enabled: true,
-            isPremium: true,
-            onTap: () => context.push('/gesture-detail/longpress'),
-          ),
-          _GestureToggle(
-            name: l10n.get('twoFingerFlick'),
-            subtitle: l10n.get('twoFingerDesc'),
-            gestureKey: 'twofinger',
-            enabled: true,
-            isPremium: true,
-            onTap: () => context.push('/gesture-detail/twofinger'),
-          ),
-          const SizedBox(height: 24),
-
-          // Floating Button Section
-          _SectionHeader(title: l10n.get('floatingButton')),
-          SwitchListTile(
-            title: Text(l10n.get('showFloatingButton')),
-            subtitle: Text(l10n.get('quickAccessControl')),
-            value: ref.watch(floatingButtonEnabledProvider),
-            onChanged: (v) {
-              ref.read(floatingButtonEnabledProvider.notifier).toggle(v);
-            },
-          ),
-          ListTile(
-            title: Text(l10n.get('floatingButton')),
-            subtitle: Text(l10n.get('buttonPosition')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/floating-button-settings'),
-          ),
-          const SizedBox(height: 24),
-
-          // Exclusion List Section
-          ListTile(
-            leading: const Icon(Icons.block),
-            title: Text(l10n.get('exclusionList')),
-            subtitle: Text(l10n.get('manageExcludedSites')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/exclusion-list'),
-          ),
-          const SizedBox(height: 8),
-
-          // Statistics Section
-          ListTile(
-            leading: const Icon(Icons.bar_chart),
-            title: Text(l10n.get('statistics')),
-            subtitle: Text(l10n.get('weeklyUsage')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/stats'),
-          ),
-          const SizedBox(height: 24),
-
-          // Subscription Section
-          _SectionHeader(title: l10n.get('subscription')),
-          subscriptionActive.when(
-            data: (active) => Card(
-              child: ListTile(
-                leading: Icon(
-                  active ? Icons.star : Icons.star_border,
-                  color: active ? Colors.amber : null,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            children: [
+              // App icon and branding
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                title: Text(
-                  active ? l10n.get('premiumActive') : l10n.get('freePlan'),
-                ),
-                subtitle: Text(
-                  active
-                      ? l10n.get('allGesturesUnlocked')
-                      : l10n.get('monthlyPrice'),
-                ),
-                trailing: active
-                    ? null
-                    : FilledButton(
-                        onPressed: () => context.push('/paywall'),
-                        child: Text(l10n.get('upgrade')),
-                      ),
+                child: const Icon(Icons.swipe, color: Colors.white, size: 40),
               ),
-            ),
-            loading: () => const Card(
-              child: ListTile(title: Text('Loading...')),
-            ),
-            error: (e, s) => const Card(
-              child: ListTile(title: Text('Unable to check status')),
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (true)
-            TextButton(
-              onPressed: () {},
-              child: Text(l10n.get('restore')),
-            ),
-          const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              Text(AppConstants.appName, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(l10n.get('appSlogan'), style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 32),
 
-          // About Section
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: Text(l10n.get('about')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/about'),
+              // Setup Steps
+              _StepCard(number: '1', title: l10n.get('enableStep1Title'), description: l10n.get('enableStep1Desc')),
+              const SizedBox(height: 12),
+              _StepCard(number: '2', title: l10n.get('enableStep2Title'), description: l10n.get('enableStep2Desc')),
+              const SizedBox(height: 32),
+
+              // Features Section
+              _SectionTitle(icon: Icons.auto_awesome, title: l10n.get('featuresTitle')),
+              const SizedBox(height: 16),
+              _FeatureItem(icon: Icons.swipe, color: Colors.blue, title: l10n.get('featSwipeTitle'), description: l10n.get('featSwipeDesc')),
+              _FeatureItem(icon: Icons.close, color: Colors.red, title: l10n.get('featVShapeTitle'), description: l10n.get('featVShapeDesc')),
+              _FeatureItem(icon: Icons.restore, color: Colors.green, title: l10n.get('featLShapeTitle'), description: l10n.get('featLShapeDesc')),
+              _FeatureItem(icon: Icons.touch_app, color: Colors.orange, title: l10n.get('featDoubleTapTitle'), description: l10n.get('featDoubleTapDesc')),
+              _FeatureItem(icon: Icons.swap_vert, color: Colors.purple, title: l10n.get('featLongPressTitle'), description: l10n.get('featLongPressDesc')),
+              _FeatureItem(icon: Icons.refresh, color: Colors.teal, title: l10n.get('featTwoFingerTitle'), description: l10n.get('featTwoFingerDesc')),
+              _FeatureItem(icon: Icons.radio_button_checked, color: AppColors.primary, title: l10n.get('featFloatingTitle'), description: l10n.get('featFloatingDesc')),
+              const SizedBox(height: 32),
+
+              // Legal Section
+              _SectionTitle(icon: Icons.description, title: l10n.get('legalTitle')),
+              const SizedBox(height: 12),
+              _LegalRow(title: l10n.get('privacyPolicy'), onTap: () => _showLegal(context, l10n, 'privacy')),
+              _LegalRow(title: l10n.get('termsOfService'), onTap: () => _showLegal(context, l10n, 'terms')),
+              _LegalRow(title: l10n.get('support'), onTap: () {}),
+              const SizedBox(height: 24),
+
+              // Version
+              Text('${l10n.get('version')} 1.0.0', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 32),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  void _showExtensionGuide(BuildContext context, AppLocalizations l10n) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+  void _showLegal(BuildContext context, AppLocalizations l10n, String type) {
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => _LegalPage(type: type, l10n: l10n),
+    ));
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  final String number;
+  final String title;
+  final String description;
+  const _StepCard({required this.number, required this.title, required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            Text(
-              l10n.get('enableExtension'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
-            Text(l10n.get('enableStep1')),
-            const SizedBox(height: 4),
-            Text(l10n.get('enableStep2')),
-            const SizedBox(height: 4),
-            Text(l10n.get('enableStep3')),
-            const SizedBox(height: 4),
-            Text(l10n.get('enableStep4')),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(l10n.get('gotIt')),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(16),
               ),
+              child: Center(child: Text(number, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
             ),
+            const SizedBox(width: 16),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(description, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ],
+            )),
           ],
         ),
       ),
@@ -253,104 +115,130 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
+class _SectionTitle extends StatelessWidget {
+  final IconData icon;
   final String title;
-  const _SectionHeader({required this.title});
+  const _SectionTitle({required this.icon, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+class _FeatureItem extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String description;
+  const _FeatureItem({required this.icon, required this.color, required this.title, required this.description});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(
-        title,
-        style: Theme.of(context)
-            .textTheme
-            .titleLarge
-            ?.copyWith(fontWeight: FontWeight.bold),
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              Text(description, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            ],
+          )),
+        ],
       ),
     );
   }
 }
 
-class _StatusCard extends StatelessWidget {
+class _LegalRow extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _StatusCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    this.onTap,
-  });
+  final VoidCallback onTap;
+  const _LegalRow({required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon, color: color, size: 32),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: onTap != null ? const Icon(Icons.chevron_right) : null,
-        onTap: onTap,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
+            Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _GestureToggle extends StatelessWidget {
-  final String name;
-  final String subtitle;
-  final String gestureKey;
-  final bool enabled;
-  final bool isPremium;
-  final VoidCallback? onTap;
-
-  const _GestureToggle({
-    required this.name,
-    required this.subtitle,
-    required this.gestureKey,
-    required this.enabled,
-    required this.isPremium,
-    this.onTap,
-  });
+class _LegalPage extends StatelessWidget {
+  final String type;
+  final AppLocalizations l10n;
+  const _LegalPage({required this.type, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Row(
-        children: [
-          Expanded(child: Text(name)),
-          if (isPremium)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'PRO',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                ),
-              ),
-            ),
-        ],
+    final title = type == 'privacy' ? l10n.get('privacyPolicy') : l10n.get('termsOfService');
+    final sections = _getSections();
+
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: sections.map((s) => Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(s[0], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 4),
+              Text(s[1], style: const TextStyle(fontSize: 14, height: 1.5)),
+            ],
+          ),
+        )).toList(),
       ),
-      subtitle: Text(subtitle),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Switch(value: enabled, onChanged: (v) {}),
-          const Icon(Icons.chevron_right, size: 16),
-        ],
-      ),
-      onTap: onTap,
     );
+  }
+
+  List<List<String>> _getSections() {
+    if (type == 'privacy') {
+      return [
+        ['1. Information We Collect', 'Swift Gestures collects no personal information — no names, emails, location data, device identifiers, or usage statistics.'],
+        ['2. Local Storage', 'Only gesture settings and preferences are stored on your device. This data never leaves your device.'],
+        ['3. Network Communication', 'Swift Gestures makes zero network requests. It works fully offline.'],
+        ['4. Third-Party Services', 'No advertising networks, analytics tools, social logins, or third-party SDKs are used.'],
+        ['5. Children\'s Privacy', 'We do not knowingly collect personal information from children under 13.'],
+        ['6. Policy Changes', 'Changes will be announced via app updates.'],
+        ['7. Contact', 'Please use the developer contact in the Apple App Store.'],
+      ];
+    } else {
+      return [
+        ['1. License Grant', 'You are granted a non-exclusive, non-transferable, personal license to use the App.'],
+        ['2. User Responsibilities', 'Use the App only for lawful purposes. You are responsible for all consequences of your use.'],
+        ['3. Intellectual Property', 'All rights in the App belong to the Developer.'],
+        ['4. Disclaimer of Warranties', 'The App is provided "AS IS" with no warranties.'],
+        ['5. Limitation of Liability', 'The Developer is not liable for any indirect or consequential damages.'],
+        ['6. Relationship with Apple', 'These Terms are solely between you and the Developer.'],
+        ['7. Governing Law', 'These Terms are interpreted under the laws of the Republic of Korea.'],
+        ['8. Contact', 'Please use the developer contact in the Apple App Store.'],
+      ];
+    }
   }
 }

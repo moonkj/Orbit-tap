@@ -258,9 +258,9 @@
             const verticalDeviation = Math.abs(segment.dy);
             if (verticalDeviation > 50)
                 return GestureType.UNKNOWN;
-            if (segment.dx < 0 && session.duration < 1000)
-                return GestureType.SWIPE_BACK;
             if (segment.dx > 0 && session.duration < 1000)
+                return GestureType.SWIPE_BACK;
+            if (segment.dx < 0 && session.duration < 1000)
                 return GestureType.SWIPE_FORWARD;
             return GestureType.UNKNOWN;
         }
@@ -1306,9 +1306,11 @@
                     this.gestureEngine = new GestureEngine(config, this.intentDetector);
                     this.gestureEngine.start();
                 }
-                // Floating button available to all users
-                this.floatingButton = new FloatingButton(config);
-                this.floatingButton.mount();
+                // Floating button — respect the enabled toggle
+                if (config.floatingButtonEnabled) {
+                    this.floatingButton = new FloatingButton(config);
+                    this.floatingButton.mount();
+                }
                 // Listen for config changes broadcast by background
                 this.configBridge.onConfigChange((updatedConfig) => {
                     try {
@@ -1317,10 +1319,20 @@
                             this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector);
                             this.gestureEngine.start();
                         }
-                        if (this.floatingButton) {
-                            this.floatingButton.unmount();
-                            this.floatingButton = new FloatingButton(updatedConfig);
+                        // Dynamically show/hide floating button based on config
+                        if (updatedConfig.floatingButtonEnabled) {
+                            if (!this.floatingButton) {
+                                this.floatingButton = new FloatingButton(updatedConfig);
+                            }
+                            else {
+                                this.floatingButton.unmount();
+                                this.floatingButton = new FloatingButton(updatedConfig);
+                            }
                             this.floatingButton.mount();
+                        }
+                        else {
+                            this.floatingButton?.unmount();
+                            this.floatingButton = null;
                         }
                     }
                     catch (err) {
