@@ -50,13 +50,18 @@ class SwiftExtension {
             this.gestureEngine.start();
           }
 
-          // Floating button: show only when master + floatingButtonEnabled
-          if (updatedConfig.masterEnabled !== false && updatedConfig.floatingButtonEnabled) {
+          // Floating button: master OFF → always unmount
+          if (updatedConfig.masterEnabled === false) {
+            this.floatingButton?.unmount();
+            this.floatingButton = null;
+          } else if (updatedConfig.floatingButtonEnabled) {
+            // master ON + floating ON → ensure mounted
             if (!this.floatingButton) {
               this.floatingButton = new FloatingButton(updatedConfig);
             }
             this.floatingButton.mount();
           } else {
+            // master ON + floating OFF → unmount only
             this.floatingButton?.unmount();
           }
         } catch (err) {

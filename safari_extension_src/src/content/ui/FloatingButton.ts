@@ -32,7 +32,7 @@ export class FloatingButton {
     this.currentY = window.innerHeight * 0.7;
   }
 
-  mount(): void {
+  async mount(): Promise<void> {
     // Guard: already mounted
     if (this.host) return;
 
@@ -128,6 +128,15 @@ export class FloatingButton {
     this.button.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
     this.button.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
 
+    // Load saved position from storage
+    try {
+      const data = await browser.storage.local.get('floatingBtnPos');
+      if (data?.floatingBtnPos) {
+        this.currentX = data.floatingBtnPos.x;
+        this.currentY = data.floatingBtnPos.y;
+      }
+    } catch {}
+
     this.updatePosition(false);
   }
 
@@ -206,6 +215,7 @@ export class FloatingButton {
       this.isDragging = false;
       this.button?.classList.remove('dragging');
       this.snapToEdge();
+      this.savePosition();
       return;
     }
 
@@ -301,6 +311,14 @@ export class FloatingButton {
       this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
     }
     this.updatePosition(true);
+  }
+
+  private savePosition(): void {
+    try {
+      browser.storage.local.set({
+        floatingBtnPos: { x: this.currentX, y: this.currentY }
+      });
+    } catch {}
   }
 
   private showGestureGuide(): void {

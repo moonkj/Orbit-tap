@@ -152,14 +152,6 @@
       </div>
 
       <div class="option-row">
-        <div><div class="option-label" id="txt_btn_position">Position</div></div>
-        <div class="seg-control">
-          <button class="seg-btn" id="posLeft">Left</button>
-          <button class="seg-btn" id="posRight">Right</button>
-        </div>
-      </div>
-
-      <div class="option-row">
         <div><div class="option-label" id="txt_btn_size">Size</div></div>
         <div class="seg-control">
           <button class="seg-btn" id="size_small">S</button>
@@ -209,7 +201,6 @@
     longPress: true,
     twoFingerFlick: true,
     floatingEnabled: true,
-    buttonPosition: 'right',
     buttonSize: 'medium',
     buttonOpacity: 90,
     sensitivity: 50
@@ -409,7 +400,6 @@
       'txt_floating_title': 'floating_title',
       'txt_show_button': 'show_button',
       'txt_show_button_desc': 'show_button_desc',
-      'txt_btn_position': 'btn_position',
       'txt_btn_size': 'btn_size',
       'txt_opacity': 'opacity',
       'txt_sensitivity_title': 'sensitivity_title',
@@ -422,9 +412,6 @@
       var el = document.getElementById(ids[i]);
       if (el) el.textContent = t(map[ids[i]]);
     }
-    // Segment button labels
-    document.getElementById('posLeft').textContent = t('left');
-    document.getElementById('posRight').textContent = t('right');
   }
 
   // ============================================================
@@ -466,7 +453,6 @@
       masterEnabled: settings.masterEnabled,
       floatingButtonEnabled: settings.masterEnabled && settings.floatingEnabled,
       sensitivity: settings.sensitivity,
-      buttonPosition: settings.buttonPosition,
       buttonSize: settings.buttonSize,
       buttonOpacity: settings.buttonOpacity,
       gesturesEnabled: {
@@ -522,10 +508,6 @@
     // Floating button toggle
     document.getElementById('floatingToggle').checked = settings.floatingEnabled;
 
-    // Position segment
-    document.getElementById('posLeft').classList.toggle('active', settings.buttonPosition === 'left');
-    document.getElementById('posRight').classList.toggle('active', settings.buttonPosition === 'right');
-
     // Size segment
     var sizes = ['small', 'medium', 'large'];
     for (var i = 0; i < sizes.length; i++) {
@@ -548,6 +530,17 @@
     document.getElementById(id).addEventListener('change', function() {
       settings[key] = this.checked;
       if (key === 'masterEnabled') {
+        if (this.checked) {
+          // Master ON: turn on all sub features
+          settings.swipeBack = true;
+          settings.swipeForward = true;
+          settings.vShape = true;
+          settings.lShape = true;
+          settings.doubleTap = true;
+          settings.longPress = true;
+          settings.twoFingerFlick = true;
+          settings.floatingEnabled = true;
+        }
         renderUI();
       }
       saveSettings();
@@ -586,10 +579,6 @@
 
     // Floating button toggle
     bindToggle('floatingToggle', 'floatingEnabled');
-
-    // Position segments
-    bindSegment('posLeft', 'buttonPosition', 'left');
-    bindSegment('posRight', 'buttonPosition', 'right');
 
     // Size segments
     bindSegment('size_small', 'buttonSize', 'small');

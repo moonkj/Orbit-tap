@@ -761,18 +761,10 @@
             this.BUTTON_SIZE = 48;
             this.abortController = null;
             this.config = config;
-            // Apply button size from config (small=36, medium=48, large=60)
-            if (config.buttonSize === 'small') this.BUTTON_SIZE = 36;
-            else if (config.buttonSize === 'large') this.BUTTON_SIZE = 60;
-            else this.BUTTON_SIZE = 48;
-            // Apply button opacity from config
-            this.buttonOpacity = (typeof config.buttonOpacity === 'number') ? config.buttonOpacity / 100 : 0.9;
-            // Apply button position from config
-            this.initialPosition = config.buttonPosition || 'right';
-            this.currentX = this.initialPosition === 'left' ? 8 : window.innerWidth - this.BUTTON_SIZE - 8;
+            this.currentX = window.innerWidth - 60;
             this.currentY = window.innerHeight * 0.7;
         }
-        mount() {
+        async mount() {
             // Guard: already mounted
             if (this.host)
                 return;
@@ -785,7 +777,7 @@
         width: ${this.BUTTON_SIZE}px;
         height: ${this.BUTTON_SIZE}px;
         border-radius: ${this.BUTTON_SIZE / 2}px;
-        background: rgba(10, 132, 255, ${this.buttonOpacity});
+        background: rgba(10, 132, 255, 0.9);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -803,7 +795,7 @@
       }
       .swift-fb.dragging {
         transition: none !important;
-        opacity: ${Math.max(0.3, this.buttonOpacity - 0.2)};
+        opacity: 0.7;
         transform: scale(1.1);
       }
       .swift-fb.hidden-edge {
@@ -815,8 +807,8 @@
         pointer-events: none;
       }
       .swift-fb svg {
-        width: ${Math.round(this.BUTTON_SIZE * 0.46)}px;
-        height: ${Math.round(this.BUTTON_SIZE * 0.46)}px;
+        width: 22px;
+        height: 22px;
         fill: white;
         pointer-events: none;
       }
@@ -862,6 +854,15 @@
             this.button.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false, signal });
             this.button.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
             this.button.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
+            // Load saved position from storage
+            try {
+                const data = await browser.storage.local.get('floatingBtnPos');
+                if (data?.floatingBtnPos) {
+                    this.currentX = data.floatingBtnPos.x;
+                    this.currentY = data.floatingBtnPos.y;
+                }
+            }
+            catch { }
             this.updatePosition(false);
         }
         unmount() {
@@ -931,6 +932,7 @@
                 this.isDragging = false;
                 this.button?.classList.remove('dragging');
                 this.snapToEdge();
+                this.savePosition();
                 return;
             }
             // Tap detection
@@ -1027,6 +1029,14 @@
                 this.currentX = window.innerWidth - this.BUTTON_SIZE - margin;
             }
             this.updatePosition(true);
+        }
+        savePosition() {
+            try {
+                browser.storage.local.set({
+                    floatingBtnPos: { x: this.currentX, y: this.currentY }
+                });
+            }
+            catch { }
         }
         showGestureGuide() {
             if (!this.host)
@@ -1332,14 +1342,20 @@
                             this.gestureEngine = new GestureEngine(updatedConfig, this.intentDetector);
                             this.gestureEngine.start();
                         }
-                        // Floating button: show only when master + floatingButtonEnabled
-                        if (updatedConfig.masterEnabled !== false && updatedConfig.floatingButtonEnabled) {
+                        // Floating button: master OFF → always unmount
+                        if (updatedConfig.masterEnabled === false) {
+                            this.floatingButton?.unmount();
+                            this.floatingButton = null;
+                        }
+                        else if (updatedConfig.floatingButtonEnabled) {
+                            // master ON + floating ON → ensure mounted
                             if (!this.floatingButton) {
                                 this.floatingButton = new FloatingButton(updatedConfig);
                             }
                             this.floatingButton.mount();
                         }
                         else {
+                            // master ON + floating OFF → unmount only
                             this.floatingButton?.unmount();
                         }
                     }
