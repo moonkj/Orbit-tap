@@ -115,19 +115,39 @@ async function handleRestoreTab(): Promise<{ success: boolean; url?: string }> {
 }
 
 async function handleGetSubscription(): Promise<{ isActive: boolean }> {
-  if (subscriptionCache && (Date.now() - subscriptionCache.checkedAt < SUBSCRIPTION_CACHE_TTL)) {
-    return { isActive: subscriptionCache.isActive };
+  // chrome.runtime.sendNativeMessage 시도 (Manifest V3 background)
+  const g = globalThis as any;
+  // chrome API만 사용 (ShieldMail 패턴)
+  const sendNative = g.chrome?.runtime?.sendNativeMessage;
+
+  if (typeof sendNative === 'function') {
+    try {
+      const result: any = await Promise.race([
+        sendNative('com.shadowengine.app', { action: 'getSubscriptionStatus' }),
+        new Promise((_, reject) => setTimeout(() => reject('timeout'), 3000))
+      ]);
+      const isActive = result?.isActive === true || result?.tier === 'pro';
+      const debugRaw = result ? JSON.stringify(result).slice(0, 200) : 'undefined';
+      await browser.storage.local.set({ subscriptionActive: isActive, subscriptionDebug: { src: 'ok', active: isActive, type: typeof result, raw: debugRaw } });
+      return { isActive };
+    } catch (e: any) {
+      await browser.storage.local.set({ subscriptionDebug: { src: 'err', err: String(e) } });
+    }
+  } else {
+    await browser.storage.local.set({ subscriptionDebug: { src: 'no_api' } });
   }
 
+  // fallback: storage
   try {
-    const result = await browser.runtime.sendNativeMessage('com.swift.app', { action: 'getSubscriptionStatus' });
-    const isActive = result?.isActive === true;
-    subscriptionCache = { isActive, checkedAt: Date.now() };
-    return { isActive };
+    const stored = await browser.storage.local.get('subscriptionActive');
+    return { isActive: stored?.subscriptionActive === true };
   } catch {
-    return { isActive: subscriptionCache?.isActive ?? false };
+    return { isActive: false };
   }
 }
+
+// 시작 시 구독 확인
+handleGetSubscription().catch(() => {});
 
 async function handleLogGesture(gestureType: string): Promise<{ success: boolean }> {
   try {

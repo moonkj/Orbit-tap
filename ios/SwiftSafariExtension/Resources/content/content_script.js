@@ -964,7 +964,7 @@
         <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
           ${i18n('무료 사용자는 하루 10회까지 사용할 수 있습니다.\nSWIFT Pro를 구독하면 무제한으로 사용하세요!', 'Free users can use up to 10 times per day.\nSubscribe to SWIFT Pro for unlimited access!')}
         </div>
-        <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">$0.99/month</div>
+        <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
         <button id="swift-sub-btn" style="
           width:100%;padding:14px;border:none;border-radius:12px;
           background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;
@@ -1010,14 +1010,15 @@
             this.longPressTimer = null;
             this.TAP_TIMEOUT = 700;
             this.DRAG_HOLD_DURATION = 600;
-            this.GUIDE_HOLD_DURATION = 3000;
+            this.GUIDE_HOLD_DURATION = 2000;
             this.guideTimer = null;
             this.abortController = null;
             this.onGestureActivate = null;
             this.usageTracker = null;
             this.config = config;
-            this.currentX = window.innerWidth - 60;
-            this.currentY = window.innerHeight * 0.7;
+            // 기본 위치: 오른쪽 하단 (안전 영역 내)
+            this.currentX = Math.max(10, (window.innerWidth || 375) - 70);
+            this.currentY = Math.max(100, ((window.innerHeight || 812) * 0.7));
         }
         getButtonSize() {
             return SIZE_MAP[this.config.buttonSize] ?? 48;
@@ -1070,6 +1071,10 @@
         -webkit-user-select: none;
         pointer-events: auto;
         opacity: ${opacity};
+        visibility: hidden;
+      }
+      .swift-fb.positioned {
+        visibility: visible;
       }
       .swift-fb.ready {
         transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s ease;
@@ -1159,7 +1164,8 @@
             this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - btnSize));
             this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - btnSize));
             this.updatePosition();
-            // 위치 설정 후 다음 프레임에서 transition 활성화 (날아오는 효과 방지)
+            // 위치 설정 완료 → 보이기 + transition 활성화
+            this.button.classList.add('positioned');
             requestAnimationFrame(() => {
                 this.button?.classList.add('ready');
             });
@@ -1634,16 +1640,38 @@
                 this.data.monthKey = mk;
                 this.data.monthSubDays = 0;
             }
-            // Native app에서 구독 상태 확인 (ShieldMail 패턴)
+            // ShieldMail 패턴: chrome.runtime.sendNativeMessage (콜백 + 타임아웃)
             try {
-                const result = await browser.runtime.sendNativeMessage('com.swift.app', { action: 'getSubscriptionStatus' });
-                if (result?.isActive === true) {
+                const g = globalThis;
+                const nativeResult = await new Promise((resolve) => {
+                    const TIMEOUT = 2000;
+                    const timer = setTimeout(() => resolve({ _timeout: true }), TIMEOUT);
+                    // chrome API 시도
+                    if (typeof g.chrome?.runtime?.sendNativeMessage === 'function') {
+                        g.chrome.runtime.sendNativeMessage('com.shadowengine.app', { action: 'getSubscriptionStatus' }, (resp) => { clearTimeout(timer); resolve(resp ?? { _noResp: true, lastErr: g.chrome?.runtime?.lastError?.message }); });
+                        // browser API 시도
+                    }
+                    else if (typeof g.browser?.runtime?.sendNativeMessage === 'function') {
+                        g.browser.runtime.sendNativeMessage('com.shadowengine.app', { action: 'getSubscriptionStatus' }).then((resp) => { clearTimeout(timer); resolve(resp ?? { _noResp: true }); }, () => { clearTimeout(timer); resolve({ _browserErr: true }); });
+                    }
+                    else {
+                        clearTimeout(timer);
+                        resolve({ _noApi: true });
+                    }
+                });
+                if (nativeResult?.isActive === true || nativeResult?.tier === 'pro') {
                     this.data.isSubscribed = true;
+                    try {
+                        await browser.storage.local.set({ subscriptionActive: true });
+                    }
+                    catch { }
                 }
+                try {
+                    await browser.storage.local.set({ subDbgContent: nativeResult });
+                }
+                catch { }
             }
-            catch {
-                // Native messaging 실패 시 storage 값 유지
-            }
+            catch { }
             await this.save();
         }
         /** 사용 전 storage에서 최신 상태 갱신 */
@@ -1788,16 +1816,25 @@
     }
     // iframe 내에서는 실행하지 않음 (중복 플로팅 버튼 방지)
     if (window.self === window.top) {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                const ext = new SwiftExtension();
-                ext.init();
-            });
-        }
-        else {
-            const ext = new SwiftExtension();
+        let ext = null;
+        function bootstrap() {
+            if (ext) {
+                ext.destroy();
+            }
+            ext = new SwiftExtension();
             ext.init();
         }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootstrap);
+        }
+        else {
+            bootstrap();
+        }
+        // BFCache 대응: 뒤로가기/앞으로가기로 페이지 복원 시 재초기화
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted)
+                bootstrap();
+        });
     }
 
 })();

@@ -126,7 +126,12 @@ class StoreKitChannel {
         }
 
         if !foundActive {
-            persistToAppGroup(tier: "free", jws: nil, expires: nil, productId: nil)
+            // 최근 구매(30초 이내)가 있으면 리셋하지 않음 (Sandbox 타이밍 문제 방지)
+            let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
+            let lastVerified = defaults?.double(forKey: AppGroupConstants.lastVerifiedKey) ?? 0
+            if Date().timeIntervalSince1970 - lastVerified > 30 {
+                persistToAppGroup(tier: "free", jws: nil, expires: nil, productId: nil)
+            }
         }
     }
 
@@ -199,6 +204,7 @@ class StoreKitChannel {
         let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
         defaults?.set(tier == "pro", forKey: AppGroupConstants.subscriptionActiveKey)
         defaults?.set(Date().timeIntervalSince1970, forKey: AppGroupConstants.lastVerifiedKey)
+        defaults?.synchronize()
 
         if let expires = expires {
             defaults?.set(expires, forKey: AppGroupConstants.subscriptionExpiryKey)

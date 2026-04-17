@@ -84,15 +84,38 @@ export class UsageTracker {
     const mk = monthKey();
     if (this.data.monthKey !== mk) { this.data.monthKey = mk; this.data.monthSubDays = 0; }
 
-    // Native app에서 구독 상태 확인 (ShieldMail 패턴)
+    // ShieldMail 패턴: chrome.runtime.sendNativeMessage (콜백 + 타임아웃)
     try {
-      const result = await browser.runtime.sendNativeMessage('com.swift.app', { action: 'getSubscriptionStatus' });
-      if (result?.isActive === true) {
+      const g = globalThis as any;
+      const nativeResult: any = await new Promise((resolve) => {
+        const TIMEOUT = 2000;
+        const timer = setTimeout(() => resolve({ _timeout: true }), TIMEOUT);
+
+        // chrome API 시도
+        if (typeof g.chrome?.runtime?.sendNativeMessage === 'function') {
+          g.chrome.runtime.sendNativeMessage(
+            'com.shadowengine.app',
+            { action: 'getSubscriptionStatus' },
+            (resp: any) => { clearTimeout(timer); resolve(resp ?? { _noResp: true, lastErr: g.chrome?.runtime?.lastError?.message }); }
+          );
+        // browser API 시도
+        } else if (typeof g.browser?.runtime?.sendNativeMessage === 'function') {
+          g.browser.runtime.sendNativeMessage('com.shadowengine.app', { action: 'getSubscriptionStatus' }).then(
+            (resp: any) => { clearTimeout(timer); resolve(resp ?? { _noResp: true }); },
+            () => { clearTimeout(timer); resolve({ _browserErr: true }); }
+          );
+        } else {
+          clearTimeout(timer);
+          resolve({ _noApi: true });
+        }
+      });
+
+      if (nativeResult?.isActive === true || nativeResult?.tier === 'pro') {
         this.data.isSubscribed = true;
+        try { await browser.storage.local.set({ subscriptionActive: true }); } catch {}
       }
-    } catch {
-      // Native messaging 실패 시 storage 값 유지
-    }
+      try { await browser.storage.local.set({ subDbgContent: nativeResult }); } catch {}
+    } catch {}
 
     await this.save();
   }

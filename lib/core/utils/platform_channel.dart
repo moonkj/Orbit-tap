@@ -18,6 +18,7 @@ class PlatformChannel {
   static Future<bool> purchase(String productId) async {
     try {
       final result = await _storeKit.invokeMethod('purchase', {'productId': productId});
+      if (result is Map) return result['success'] == true;
       return result == true;
     } on PlatformException {
       return false;
@@ -36,6 +37,7 @@ class PlatformChannel {
   static Future<bool> restorePurchases() async {
     try {
       final result = await _storeKit.invokeMethod('restore');
+      if (result is Map) return result['success'] == true;
       return result == true;
     } on PlatformException {
       return false;

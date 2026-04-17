@@ -27,12 +27,12 @@ class SceneDelegate: FlutterSceneDelegate {
         guard url.scheme == "swiftgesture" else { return }
 
         if url.host == "subscribe" {
-            // Extension에서 구독 요청 → StoreKit 구매 플로우 시작
+            // Extension에서 구독 요청 → Flutter 구독 화면으로 이동
             Task { @MainActor in
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let controller = windowScene.windows.first?.rootViewController as? FlutterViewController {
-                    let channel = FlutterMethodChannel(name: StoreKitChannel.channelName, binaryMessenger: controller.binaryMessenger)
-                    channel.invokeMethod("triggerPurchase", arguments: nil)
+                    let nav = FlutterMethodChannel(name: "com.swift.app/navigation", binaryMessenger: controller.binaryMessenger)
+                    nav.invokeMethod("navigate", arguments: "/subscribe")
                 }
             }
         }

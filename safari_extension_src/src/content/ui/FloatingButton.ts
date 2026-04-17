@@ -30,7 +30,7 @@ export class FloatingButton {
   private longPressTimer: number | null = null;
   private readonly TAP_TIMEOUT = 700;
   private readonly DRAG_HOLD_DURATION = 600;
-  private readonly GUIDE_HOLD_DURATION = 3000;
+  private readonly GUIDE_HOLD_DURATION = 2000;
   private guideTimer: number | null = null;
   private abortController: AbortController | null = null;
   private onGestureActivate: GestureActivator | null = null;
@@ -38,8 +38,9 @@ export class FloatingButton {
 
   constructor(config: GestureConfig) {
     this.config = config;
-    this.currentX = window.innerWidth - 60;
-    this.currentY = window.innerHeight * 0.7;
+    // 기본 위치: 오른쪽 하단 (안전 영역 내)
+    this.currentX = Math.max(10, (window.innerWidth || 375) - 70);
+    this.currentY = Math.max(100, ((window.innerHeight || 812) * 0.7));
   }
 
   private getButtonSize(): number {
@@ -96,6 +97,10 @@ export class FloatingButton {
         -webkit-user-select: none;
         pointer-events: auto;
         opacity: ${opacity};
+        visibility: hidden;
+      }
+      .swift-fb.positioned {
+        visibility: visible;
       }
       .swift-fb.ready {
         transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s ease;
@@ -193,7 +198,8 @@ export class FloatingButton {
 
     this.updatePosition();
 
-    // 위치 설정 후 다음 프레임에서 transition 활성화 (날아오는 효과 방지)
+    // 위치 설정 완료 → 보이기 + transition 활성화
+    this.button.classList.add('positioned');
     requestAnimationFrame(() => {
       this.button?.classList.add('ready');
     });

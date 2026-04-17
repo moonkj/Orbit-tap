@@ -99,13 +99,22 @@ class SwiftExtension {
 
 // iframe 내에서는 실행하지 않음 (중복 플로팅 버튼 방지)
 if (window.self === window.top) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      const ext = new SwiftExtension();
-      ext.init();
-    });
-  } else {
-    const ext = new SwiftExtension();
+  let ext: SwiftExtension | null = null;
+
+  function bootstrap() {
+    if (ext) { ext.destroy(); }
+    ext = new SwiftExtension();
     ext.init();
   }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
+  }
+
+  // BFCache 대응: 뒤로가기/앞으로가기로 페이지 복원 시 재초기화
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) bootstrap();
+  });
 }

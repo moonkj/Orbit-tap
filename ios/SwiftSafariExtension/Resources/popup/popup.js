@@ -184,46 +184,71 @@
   renderUI();
 
   // ── Usage Display ──────────────────────────────────────────
+  function renderUsage(count, isSub) {
+    const card = document.getElementById('usageCard');
+    if (!card) return;
+
+    if (isSub) {
+      card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--green);font-weight:700;">Pro</span> <span style="color:var(--sub);">' + i18n('무제한', 'Unlimited') + '</span></div>';
+    } else {
+      card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--sub);" id="txt_usage_label">' + t('usage_label') + '</span> <span style="color:var(--text);font-weight:700;">' + count + '</span><span style="color:var(--sub);"> / 10</span></div><button id="subscribeBtn" style="padding:8px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,sans-serif;" >Pro</button>';
+      document.getElementById('subscribeBtn')?.addEventListener('click', () => {
+        try {
+          const p = browser.tabs?.create({ url: 'swiftgesture://subscribe' });
+          if (!p) window.open('swiftgesture://subscribe');
+          else p.catch(() => window.open('swiftgesture://subscribe'));
+        } catch(_) { window.open('swiftgesture://subscribe'); }
+      });
+    }
+  }
+
   function loadUsage() {
+    let count = 0;
+    let isSub = false;
+
+    // 팝업에서 직접 native messaging (ShieldMail 패턴)
     try {
-      browser.storage?.local?.get('swiftUsage')?.then(result => {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.sendNativeMessage) {
+        chrome.runtime.sendNativeMessage(
+          'com.shadowengine.app',
+          { action: 'getSubscriptionStatus' },
+          (resp) => {
+            if (resp?.isActive === true || resp?.tier === 'pro') {
+              isSub = true;
+              browser.storage?.local?.set({ subscriptionActive: true })?.catch(() => {});
+              renderUsage(count, true);
+            }
+          }
+        );
+      }
+    } catch(_) {}
+
+    try {
+      browser.storage?.local?.get(['swiftUsage', 'subscriptionActive', 'subscriptionDebug', 'subDbgContent'])?.then(result => {
         const data = result?.swiftUsage || {};
         const todayStr = new Date().toISOString().slice(0, 10);
-        const count = (data.date === todayStr) ? (data.count || 0) : 0;
-        const isSub = data.isSubscribed || false;
+        count = (data.date === todayStr) ? (data.count || 0) : 0;
+        if (data.isSubscribed) isSub = true;
+        if (result?.subscriptionActive === true) isSub = true;
 
-        document.getElementById('usageCount').textContent = count;
-        const card = document.getElementById('usageCard');
-        const btn = document.getElementById('subscribeBtn');
 
-        if (isSub) {
-          const parent = card.querySelector('span[id="usageCount"]').parentElement;
-          parent.textContent = '';
-          const pro = document.createElement('span');
-          pro.style.cssText = 'color:var(--green);font-weight:700;';
-          pro.textContent = 'Pro';
-          const unlimited = document.createElement('span');
-          unlimited.style.cssText = 'color:var(--sub);margin-left:4px;';
-          unlimited.textContent = i18n('무제한', 'Unlimited');
-          parent.appendChild(pro);
-          parent.appendChild(unlimited);
-          btn.style.display = 'none';
-        }
-      })?.catch(() => {});
-    } catch(_) {}
+        // background에 fresh 체크
+        try {
+          browser.runtime?.sendMessage?.({ action: 'getSubscriptionStatus' })?.then(r => {
+            if (r?.isActive === true) {
+              isSub = true;
+              renderUsage(count, isSub);
+            }
+          })?.catch(() => {});
+        } catch(_){}
+
+        renderUsage(count, isSub);
+      })?.catch(() => renderUsage(count, isSub));
+    } catch(_) { renderUsage(count, isSub); }
   }
   loadUsage();
 
-  document.getElementById('subscribeBtn').addEventListener('click', () => {
-    // ShieldMail 패턴: URL scheme으로 앱의 구독 화면 열기
-    try {
-      const p = browser.tabs?.create({ url: 'swiftgesture://subscribe' });
-      if (!p) window.open('swiftgesture://subscribe');
-      else p.catch(() => window.open('swiftgesture://subscribe'));
-    } catch(_) {
-      window.open('swiftgesture://subscribe');
-    }
-  });
+  // subscribeBtn 이벤트는 renderUsage()에서 동적으로 등록
 
   // ── Admin Mode ────────────────────────────────────────────
   const USAGE_KEY = 'swiftUsage';

@@ -365,7 +365,7 @@ export class GestureEngine {
             'Free users can use up to 10 times per day.\nSubscribe to SWIFT Pro for unlimited access!'
           )}
         </div>
-        <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">$0.99/month</div>
+        <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
         <button id="swift-sub-btn" style="
           width:100%;padding:14px;border:none;border-radius:12px;
           background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;

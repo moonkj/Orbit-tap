@@ -30,7 +30,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
         let responseItem = NSExtensionItem()
         responseItem.userInfo = [SFExtensionMessageKey: response]
-        context.completeRequest(returningItems: [responseItem])
+        context.completeRequest(returningItems: [responseItem], completionHandler: nil)
     }
 
     private func loadGestureConfig() -> [String: Any] {
@@ -55,10 +55,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
         return [
             "tier": isActive ? "pro" : "free",
-            "isActive": isActive && (expiryTimestamp == 0 || expiryTimestamp > now),
-            "expiresDate": expiryTimestamp,
-            "jws": jws ?? NSNull(),
-            "productId": productId ?? NSNull(),
+            "isActive": isActive,
         ]
     }
 }
