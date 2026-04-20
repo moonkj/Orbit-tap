@@ -7,7 +7,7 @@ type GestureActivator = () => void;
 const SIZE_MAP: Record<string, number> = {
   small: 42,
   medium: 52,
-  large: 64,
+  large: 76,
 };
 
 export class FloatingButton {
@@ -298,6 +298,7 @@ export class FloatingButton {
     // 꾹 누른 후 의도적 이동(20px+)에서만 드래그 시작
     if (this.dragReady && this.totalDragDistance > 20) {
       this.isDragging = true;
+      if (this.guideTimer) { clearTimeout(this.guideTimer); this.guideTimer = null; }
       e.preventDefault();
 
       const size = this.getButtonSize();
@@ -306,7 +307,7 @@ export class FloatingButton {
 
       // Clamp to viewport
       this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - size));
-      this.currentY = Math.max(60, Math.min(this.currentY, window.innerHeight - size - 60));
+      this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - size));
 
       if (!this.button.classList.contains('dragging')) {
         this.button.classList.remove('drag-ready');

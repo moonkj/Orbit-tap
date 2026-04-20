@@ -173,7 +173,7 @@ UsageTracker.recordUse() → count++
 | 구매: popup → URL scheme → StoreKit | ✅ |
 | 무료 제한: 10회 → 프롬프트 | ✅ |
 | 관리자: 5탭 → 비밀번호 → 토글 + 서명 | ✅ |
-| 구독 확인: native messaging → App Groups | ✅ |
+| 구독 확인: popup native messaging → App Groups | ✅ |
 | Product ID 일관성 | ✅ |
 | App Group 일관성 | ✅ |
 | URL scheme 일관성 | ✅ |
@@ -181,14 +181,55 @@ UsageTracker.recordUse() → count++
 
 ---
 
+## Phase 8: 구독 브릿지 디버깅 ✅
+
+### 문제
+StoreKit 구매 성공 후 팝업에서 "Pro 무제한" 표시 안 됨
+
+### 디버깅 과정
+| 시도 | 결과 |
+|------|------|
+| `browser.runtime.sendNativeMessage` (MV2 BG) | `is not a function` |
+| `chrome.runtime.sendNativeMessage` (MV3 BG Promise) | 응답 `undefined` |
+| `chrome.runtime.sendNativeMessage` (MV3 BG 콜백) | timeout |
+| `chrome.runtime.sendNativeMessage` (MV3 CS) | API 없음 |
+| **`chrome.runtime.sendNativeMessage` (MV3 Popup 콜백)** | **`{"tier":"pro","isActive":true}` 성공** |
+
+### 근본 원인 및 해결
+1. **Manifest V2 → V3** 전환 필수 (`nativeMessaging` 권한)
+2. **App Groups entitlement** 앱 + Extension 둘 다 필요
+3. **Popup context + 콜백 방식만** 응답 반환 (Background/Content 불가)
+4. **NSNull 사용 금지** — 단순 타입만 반환
+5. **`context.completeRequest(returningItems:, completionHandler: nil)`** 명시
+
+### 핵심 교훈
+> Safari에서 `sendNativeMessage` 응답은 **popup + chrome + 콜백**에서만 동작.
+> Background service worker에서는 호출은 되지만 응답이 undefined.
+> Content script에서는 API 자체 없음.
+
+---
+
 ## 커밋 히스토리
 | 커밋 | 내용 |
 |------|------|
+| `latest` | Final review: timer leak fixes, large button 76px, free Y-axis movement |
+| `5c845e6` | Fix subscription bridge: popup native messaging + MV3 + entitlements |
 | `c03dfdb` | Fix critical subscription bugs |
 | `06fb30b` | Complete app overhaul: subscription, admin, security, i18n, TDD 90%+ |
 | `9391cba` | Major overhaul: new gesture system, Scrolly-pattern storage, glassmorphism |
 | `400b5cd` | Remove position buttons, persist drag, master toggle fixes |
 | `5f93c79` | Complete popup rewrite: Scrolly storage pattern |
+
+---
+
+## 최종 상태
+
+- **코드 리뷰**: 팀 에이전트 전원 CLEAN (Coder/UX/Security+Perf)
+- **테스트**: 247 통과, 90%+ 커버리지
+- **보안**: SHA-256 비밀번호, storage 서명, sender 검증, XSS 방지
+- **구독**: StoreKit 2 + App Groups + Manifest V3 native messaging
+- **i18n**: 6개 언어 완전 커버
+- **성능**: 디바운싱, AbortController, 타이머 cleanup 완료
 
 ---
 

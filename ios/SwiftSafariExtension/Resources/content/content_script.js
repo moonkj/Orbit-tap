@@ -461,6 +461,7 @@
             this.countEl = null;
             this.styleEl = null;
             this.matches = [];
+            this.debounceTimer = null;
             this.currentIdx = -1;
         }
         show() {
@@ -526,11 +527,10 @@
             closeBtn.addEventListener('click', () => this.hide());
             this.overlay.append(this.input, this.countEl, prevBtn, nextBtn, closeBtn);
             document.documentElement.appendChild(this.overlay);
-            let debounceTimer = null;
             this.input.addEventListener('input', () => {
-                if (debounceTimer)
-                    clearTimeout(debounceTimer);
-                debounceTimer = window.setTimeout(() => this.search(this.input.value), 200);
+                if (this.debounceTimer)
+                    clearTimeout(this.debounceTimer);
+                this.debounceTimer = window.setTimeout(() => this.search(this.input.value), 200);
             });
             requestAnimationFrame(() => {
                 this.overlay?.classList.add('visible');
@@ -538,6 +538,10 @@
             });
         }
         hide() {
+            if (this.debounceTimer) {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = null;
+            }
             this.clearHighlights();
             this.overlay?.classList.remove('visible');
             setTimeout(() => {
@@ -990,7 +994,7 @@
     const SIZE_MAP = {
         small: 42,
         medium: 52,
-        large: 64,
+        large: 76,
     };
     class FloatingButton {
         constructor(config) {
@@ -1262,13 +1266,17 @@
             // 꾹 누른 후 의도적 이동(20px+)에서만 드래그 시작
             if (this.dragReady && this.totalDragDistance > 20) {
                 this.isDragging = true;
+                if (this.guideTimer) {
+                    clearTimeout(this.guideTimer);
+                    this.guideTimer = null;
+                }
                 e.preventDefault();
                 const size = this.getButtonSize();
                 this.currentX = e.touches[0].clientX - size / 2;
                 this.currentY = e.touches[0].clientY - size / 2;
                 // Clamp to viewport
                 this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - size));
-                this.currentY = Math.max(60, Math.min(this.currentY, window.innerHeight - size - 60));
+                this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - size));
                 if (!this.button.classList.contains('dragging')) {
                     this.button.classList.remove('drag-ready');
                     this.button.classList.add('dragging');

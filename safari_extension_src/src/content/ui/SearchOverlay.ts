@@ -7,6 +7,7 @@ export class SearchOverlay {
   private countEl: HTMLElement | null = null;
   private styleEl: HTMLStyleElement | null = null;
   private matches: Range[] = [];
+  private debounceTimer: number | null = null;
   private currentIdx = -1;
 
   show(): void {
@@ -78,10 +79,9 @@ export class SearchOverlay {
     this.overlay.append(this.input, this.countEl, prevBtn, nextBtn, closeBtn);
     document.documentElement.appendChild(this.overlay);
 
-    let debounceTimer: number | null = null;
     this.input.addEventListener('input', () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = window.setTimeout(() => this.search(this.input!.value), 200);
+      if (this.debounceTimer) clearTimeout(this.debounceTimer);
+      this.debounceTimer = window.setTimeout(() => this.search(this.input!.value), 200);
     });
 
     requestAnimationFrame(() => {
@@ -91,6 +91,7 @@ export class SearchOverlay {
   }
 
   hide(): void {
+    if (this.debounceTimer) { clearTimeout(this.debounceTimer); this.debounceTimer = null; }
     this.clearHighlights();
     this.overlay?.classList.remove('visible');
     setTimeout(() => {
