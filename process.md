@@ -209,10 +209,62 @@ StoreKit 구매 성공 후 팝업에서 "Pro 무제한" 표시 안 됨
 
 ---
 
+## Phase 9: App Store 심사 거부 & 재제출 ✅
+
+### 심사 거부 (Guideline 2.1(b))
+> "the app includes references to subscriptions but the associated In-App Purchase products have not been submitted for review"
+
+### 원인
+1. 구독 상품 `com.swift.app.monthly` 메타데이터 미완성 ("메타데이터 누락됨" 상태)
+2. 첫 바이너리 제출 시 IAP를 함께 연결하지 않음
+3. 구독 **그룹** 현지화 누락 (상품 현지화와 별개)
+
+### 해결 단계
+
+**1. 구독 상품 메타데이터 완성**
+- 구독 가격: $0.99 / 175개국
+- 심사 스크린샷 업로드 (Paywall 화면)
+- 세금 범주: 상위 앱과 일치
+- 상품 현지화 6개 언어 (한/영/일/중/프/힌)
+  - 구독 설명 예: "무제한 제스처 사용, 하루 10회 제한 해제"
+
+**2. 구독 그룹 현지화 (핵심 누락 지점)**
+- SWIFT Pro 그룹 자체 현지화가 별도로 필요
+- 6개 언어 × 표시 이름 `SWIFT Pro`
+- 이 작업 후 상태: "메타데이터 누락됨" → **"제출 준비 완료"**
+
+**3. 빌드 번호 상승 + 재빌드**
+- `pubspec.yaml`: `1.0.0+1` → `1.0.0+2`
+- `project.pbxproj`: SwiftSafariExtension 3개 config `CURRENT_PROJECT_VERSION = 1` → `2`
+- `flutter build ios --release` + Xcode Archive
+
+**4. 앱 버전에 IAP 연결**
+- App Store 버전 1.0.0 페이지 하단 "앱 내 구입 및 구독" 섹션
+- ➕ → SWIFT Pro Monthly 체크
+
+**5. 심사 재제출**
+
+### 핵심 교훈
+| 교훈 | 설명 |
+|------|------|
+| 구독 상품 ≠ 구독 그룹 | 둘 다 별도의 현지화 필요 |
+| "메타데이터 누락됨" 진단법 | 페이지 각 섹션의 🟡 노란 원 찾기 |
+| 첫 구독은 반드시 앱과 함께 | 앱 버전 페이지에서 IAP 선택 후 제출 |
+| Xcode Organizer GUI 필수 | Apple ID 인증은 Xcode keychain만 가능 |
+| CLI 자동화 조건 | `~/.appstoreconnect/private_keys/` 에 API 키 필요 |
+
+### 회신 템플릿 (영어)
+Apple 심사팀 회신 시 수정 사항 나열 + 새 빌드 번호 명시
+
+---
+
 ## 커밋 히스토리
 | 커밋 | 내용 |
 |------|------|
-| `latest` | Final review: timer leak fixes, large button 76px, free Y-axis movement |
+| `latest` | App Store resubmit: IAP metadata + group localization + build 2 |
+| `0a4eb5c` | Rename extension to SWIFT with i18n manifest and popup min-width fix |
+| `83c4620` | Add GitHub Pages: privacy, terms, support pages |
+| `859a393` | Final review: timer leak fixes, large button 76px, free Y-axis movement |
 | `5c845e6` | Fix subscription bridge: popup native messaging + MV3 + entitlements |
 | `c03dfdb` | Fix critical subscription bugs |
 | `06fb30b` | Complete app overhaul: subscription, admin, security, i18n, TDD 90%+ |
