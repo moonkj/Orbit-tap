@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "SWIFT",
+  "name": "__MSG_extensionName__",
   "version": "1.0.0",
-  "description": "SWIFT - Gesture control for Safari",
+  "default_locale": "en",
+  "description": "__MSG_extensionDescription__",
   "permissions": ["activeTab", "storage", "tabs", "nativeMessaging"],
   "background": {
     "service_worker": "background/background.js"
