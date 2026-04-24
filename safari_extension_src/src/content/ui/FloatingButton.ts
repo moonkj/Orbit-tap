@@ -425,7 +425,7 @@ export class FloatingButton {
         <div class="swift-guide-icon">👆×3</div>
         <div class="swift-guide-text">
           <div class="swift-guide-label">${k ? '버튼 3번 탭 → 제스처 모드' : '3 taps → Gesture mode'}</div>
-          <div class="swift-guide-desc">${k ? '파란 테두리가 나타나면 제스처를 그리세요' : 'Draw gestures when blue border appears'}</div>
+          <div class="swift-guide-desc">${k ? '그라디언트 테두리가 나타나면 제스처를 그리세요' : 'Draw gestures when the gradient border appears'}</div>
         </div>
       </div>
       <div class="swift-guide-item">
