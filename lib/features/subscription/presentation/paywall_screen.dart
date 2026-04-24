@@ -166,13 +166,37 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   }
 
   List<List<String>> _getLegalSections(AppLocalizations l10n, String type) {
-    final isKo = l10n.locale.languageCode == 'ko';
+    final code = l10n.locale.languageCode;
     if (type == 'privacy') {
-      if (isKo) return [
+      if (code == 'ko') return [
         ['1. 수집하는 정보', 'Orbit Tap은 개인정보를 수집하지 않습니다.'],
         ['2. 로컬 저장소', '제스처 설정만 기기에 저장됩니다.'],
         ['3. 네트워크 통신', '네트워크 요청을 하지 않습니다.'],
         ['4. 연락처', 'Apple App Store의 개발자 연락처를 이용해 주세요.'],
+      ];
+      if (code == 'ja') return [
+        ['1. 収集する情報', 'Orbit Tap は個人情報を収集しません。'],
+        ['2. ローカルストレージ', 'ジェスチャー設定のみデバイスに保存されます。'],
+        ['3. ネットワーク通信', 'ネットワーク要求は行いません。'],
+        ['4. 連絡先', 'Apple App Store の開発者連絡先をご利用ください。'],
+      ];
+      if (code == 'zh') return [
+        ['1. 收集的信息', 'Orbit Tap 不收集任何个人信息。'],
+        ['2. 本地存储', '仅手势设置存储在您的设备上。'],
+        ['3. 网络通信', '不发送任何网络请求。'],
+        ['4. 联系方式', '请使用 App Store 中的开发者联系方式。'],
+      ];
+      if (code == 'fr') return [
+        ['1. Informations collectées', "Orbit Tap ne collecte aucune information personnelle."],
+        ['2. Stockage local', "Seuls les paramètres de gestes sont stockés sur votre appareil."],
+        ['3. Réseau', "Aucune requête réseau n'est effectuée."],
+        ['4. Contact', "Utilisez les coordonnées du développeur sur l'App Store."],
+      ];
+      if (code == 'hi') return [
+        ['1. एकत्रित जानकारी', 'Orbit Tap कोई व्यक्तिगत जानकारी एकत्र नहीं करता।'],
+        ['2. स्थानीय संग्रहण', 'केवल जेस्चर सेटिंग्स आपके डिवाइस पर संग्रहीत होती हैं।'],
+        ['3. नेटवर्क', 'कोई नेटवर्क अनुरोध नहीं किए जाते।'],
+        ['4. संपर्क', 'कृपया App Store में डेवलपर संपर्क का उपयोग करें।'],
       ];
       return [
         ['1. Information We Collect', 'Orbit Tap collects no personal information.'],
@@ -181,11 +205,35 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         ['4. Contact', 'Please use the developer contact in the App Store.'],
       ];
     } else {
-      if (isKo) return [
+      if (code == 'ko') return [
         ['1. 라이선스', '비독점적, 양도 불가능한 개인 라이선스가 부여됩니다.'],
         ['2. 자동 갱신', '구독은 취소하지 않으면 자동 갱신됩니다.'],
         ['3. 준거법', '대한민국 법률에 따라 해석됩니다.'],
         ['4. 연락처', 'Apple App Store의 개발자 연락처를 이용해 주세요.'],
+      ];
+      if (code == 'ja') return [
+        ['1. ライセンス', '非独占的かつ譲渡不能な個人ライセンスが付与されます。'],
+        ['2. 自動更新', 'キャンセルしない限り、購読は自動更新されます。'],
+        ['3. 準拠法', '大韓民国の法律に従って解釈されます。'],
+        ['4. 連絡先', 'Apple App Store の開発者連絡先をご利用ください。'],
+      ];
+      if (code == 'zh') return [
+        ['1. 许可证', '授予您非独占、不可转让的个人许可。'],
+        ['2. 自动续订', '订阅在取消前将自动续订。'],
+        ['3. 适用法律', '根据大韩民国法律解释。'],
+        ['4. 联系方式', '请使用 App Store 中的开发者联系方式。'],
+      ];
+      if (code == 'fr') return [
+        ['1. Licence', "Une licence personnelle, non exclusive et non transférable vous est accordée."],
+        ['2. Renouvellement automatique', "L'abonnement se renouvelle automatiquement sauf annulation."],
+        ['3. Droit applicable', "Interprété selon les lois de la République de Corée."],
+        ['4. Contact', "Utilisez les coordonnées du développeur sur l'App Store."],
+      ];
+      if (code == 'hi') return [
+        ['1. लाइसेंस', 'आपको गैर-अनन्य, गैर-हस्तांतरणीय व्यक्तिगत लाइसेंस दिया गया है।'],
+        ['2. स्वतः नवीनीकरण', 'रद्द न करने पर सदस्यता स्वतः नवीनीकृत होती है।'],
+        ['3. शासी कानून', 'कोरिया गणराज्य के कानूनों के तहत व्याख्या की जाती है।'],
+        ['4. संपर्क', 'कृपया App Store में डेवलपर संपर्क का उपयोग करें।'],
       ];
       return [
         ['1. License', 'You are granted a non-exclusive, personal license.'],

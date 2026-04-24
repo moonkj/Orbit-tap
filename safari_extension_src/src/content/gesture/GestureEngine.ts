@@ -17,8 +17,19 @@ const GESTURE_CONFIG_KEY: Partial<Record<GestureType, string>> = {
 
 const GESTURE_MODE_DURATION = 5000;
 
-function i18n(ko: string, en: string): string {
-  return (navigator.language || 'en').toLowerCase().startsWith('ko') ? ko : en;
+function getLang(): 'ko' | 'en' | 'ja' | 'zh' | 'fr' | 'hi' {
+  const l = (navigator.language || 'en').toLowerCase();
+  if (l.startsWith('ko')) return 'ko';
+  if (l.startsWith('ja')) return 'ja';
+  if (l.startsWith('zh')) return 'zh';
+  if (l.startsWith('fr')) return 'fr';
+  if (l.startsWith('hi')) return 'hi';
+  return 'en';
+}
+
+function i18n(ko: string, en: string, ja?: string, zh?: string, fr?: string, hi?: string): string {
+  const map: Record<string, string | undefined> = { ko, en, ja, zh, fr, hi };
+  return map[getLang()] || en;
 }
 
 export class GestureEngine {
@@ -79,7 +90,7 @@ export class GestureEngine {
     this.gestureMode = true;
 
     // 토스트
-    this.showToast(i18n('제스처 모드', 'Gesture Mode'), 'bottom');
+    this.showToast(i18n('제스처 모드', 'Gesture Mode', 'ジェスチャーモード', '手势模式', 'Mode gestes', 'जेस्चर मोड'), 'bottom');
 
     // 오버레이 스타일
     this.overlayStyle = document.createElement('style');
@@ -296,7 +307,7 @@ export class GestureEngine {
           this.xStrokeTimer = null;
         }, this.X_STROKE_TIMEOUT);
 
-        this.showToast(i18n('한 획 더 그리세요', 'Draw one more'), 'bottom');
+        this.showToast(i18n('한 획 더 그리세요', 'Draw one more', 'もう一画描いてください', '再画一笔', 'Dessinez encore un trait', 'एक और रेखा बनाएं'), 'bottom');
         return;
       }
     }
@@ -317,14 +328,14 @@ export class GestureEngine {
 
     this.feedback.show(gesture, points);
 
-    const names: Record<string, [string, string]> = {
-      [GestureType.X_SHAPE]: ['X — 탭 닫기', 'X — Close Tab'],
-      [GestureType.L_SHAPE]: ['L — 새 탭 열기', 'L — New Tab'],
-      [GestureType.CIRCLE]: ['○ — 페이지 내 검색', '○ — Find on Page'],
-      [GestureType.C_SHAPE]: ['C — 새로고침', 'C — Hard Refresh'],
+    const names: Record<string, [string, string, string, string, string, string]> = {
+      [GestureType.X_SHAPE]: ['X — 탭 닫기', 'X — Close Tab', 'X — タブを閉じる', 'X — 关闭标签页', "X — Fermer l'onglet", 'X — टैब बंद करें'],
+      [GestureType.L_SHAPE]: ['L — 새 탭 열기', 'L — New Tab', 'L — 新しいタブ', 'L — 新建标签页', 'L — Nouvel onglet', 'L — नया टैब'],
+      [GestureType.CIRCLE]: ['○ — 페이지 내 검색', '○ — Find on Page', '○ — ページ内検索', '○ — 页面内搜索', '○ — Rechercher dans la page', '○ — पेज में खोजें'],
+      [GestureType.C_SHAPE]: ['C — 새로고침', 'C — Hard Refresh', 'C — 再読み込み', 'C — 刷新', 'C — Actualisation forcée', 'C — रीलोड'],
     };
     const label = names[gesture];
-    if (label) this.showToast(i18n(label[0], label[1]));
+    if (label) this.showToast(i18n(label[0], label[1], label[2], label[3], label[4], label[5]));
 
     switch (gesture) {
       case GestureType.X_SHAPE:
@@ -357,12 +368,16 @@ export class GestureEngine {
       <div style="background:#1c1c1e;border-radius:16px;padding:28px 24px;max-width:300px;text-align:center;color:#fff;">
         <div style="font-size:32px;margin-bottom:12px;">⚡</div>
         <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
-          ${i18n('오늘 무료 사용 완료', 'Free Limit Reached')}
+          ${i18n('오늘 무료 사용 완료', 'Free Limit Reached', '本日の無料利用上限に達しました', '今日免费使用已达上限', 'Limite gratuite atteinte', 'आज की मुफ्त सीमा पूरी')}
         </div>
         <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
           ${i18n(
             '무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!',
-            'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!'
+            'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!',
+            '無料ユーザーは1日10回まで利用できます。\nOrbit Tap Pro を購読すると無制限でご利用いただけます!',
+            '免费用户每天最多使用10次。\n订阅 Orbit Tap Pro 即可无限使用!',
+            "Les utilisateurs gratuits peuvent utiliser jusqu'à 10 fois par jour.\nAbonnez-vous à Orbit Tap Pro pour un accès illimité !",
+            'मुफ्त उपयोगकर्ता दिन में 10 बार तक उपयोग कर सकते हैं।\nअसीमित पहुंच के लिए Orbit Tap Pro की सदस्यता लें!'
           )}
         </div>
         <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
@@ -370,12 +385,12 @@ export class GestureEngine {
           width:100%;padding:14px;border:none;border-radius:12px;
           background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;
           font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('구독하기', 'Subscribe')}</button>
+        ">${i18n('구독하기', 'Subscribe', '購読する', '订阅', "S'abonner", 'सदस्यता लें')}</button>
         <button id="swift-sub-close" style="
           width:100%;padding:10px;border:none;background:none;
           color:#98989d;font-size:13px;cursor:pointer;margin-top:8px;
           font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('나중에', 'Later')}</button>
+        ">${i18n('나중에', 'Later', 'あとで', '稍后', 'Plus tard', 'बाद में')}</button>
       </div>
     `;
     document.documentElement.appendChild(el);

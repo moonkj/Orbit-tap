@@ -302,6 +302,8 @@ class _LegalPage extends StatelessWidget {
     final isKo = l10n.locale.languageCode == 'ko';
     final isJa = l10n.locale.languageCode == 'ja';
     final isZh = l10n.locale.languageCode == 'zh';
+    final isFr = l10n.locale.languageCode == 'fr';
+    final isHi = l10n.locale.languageCode == 'hi';
 
     if (type == 'privacy') {
       if (isKo) return [
@@ -330,6 +332,24 @@ class _LegalPage extends StatelessWidget {
         ['5. 儿童隐私', '我们不会故意收集13岁以下儿童的个人信息。'],
         ['6. 政策变更', '变更将通过应用更新通知。'],
         ['7. 联系方式', '请使用Apple App Store中的开发者联系方式。'],
+      ];
+      if (isFr) return [
+        ['1. Informations collectées', "Orbit Tap ne collecte aucune information personnelle : ni nom, e-mail, localisation, identifiant d'appareil ou statistiques d'utilisation."],
+        ['2. Stockage local', "Seuls les paramètres de gestes et préférences sont stockés sur votre appareil. Ces données ne quittent jamais votre appareil."],
+        ['3. Communication réseau', "Orbit Tap n'effectue aucune requête réseau. Il fonctionne entièrement hors ligne."],
+        ['4. Services tiers', "Aucun réseau publicitaire, outil d'analyse, connexion sociale ou SDK tiers n'est utilisé."],
+        ['5. Protection des mineurs', "Nous ne collectons pas sciemment d'informations personnelles d'enfants de moins de 13 ans."],
+        ['6. Modifications', "Les modifications seront annoncées via les mises à jour de l'application."],
+        ['7. Contact', "Utilisez les coordonnées du développeur sur l'Apple App Store."],
+      ];
+      if (isHi) return [
+        ['1. एकत्रित जानकारी', 'Orbit Tap कोई व्यक्तिगत जानकारी एकत्र नहीं करता - नाम, ईमेल, स्थान डेटा, डिवाइस पहचानकर्ता या उपयोग आंकड़े नहीं।'],
+        ['2. स्थानीय संग्रहण', 'केवल जेस्चर सेटिंग्स और वरीयताएं आपके डिवाइस पर संग्रहीत होती हैं। यह डेटा आपके डिवाइस को कभी नहीं छोड़ता।'],
+        ['3. नेटवर्क संचार', 'Orbit Tap कोई नेटवर्क अनुरोध नहीं करता। यह पूरी तरह से ऑफ़लाइन काम करता है।'],
+        ['4. तृतीय-पक्ष सेवाएं', 'कोई विज्ञापन नेटवर्क, एनालिटिक्स टूल, सोशल लॉगिन या तृतीय-पक्ष SDK उपयोग नहीं किए जाते।'],
+        ['5. बच्चों की गोपनीयता', 'हम जानबूझकर 13 वर्ष से कम उम्र के बच्चों की व्यक्तिगत जानकारी एकत्र नहीं करते।'],
+        ['6. नीति परिवर्तन', 'परिवर्तनों की घोषणा ऐप अपडेट के माध्यम से की जाएगी।'],
+        ['7. संपर्क', 'कृपया Apple App Store में डेवलपर संपर्क का उपयोग करें।'],
       ];
       return [
         ['1. Information We Collect', 'Orbit Tap collects no personal information — no names, emails, location data, device identifiers, or usage statistics.'],
@@ -370,6 +390,26 @@ class _LegalPage extends StatelessWidget {
         ['6. 与Apple的关系', '本条款仅在您与开发者之间适用。'],
         ['7. 适用法律', '本条款根据大韩民国法律进行解释。'],
         ['8. 联系方式', '请使用Apple App Store中的开发者联系方式。'],
+      ];
+      if (isFr) return [
+        ['1. Octroi de licence', "Une licence personnelle, non exclusive et non transférable vous est accordée pour l'application."],
+        ['2. Responsabilités utilisateur', "Utilisez l'application uniquement à des fins licites. Vous êtes responsable de toutes les conséquences de votre utilisation."],
+        ['3. Propriété intellectuelle', "Tous les droits sur l'application appartiennent au développeur."],
+        ['4. Exclusion de garanties', "L'application est fournie \"EN L'ÉTAT\" sans aucune garantie."],
+        ['5. Limitation de responsabilité', "Le développeur n'est pas responsable des dommages indirects ou consécutifs."],
+        ['6. Relation avec Apple', "Ces conditions ne s'appliquent qu'entre vous et le développeur."],
+        ['7. Droit applicable', "Ces conditions sont interprétées selon les lois de la République de Corée."],
+        ['8. Contact', "Utilisez les coordonnées du développeur sur l'Apple App Store."],
+      ];
+      if (isHi) return [
+        ['1. लाइसेंस प्रदान', 'आपको ऐप का उपयोग करने के लिए गैर-अनन्य, गैर-हस्तांतरणीय, व्यक्तिगत लाइसेंस दिया गया है।'],
+        ['2. उपयोगकर्ता जिम्मेदारियां', 'केवल वैध उद्देश्यों के लिए ऐप का उपयोग करें। आप अपने उपयोग के सभी परिणामों के लिए जिम्मेदार हैं।'],
+        ['3. बौद्धिक संपदा', 'ऐप के सभी अधिकार डेवलपर के हैं।'],
+        ['4. वारंटी अस्वीकरण', 'ऐप "जैसा है" प्रदान किया जाता है बिना किसी वारंटी के।'],
+        ['5. दायित्व सीमा', 'डेवलपर किसी भी अप्रत्यक्ष या परिणामी हानि के लिए जिम्मेदार नहीं है।'],
+        ['6. Apple के साथ संबंध', 'ये शर्तें केवल आपके और डेवलपर के बीच हैं।'],
+        ['7. शासी कानून', 'ये शर्तें कोरिया गणराज्य के कानूनों के तहत व्याख्या की जाती हैं।'],
+        ['8. संपर्क', 'कृपया Apple App Store में डेवलपर संपर्क का उपयोग करें।'],
       ];
       return [
         ['1. License Grant', 'You are granted a non-exclusive, non-transferable, personal license to use the App.'],

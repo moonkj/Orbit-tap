@@ -20,17 +20,36 @@
   // ── i18n ──────────────────────────────────────────────────
   const HOWTO_HTML = {
     ko: '플로팅 버튼 <b style="color:var(--text)">3번 탭</b> → 제스처 모드 활성화<br>화면에 그라디언트 테두리가 나타나면 아래 제스처를 그리세요<br><span style="font-size:11px;color:var(--text)">· 1탭: 뒤로 · 2탭: 앞으로 · 길게 누르기: 가이드 표시</span>',
-    en: 'Tap the floating button <b style="color:var(--text)">3 times</b> → Gesture mode<br>Draw gestures below when the gradient border appears<br><span style="font-size:11px;color:var(--text)">· 1 tap: Back · 2 taps: Forward · Long press: Guide</span>'
+    en: 'Tap the floating button <b style="color:var(--text)">3 times</b> → Gesture mode<br>Draw gestures below when the gradient border appears<br><span style="font-size:11px;color:var(--text)">· 1 tap: Back · 2 taps: Forward · Long press: Guide</span>',
+    ja: 'フローティングボタンを<b style="color:var(--text)">3回タップ</b> → ジェスチャーモード<br>グラデーションの枠が表示されたらジェスチャーを描画<br><span style="font-size:11px;color:var(--text)">· 1タップ: 戻る · 2タップ: 進む · 長押し: ガイド</span>',
+    zh: '悬浮按钮<b style="color:var(--text)">点击3次</b> → 手势模式<br>出现渐变边框时绘制手势<br><span style="font-size:11px;color:var(--text)">· 1次点击: 后退 · 2次点击: 前进 · 长按: 指南</span>',
+    fr: 'Appuyez <b style="color:var(--text)">3 fois</b> sur le bouton flottant → Mode gestes<br>Dessinez des gestes quand la bordure dégradée apparaît<br><span style="font-size:11px;color:var(--text)">· 1 appui: Retour · 2 appuis: Avancer · Appui long: Guide</span>',
+    hi: 'फ्लोटिंग बटन को <b style="color:var(--text)">3 बार टैप</b> करें → जेस्चर मोड<br>ग्रेडिएंट बॉर्डर दिखने पर जेस्चर बनाएं<br><span style="font-size:11px;color:var(--text)">· 1 टैप: पीछे · 2 टैप: आगे · लंबे समय तक दबाएं: गाइड</span>'
   };
 
   const I18N = {
     ko: { tagline:'Safari 제스처 컨트롤', master_label:'Orbit Tap Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', howto_title:'Orbit Tap 사용법', usage_label:'오늘', gestures_title:'제스처', xshape_label:'탭 닫기', lshape_label:'새 탭 열기', circle_label:'페이지 내 검색', cshape_label:'새로고침 (캐시 무시)', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_size:'크기', opacity:'투명도', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'Orbit Tap v1.0.0' },
-    en: { tagline:'Gesture control for Safari', master_label:'Orbit Tap Extension', master_desc:'Enable all gestures & floating button', howto_title:'HOW TO USE ORBIT TAP', usage_label:'Today', gestures_title:'GESTURES', xshape_label:'Close Tab', lshape_label:'New Tab', circle_label:'Find on Page', cshape_label:'Hard Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'Orbit Tap v1.0.0' }
+    en: { tagline:'Gesture control for Safari', master_label:'Orbit Tap Extension', master_desc:'Enable all gestures & floating button', howto_title:'HOW TO USE ORBIT TAP', usage_label:'Today', gestures_title:'GESTURES', xshape_label:'Close Tab', lshape_label:'New Tab', circle_label:'Find on Page', cshape_label:'Hard Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'Orbit Tap v1.0.0' },
+    ja: { tagline:'Safariジェスチャーコントロール', master_label:'Orbit Tap 拡張機能', master_desc:'すべてのジェスチャーとフローティングボタンを有効化', howto_title:'Orbit Tap の使い方', usage_label:'今日', gestures_title:'ジェスチャー', xshape_label:'タブを閉じる', lshape_label:'新しいタブ', circle_label:'ページ内検索', cshape_label:'再読み込み (キャッシュ無視)', floating_title:'フローティングボタン', show_button:'フローティングボタンを表示', show_button_desc:'すべてのページで素早くアクセス', btn_size:'サイズ', opacity:'不透明度', sensitivity_title:'感度', less_sensitive:'低', more_sensitive:'高', footer:'Orbit Tap v1.0.0' },
+    zh: { tagline:'Safari 手势控制', master_label:'Orbit Tap 扩展', master_desc:'启用所有手势和悬浮按钮', howto_title:'Orbit Tap 使用方法', usage_label:'今天', gestures_title:'手势', xshape_label:'关闭标签页', lshape_label:'新建标签页', circle_label:'页面内搜索', cshape_label:'刷新 (忽略缓存)', floating_title:'悬浮按钮', show_button:'显示悬浮按钮', show_button_desc:'在每个页面快速访问', btn_size:'大小', opacity:'不透明度', sensitivity_title:'灵敏度', less_sensitive:'低', more_sensitive:'高', footer:'Orbit Tap v1.0.0' },
+    fr: { tagline:'Contrôle gestuel pour Safari', master_label:'Extension Orbit Tap', master_desc:'Activer tous les gestes et le bouton flottant', howto_title:'COMMENT UTILISER ORBIT TAP', usage_label:"Aujourd'hui", gestures_title:'GESTES', xshape_label:"Fermer l'onglet", lshape_label:'Nouvel onglet', circle_label:'Rechercher dans la page', cshape_label:'Actualisation forcée', floating_title:'BOUTON FLOTTANT', show_button:'Afficher le bouton flottant', show_button_desc:'Accès rapide sur chaque page', btn_size:'Taille', opacity:'Opacité', sensitivity_title:'SENSIBILITÉ', less_sensitive:'Moins', more_sensitive:'Plus', footer:'Orbit Tap v1.0.0' },
+    hi: { tagline:'Safari के लिए इशारा नियंत्रण', master_label:'Orbit Tap एक्सटेंशन', master_desc:'सभी इशारे और फ्लोटिंग बटन सक्षम करें', howto_title:'Orbit Tap का उपयोग कैसे करें', usage_label:'आज', gestures_title:'इशारे', xshape_label:'टैब बंद करें', lshape_label:'नया टैब', circle_label:'पेज में खोजें', cshape_label:'रीलोड (कैश अनदेखा)', floating_title:'फ्लोटिंग बटन', show_button:'फ्लोटिंग बटन दिखाएं', show_button_desc:'हर पेज पर त्वरित पहुंच', btn_size:'आकार', opacity:'अपारदर्शिता', sensitivity_title:'संवेदनशीलता', less_sensitive:'कम', more_sensitive:'अधिक', footer:'Orbit Tap v1.0.0' }
   };
-  const lang = (() => { const l = (navigator.language || 'en').toLowerCase(); return l.startsWith('ko') ? 'ko' : 'en'; })();
+  const lang = (() => {
+    const l = (navigator.language || 'en').toLowerCase();
+    if (l.startsWith('ko')) return 'ko';
+    if (l.startsWith('ja')) return 'ja';
+    if (l.startsWith('zh')) return 'zh';
+    if (l.startsWith('fr')) return 'fr';
+    if (l.startsWith('hi')) return 'hi';
+    return 'en';
+  })();
   const t = (key) => (I18N[lang] || I18N.en)[key] || I18N.en[key] || key;
-  // i18n helper: 한국어/영어 선택
-  function i18n(ko, en) { return lang === 'ko' ? ko : en; }
+  // i18n helper: select localized string for current lang with en fallback
+  function i18n(ko, en, ja, zh, fr, hi) {
+    const m = { ko, en, ja, zh, fr, hi };
+    return m[lang] || en;
+  }
 
   function applyI18n() {
     const map = { txt_tagline:'tagline', txt_master_label:'master_label', txt_master_desc:'master_desc', txt_howto_title:'howto_title', txt_usage_label:'usage_label', txt_gestures_title:'gestures_title', txt_xshape_label:'xshape_label', txt_lshape_label:'lshape_label', txt_circle_label:'circle_label', txt_cshape_label:'cshape_label', txt_floating_title:'floating_title', txt_show_button:'show_button', txt_show_button_desc:'show_button_desc', txt_btn_size:'btn_size', txt_opacity:'opacity', txt_sensitivity_title:'sensitivity_title', txt_less_sensitive:'less_sensitive', txt_more_sensitive:'more_sensitive', txt_footer:'footer' };
@@ -196,7 +215,7 @@
     if (!card) return;
 
     if (isSub) {
-      card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--green);font-weight:700;">Pro</span> <span style="color:var(--sub);">' + i18n('무제한', 'Unlimited') + '</span></div>';
+      card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--green);font-weight:700;">Pro</span> <span style="color:var(--sub);">' + i18n('무제한', 'Unlimited', '無制限', '无限', 'Illimité', 'असीमित') + '</span></div>';
     } else {
       card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--sub);" id="txt_usage_label">' + t('usage_label') + '</span> <span style="color:var(--text);font-weight:700;">' + count + '</span><span style="color:var(--sub);"> / 10</span></div><button id="subscribeBtn" style="padding:8px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,sans-serif;" >Pro</button>';
       document.getElementById('subscribeBtn')?.addEventListener('click', () => {

@@ -652,8 +652,23 @@
         [GestureType.C_SHAPE]: 'cShape',
     };
     const GESTURE_MODE_DURATION = 5000;
-    function i18n(ko, en) {
-        return (navigator.language || 'en').toLowerCase().startsWith('ko') ? ko : en;
+    function getLang() {
+        const l = (navigator.language || 'en').toLowerCase();
+        if (l.startsWith('ko'))
+            return 'ko';
+        if (l.startsWith('ja'))
+            return 'ja';
+        if (l.startsWith('zh'))
+            return 'zh';
+        if (l.startsWith('fr'))
+            return 'fr';
+        if (l.startsWith('hi'))
+            return 'hi';
+        return 'en';
+    }
+    function i18n(ko, en, ja, zh, fr, hi) {
+        const map = { ko, en, ja, zh, fr, hi };
+        return map[getLang()] || en;
     }
     class GestureEngine {
         constructor(config, intentDetector, usageTracker) {
@@ -702,7 +717,7 @@
             }
             this.gestureMode = true;
             // 토스트
-            this.showToast(i18n('제스처 모드', 'Gesture Mode'), 'bottom');
+            this.showToast(i18n('제스처 모드', 'Gesture Mode', 'ジェスチャーモード', '手势模式', 'Mode gestes', 'जेस्चर मोड'), 'bottom');
             // 오버레이 스타일
             this.overlayStyle = document.createElement('style');
             this.overlayStyle.textContent = `
@@ -908,7 +923,7 @@
                         this.firstStroke = null;
                         this.xStrokeTimer = null;
                     }, this.X_STROKE_TIMEOUT);
-                    this.showToast(i18n('한 획 더 그리세요', 'Draw one more'), 'bottom');
+                    this.showToast(i18n('한 획 더 그리세요', 'Draw one more', 'もう一画描いてください', '再画一笔', 'Dessinez encore un trait', 'एक और रेखा बनाएं'), 'bottom');
                     return;
                 }
             }
@@ -926,14 +941,14 @@
             this.usageTracker.recordUse();
             this.feedback.show(gesture, points);
             const names = {
-                [GestureType.X_SHAPE]: ['X — 탭 닫기', 'X — Close Tab'],
-                [GestureType.L_SHAPE]: ['L — 새 탭 열기', 'L — New Tab'],
-                [GestureType.CIRCLE]: ['○ — 페이지 내 검색', '○ — Find on Page'],
-                [GestureType.C_SHAPE]: ['C — 새로고침', 'C — Hard Refresh'],
+                [GestureType.X_SHAPE]: ['X — 탭 닫기', 'X — Close Tab', 'X — タブを閉じる', 'X — 关闭标签页', "X — Fermer l'onglet", 'X — टैब बंद करें'],
+                [GestureType.L_SHAPE]: ['L — 새 탭 열기', 'L — New Tab', 'L — 新しいタブ', 'L — 新建标签页', 'L — Nouvel onglet', 'L — नया टैब'],
+                [GestureType.CIRCLE]: ['○ — 페이지 내 검색', '○ — Find on Page', '○ — ページ内検索', '○ — 页面内搜索', '○ — Rechercher dans la page', '○ — पेज में खोजें'],
+                [GestureType.C_SHAPE]: ['C — 새로고침', 'C — Hard Refresh', 'C — 再読み込み', 'C — 刷新', 'C — Actualisation forcée', 'C — रीलोड'],
             };
             const label = names[gesture];
             if (label)
-                this.showToast(i18n(label[0], label[1]));
+                this.showToast(i18n(label[0], label[1], label[2], label[3], label[4], label[5]));
             switch (gesture) {
                 case GestureType.X_SHAPE:
                     browser.runtime.sendMessage({ action: 'closeTab' });
@@ -963,22 +978,22 @@
       <div style="background:#1c1c1e;border-radius:16px;padding:28px 24px;max-width:300px;text-align:center;color:#fff;">
         <div style="font-size:32px;margin-bottom:12px;">⚡</div>
         <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
-          ${i18n('오늘 무료 사용 완료', 'Free Limit Reached')}
+          ${i18n('오늘 무료 사용 완료', 'Free Limit Reached', '本日の無料利用上限に達しました', '今日免费使用已达上限', 'Limite gratuite atteinte', 'आज की मुफ्त सीमा पूरी')}
         </div>
         <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
-          ${i18n('무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!', 'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!')}
+          ${i18n('무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!', 'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!', '無料ユーザーは1日10回まで利用できます。\nOrbit Tap Pro を購読すると無制限でご利用いただけます!', '免费用户每天最多使用10次。\n订阅 Orbit Tap Pro 即可无限使用!', "Les utilisateurs gratuits peuvent utiliser jusqu'à 10 fois par jour.\nAbonnez-vous à Orbit Tap Pro pour un accès illimité !", 'मुफ्त उपयोगकर्ता दिन में 10 बार तक उपयोग कर सकते हैं।\nअसीमित पहुंच के लिए Orbit Tap Pro की सदस्यता लें!')}
         </div>
         <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
         <button id="swift-sub-btn" style="
           width:100%;padding:14px;border:none;border-radius:12px;
           background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;
           font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('구독하기', 'Subscribe')}</button>
+        ">${i18n('구독하기', 'Subscribe', '購読する', '订阅', "S'abonner", 'सदस्यता लें')}</button>
         <button id="swift-sub-close" style="
           width:100%;padding:10px;border:none;background:none;
           color:#98989d;font-size:13px;cursor:pointer;margin-top:8px;
           font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('나중에', 'Later')}</button>
+        ">${i18n('나중에', 'Later', 'あとで', '稍后', 'Plus tard', 'बाद में')}</button>
       </div>
     `;
             document.documentElement.appendChild(el);
@@ -1387,47 +1402,69 @@
                 existing.remove();
                 return;
             }
-            const k = (navigator.language || '').startsWith('ko');
+            const lang = (() => {
+                const l = (navigator.language || 'en').toLowerCase();
+                if (l.startsWith('ko'))
+                    return 'ko';
+                if (l.startsWith('ja'))
+                    return 'ja';
+                if (l.startsWith('zh'))
+                    return 'zh';
+                if (l.startsWith('fr'))
+                    return 'fr';
+                if (l.startsWith('hi'))
+                    return 'hi';
+                return 'en';
+            })();
+            const GUIDE = {
+                ko: { title: '제스처 가이드', triTapLbl: '버튼 3번 탭 → 제스처 모드', triTapDesc: '그라디언트 테두리가 나타나면 제스처를 그리세요', xLbl: 'X 모양', xDesc: '현재 탭 닫기', lLbl: 'L 모양', lDesc: '새 탭 열기', circleLbl: '원 그리기', circleDesc: '페이지 내 텍스트 검색', cShapeLbl: 'C 모양', cShapeDesc: '새로고침 (캐시 무시)', footer: '1탭: 뒤로 · 2탭: 앞으로 · 3탭: 제스처 모드 · 꾹: 가이드' },
+                en: { title: 'Gesture Guide', triTapLbl: '3 taps → Gesture mode', triTapDesc: 'Draw gestures when the gradient border appears', xLbl: 'X Shape', xDesc: 'Close current tab', lLbl: 'L Shape', lDesc: 'Open new tab', circleLbl: 'Circle', circleDesc: 'Find text on page', cShapeLbl: 'C Shape', cShapeDesc: 'Hard refresh', footer: '1 tap: back · 2 taps: forward · 3 taps: gesture · hold: guide' },
+                ja: { title: 'ジェスチャーガイド', triTapLbl: 'ボタンを3回タップ → ジェスチャーモード', triTapDesc: 'グラデーションの枠が表示されたらジェスチャーを描画', xLbl: 'X の形', xDesc: '現在のタブを閉じる', lLbl: 'L の形', lDesc: '新しいタブを開く', circleLbl: '円', circleDesc: 'ページ内テキスト検索', cShapeLbl: 'C の形', cShapeDesc: '再読み込み (キャッシュ無視)', footer: '1タップ: 戻る · 2タップ: 進む · 3タップ: ジェスチャー · 長押し: ガイド' },
+                zh: { title: '手势指南', triTapLbl: '点击3次 → 手势模式', triTapDesc: '出现渐变边框时绘制手势', xLbl: 'X 形', xDesc: '关闭当前标签页', lLbl: 'L 形', lDesc: '打开新标签页', circleLbl: '圆形', circleDesc: '页面内文本搜索', cShapeLbl: 'C 形', cShapeDesc: '刷新 (忽略缓存)', footer: '1次: 后退 · 2次: 前进 · 3次: 手势 · 长按: 指南' },
+                fr: { title: 'Guide des gestes', triTapLbl: '3 appuis → Mode gestes', triTapDesc: 'Dessinez des gestes quand la bordure dégradée apparaît', xLbl: 'Forme X', xDesc: "Fermer l'onglet actuel", lLbl: 'Forme L', lDesc: 'Ouvrir un nouvel onglet', circleLbl: 'Cercle', circleDesc: 'Rechercher du texte sur la page', cShapeLbl: 'Forme C', cShapeDesc: 'Actualisation forcée', footer: '1 appui: retour · 2 appuis: avancer · 3 appuis: gestes · appui long: guide' },
+                hi: { title: 'जेस्चर गाइड', triTapLbl: '3 बार टैप → जेस्चर मोड', triTapDesc: 'ग्रेडिएंट बॉर्डर दिखने पर जेस्चर बनाएं', xLbl: 'X आकार', xDesc: 'वर्तमान टैब बंद करें', lLbl: 'L आकार', lDesc: 'नया टैब खोलें', circleLbl: 'वृत्त', circleDesc: 'पेज में टेक्स्ट खोजें', cShapeLbl: 'C आकार', cShapeDesc: 'रीलोड (कैश अनदेखा)', footer: '1 टैप: पीछे · 2 टैप: आगे · 3 टैप: जेस्चर · लंबे समय: गाइड' }
+            };
+            const g = GUIDE[lang] || GUIDE.en;
             this.guideOverlay = document.createElement('div');
             this.guideOverlay.className = 'swift-guide';
             this.guideOverlay.innerHTML = `
-      <h2>Orbit Tap ${k ? '제스처 가이드' : 'Gesture Guide'}</h2>
+      <h2>Orbit Tap ${g.title}</h2>
       <div class="swift-guide-item" style="background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);">
         <div class="swift-guide-icon">👆×3</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">${k ? '버튼 3번 탭 → 제스처 모드' : '3 taps → Gesture mode'}</div>
-          <div class="swift-guide-desc">${k ? '그라디언트 테두리가 나타나면 제스처를 그리세요' : 'Draw gestures when the gradient border appears'}</div>
+          <div class="swift-guide-label">${g.triTapLbl}</div>
+          <div class="swift-guide-desc">${g.triTapDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#FF453A">✕</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">${k ? 'X 모양' : 'X Shape'}</div>
-          <div class="swift-guide-desc">${k ? '현재 탭 닫기' : 'Close current tab'}</div>
+          <div class="swift-guide-label">${g.xLbl}</div>
+          <div class="swift-guide-desc">${g.xDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#30D158">L</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">${k ? 'L 모양' : 'L Shape'}</div>
-          <div class="swift-guide-desc">${k ? '새 탭 열기' : 'Open new tab'}</div>
+          <div class="swift-guide-label">${g.lLbl}</div>
+          <div class="swift-guide-desc">${g.lDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#0A84FF">○</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">${k ? '원 그리기' : 'Circle'}</div>
-          <div class="swift-guide-desc">${k ? '페이지 내 텍스트 검색' : 'Find text on page'}</div>
+          <div class="swift-guide-label">${g.circleLbl}</div>
+          <div class="swift-guide-desc">${g.circleDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
         <div class="swift-guide-icon" style="color:#FF9F0A">C</div>
         <div class="swift-guide-text">
-          <div class="swift-guide-label">${k ? 'C 모양' : 'C Shape'}</div>
-          <div class="swift-guide-desc">${k ? '새로고침 (캐시 무시)' : 'Hard refresh'}</div>
+          <div class="swift-guide-label">${g.cShapeLbl}</div>
+          <div class="swift-guide-desc">${g.cShapeDesc}</div>
         </div>
       </div>
-      <div style="margin-top:8px;color:rgba(255,255,255,0.85);font-size:11px;text-align:center;">${k ? '1탭: 뒤로 · 2탭: 앞으로 · 3탭: 제스처 모드 · 꾹: 가이드' : '1 tap: back · 2 taps: forward · 3 taps: gesture · hold: guide'}</div>
+      <div style="margin-top:8px;color:rgba(255,255,255,0.85);font-size:11px;text-align:center;">${g.footer}</div>
     `;
             this.guideOverlay.addEventListener('click', () => {
                 this.guideOverlay?.remove();
