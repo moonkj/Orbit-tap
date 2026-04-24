@@ -966,7 +966,7 @@
           ${i18n('오늘 무료 사용 완료', 'Free Limit Reached')}
         </div>
         <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
-          ${i18n('무료 사용자는 하루 10회까지 사용할 수 있습니다.\nSWIFT Pro를 구독하면 무제한으로 사용하세요!', 'Free users can use up to 10 times per day.\nSubscribe to SWIFT Pro for unlimited access!')}
+          ${i18n('무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!', 'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!')}
         </div>
         <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
         <button id="swift-sub-btn" style="
@@ -1391,7 +1391,7 @@
             this.guideOverlay = document.createElement('div');
             this.guideOverlay.className = 'swift-guide';
             this.guideOverlay.innerHTML = `
-      <h2>SWIFT ${k ? '제스처 가이드' : 'Gesture Guide'}</h2>
+      <h2>Orbit Tap ${k ? '제스처 가이드' : 'Gesture Guide'}</h2>
       <div class="swift-guide-item" style="background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);">
         <div class="swift-guide-icon">👆×3</div>
         <div class="swift-guide-text">
@@ -1740,7 +1740,7 @@
         }
     }
 
-    class SwiftExtension {
+    class OrbitTapExtension {
         constructor() {
             this.gestureEngine = null;
             this.floatingButton = null;
@@ -1803,7 +1803,7 @@
                         }
                     }
                     catch (err) {
-                        console.error('[SwiftExtension] Failed to apply config update:', err);
+                        console.error('[OrbitTapExtension] Failed to apply config update:', err);
                     }
                 });
                 this.configBridge.startListening();
@@ -1813,7 +1813,7 @@
             }
             catch (err) {
                 // Error boundary: log and degrade gracefully — never crash the page
-                console.error('[SwiftExtension] Initialization failed:', err);
+                console.error('[OrbitTapExtension] Initialization failed:', err);
             }
         }
         destroy() {
@@ -1829,7 +1829,7 @@
             if (ext) {
                 ext.destroy();
             }
-            ext = new SwiftExtension();
+            ext = new OrbitTapExtension();
             ext.init();
         }
         if (document.readyState === 'loading') {

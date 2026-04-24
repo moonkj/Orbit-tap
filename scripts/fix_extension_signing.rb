@@ -17,7 +17,7 @@ ext_target.build_configurations.each do |config|
   s['DEVELOPMENT_TEAM'] = 'QN975MTM7H'
   s['GENERATE_INFOPLIST_FILE'] = 'YES'
   s['INFOPLIST_FILE'] = 'SwiftSafariExtension/Info.plist'
-  s['INFOPLIST_KEY_CFBundleDisplayName'] = 'Swift Gestures'
+  s['INFOPLIST_KEY_CFBundleDisplayName'] = 'Orbit Tap'
   s['INFOPLIST_KEY_NSHumanReadableCopyright'] = ''
   s['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.shadowengine.app.extension'
   s['PRODUCT_NAME'] = '$(TARGET_NAME)'

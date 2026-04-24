@@ -6,14 +6,14 @@ import 'core/l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/router.dart';
 
-class SwiftApp extends ConsumerStatefulWidget {
-  const SwiftApp({super.key});
+class OrbitTapApp extends ConsumerStatefulWidget {
+  const OrbitTapApp({super.key});
 
   @override
-  ConsumerState<SwiftApp> createState() => _SwiftAppState();
+  ConsumerState<OrbitTapApp> createState() => _OrbitTapAppState();
 }
 
-class _SwiftAppState extends ConsumerState<SwiftApp> {
+class _OrbitTapAppState extends ConsumerState<OrbitTapApp> {
   static const _navChannel = MethodChannel('com.swift.app/navigation');
 
   @override
@@ -31,7 +31,7 @@ class _SwiftAppState extends ConsumerState<SwiftApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'SWIFT',
+      title: 'Orbit Tap',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

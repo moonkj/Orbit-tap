@@ -1,4 +1,4 @@
-# Swift – Safari Gesture Control Extension
+# Orbit Tap – Safari Gesture Control Extension
 ## Architecture & Implementation Plan
 
 > **Version:** 1.0 | **Date:** 2026-04-15 | **Author:** Team Leader (Architect)

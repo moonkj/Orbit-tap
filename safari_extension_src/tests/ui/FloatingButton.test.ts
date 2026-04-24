@@ -464,7 +464,7 @@ describe('FloatingButton', () => {
 
       const guide = document.querySelector('.swift-guide');
       expect(guide).not.toBeNull();
-      expect(guide!.textContent).toContain('SWIFT');
+      expect(guide!.textContent).toContain('Orbit Tap');
 
       vi.useRealTimers();
     });

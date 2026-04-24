@@ -420,7 +420,7 @@ export class FloatingButton {
     this.guideOverlay = document.createElement('div');
     this.guideOverlay.className = 'swift-guide';
     this.guideOverlay.innerHTML = `
-      <h2>SWIFT ${k ? '제스처 가이드' : 'Gesture Guide'}</h2>
+      <h2>Orbit Tap ${k ? '제스처 가이드' : 'Gesture Guide'}</h2>
       <div class="swift-guide-item" style="background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);">
         <div class="swift-guide-icon">👆×3</div>
         <div class="swift-guide-text">

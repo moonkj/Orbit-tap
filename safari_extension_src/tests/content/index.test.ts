@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock all dependencies before importing SwiftExtension
+// Mock all dependencies before importing OrbitTapExtension
 vi.mock('../../src/content/gesture/GestureEngine', () => ({
   GestureEngine: vi.fn().mockImplementation(() => ({
     start: vi.fn(),
@@ -78,7 +78,7 @@ import { ConfigBridge } from '../../src/content/config/ConfigBridge';
 import { UsageTracker } from '../../src/content/usage/UsageTracker';
 
 /**
- * SwiftExtension is not exported from content/index.ts. The module auto-runs
+ * OrbitTapExtension is not exported from content/index.ts. The module auto-runs
  * at import time. To test it properly, we extract the class definition.
  * We'll re-import the module after mocking to test the auto-initialization path,
  * and also construct the class manually for unit tests.
@@ -87,7 +87,7 @@ import { UsageTracker } from '../../src/content/usage/UsageTracker';
  * However, the auto-init only runs when window.self === window.top, which is true in jsdom.
  */
 
-describe('content/index.ts — SwiftExtension', () => {
+describe('content/index.ts — OrbitTapExtension', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     document.documentElement.innerHTML = '<head></head><body></body>';
@@ -97,7 +97,7 @@ describe('content/index.ts — SwiftExtension', () => {
     document.documentElement.innerHTML = '';
   });
 
-  describe('SwiftExtension constructor', () => {
+  describe('OrbitTapExtension constructor', () => {
     it('creates ConfigBridge and UsageTracker', async () => {
       vi.resetModules();
       await import('../../src/content/index');

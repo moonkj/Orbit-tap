@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Swift Gestures",
+    "message": "Orbit Tap",
     "description": "확장 프로그램 이름"
   },
   "extensionDescription": {
-    "message": "Safari용 스위프트 제스처 - 직관적인 제스처로 브라우저 탐색",
+    "message": "한 탭으로 페이지 탐색 - 직관적인 제스처로 브라우저 제어",
     "description": "확장 프로그램 설명"
   }
 }

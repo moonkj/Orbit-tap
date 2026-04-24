@@ -5,7 +5,7 @@ import { ExclusionManager } from './exclusion/ExclusionManager';
 import { ConfigBridge } from './config/ConfigBridge';
 import { UsageTracker } from './usage/UsageTracker';
 
-class SwiftExtension {
+class OrbitTapExtension {
   private gestureEngine: GestureEngine | null = null;
   private floatingButton: FloatingButton | null = null;
   private intentDetector: IntentDetector | null = null;
@@ -76,7 +76,7 @@ class SwiftExtension {
             this.floatingButton = null;
           }
         } catch (err) {
-          console.error('[SwiftExtension] Failed to apply config update:', err);
+          console.error('[OrbitTapExtension] Failed to apply config update:', err);
         }
       });
       this.configBridge.startListening();
@@ -86,7 +86,7 @@ class SwiftExtension {
       });
     } catch (err) {
       // Error boundary: log and degrade gracefully — never crash the page
-      console.error('[SwiftExtension] Initialization failed:', err);
+      console.error('[OrbitTapExtension] Initialization failed:', err);
     }
   }
 
@@ -99,11 +99,11 @@ class SwiftExtension {
 
 // iframe 내에서는 실행하지 않음 (중복 플로팅 버튼 방지)
 if (window.self === window.top) {
-  let ext: SwiftExtension | null = null;
+  let ext: OrbitTapExtension | null = null;
 
   function bootstrap() {
     if (ext) { ext.destroy(); }
-    ext = new SwiftExtension();
+    ext = new OrbitTapExtension();
     ext.init();
   }
 

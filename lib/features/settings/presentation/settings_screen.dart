@@ -137,7 +137,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _LegalRow(title: l10n.get('privacyPolicy'), onTap: () => _showLegal(context, l10n, 'privacy')),
               _LegalRow(title: l10n.get('termsOfService'), onTap: () => _showLegal(context, l10n, 'terms')),
               _LegalRow(title: l10n.get('support'), onTap: () {
-                launchUrl(Uri.parse('mailto:imurmkj@naver.com?subject=SWIFT%20Support'));
+                launchUrl(Uri.parse('mailto:imurmkj@naver.com?subject=Orbit%20Tap%20Support'));
               }),
               const SizedBox(height: 24),
 
@@ -305,36 +305,36 @@ class _LegalPage extends StatelessWidget {
 
     if (type == 'privacy') {
       if (isKo) return [
-        ['1. 수집하는 정보', 'SWIFT는 개인정보를 수집하지 않습니다. 이름, 이메일, 위치정보, 기기 식별자, 사용 통계 등 어떤 정보도 수집하지 않습니다.'],
+        ['1. 수집하는 정보', 'Orbit Tap은 개인정보를 수집하지 않습니다. 이름, 이메일, 위치정보, 기기 식별자, 사용 통계 등 어떤 정보도 수집하지 않습니다.'],
         ['2. 로컬 저장소', '제스처 설정과 환경설정만 기기에 저장됩니다. 이 데이터는 기기 외부로 전송되지 않습니다.'],
-        ['3. 네트워크 통신', 'SWIFT는 네트워크 요청을 하지 않습니다. 완전히 오프라인으로 동작합니다.'],
+        ['3. 네트워크 통신', 'Orbit Tap은 네트워크 요청을 하지 않습니다. 완전히 오프라인으로 동작합니다.'],
         ['4. 제3자 서비스', '광고 네트워크, 분석 도구, 소셜 로그인, 제3자 SDK를 사용하지 않습니다.'],
         ['5. 아동 개인정보 보호', '13세 미만 아동의 개인정보를 의도적으로 수집하지 않습니다.'],
         ['6. 정책 변경', '변경사항은 앱 업데이트를 통해 공지합니다.'],
         ['7. 연락처', 'Apple App Store의 개발자 연락처를 이용해 주세요.'],
       ];
       if (isJa) return [
-        ['1. 収集する情報', 'SWIFTは個人情報を収集しません。名前、メール、位置情報、デバイス識別子、使用統計などは一切収集しません。'],
+        ['1. 収集する情報', 'Orbit Tapは個人情報を収集しません。名前、メール、位置情報、デバイス識別子、使用統計などは一切収集しません。'],
         ['2. ローカルストレージ', 'ジェスチャー設定と環境設定のみがデバイスに保存されます。このデータはデバイス外に送信されません。'],
-        ['3. ネットワーク通信', 'SWIFTはネットワークリクエストを行いません。完全にオフラインで動作します。'],
+        ['3. ネットワーク通信', 'Orbit Tapはネットワークリクエストを行いません。完全にオフラインで動作します。'],
         ['4. 第三者サービス', '広告ネットワーク、分析ツール、ソーシャルログイン、第三者SDKは使用しません。'],
         ['5. 子供のプライバシー', '13歳未満の子供の個人情報を意図的に収集しません。'],
         ['6. ポリシーの変更', '変更はアプリのアップデートで通知します。'],
         ['7. 連絡先', 'Apple App Storeの開発者連絡先をご利用ください。'],
       ];
       if (isZh) return [
-        ['1. 收集的信息', 'SWIFT不收集任何个人信息。不收集姓名、邮箱、位置、设备标识或使用统计。'],
+        ['1. 收集的信息', 'Orbit Tap不收集任何个人信息。不收集姓名、邮箱、位置、设备标识或使用统计。'],
         ['2. 本地存储', '仅手势设置和偏好存储在您的设备上。此数据不会离开您的设备。'],
-        ['3. 网络通信', 'SWIFT不发送任何网络请求。完全离线运行。'],
+        ['3. 网络通信', 'Orbit Tap不发送任何网络请求。完全离线运行。'],
         ['4. 第三方服务', '不使用广告网络、分析工具、社交登录或第三方SDK。'],
         ['5. 儿童隐私', '我们不会故意收集13岁以下儿童的个人信息。'],
         ['6. 政策变更', '变更将通过应用更新通知。'],
         ['7. 联系方式', '请使用Apple App Store中的开发者联系方式。'],
       ];
       return [
-        ['1. Information We Collect', 'SWIFT collects no personal information — no names, emails, location data, device identifiers, or usage statistics.'],
+        ['1. Information We Collect', 'Orbit Tap collects no personal information — no names, emails, location data, device identifiers, or usage statistics.'],
         ['2. Local Storage', 'Only gesture settings and preferences are stored on your device. This data never leaves your device.'],
-        ['3. Network Communication', 'SWIFT makes zero network requests. It works fully offline.'],
+        ['3. Network Communication', 'Orbit Tap makes zero network requests. It works fully offline.'],
         ['4. Third-Party Services', 'No advertising networks, analytics tools, social logins, or third-party SDKs are used.'],
         ['5. Children\'s Privacy', 'We do not knowingly collect personal information from children under 13.'],
         ['6. Policy Changes', 'Changes will be announced via app updates.'],

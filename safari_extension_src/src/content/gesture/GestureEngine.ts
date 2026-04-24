@@ -361,8 +361,8 @@ export class GestureEngine {
         </div>
         <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
           ${i18n(
-            '무료 사용자는 하루 10회까지 사용할 수 있습니다.\nSWIFT Pro를 구독하면 무제한으로 사용하세요!',
-            'Free users can use up to 10 times per day.\nSubscribe to SWIFT Pro for unlimited access!'
+            '무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!',
+            'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!'
           )}
         </div>
         <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>

@@ -169,15 +169,15 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     final isKo = l10n.locale.languageCode == 'ko';
     if (type == 'privacy') {
       if (isKo) return [
-        ['1. 수집하는 정보', 'SWIFT는 개인정보를 수집하지 않습니다.'],
+        ['1. 수집하는 정보', 'Orbit Tap은 개인정보를 수집하지 않습니다.'],
         ['2. 로컬 저장소', '제스처 설정만 기기에 저장됩니다.'],
         ['3. 네트워크 통신', '네트워크 요청을 하지 않습니다.'],
         ['4. 연락처', 'Apple App Store의 개발자 연락처를 이용해 주세요.'],
       ];
       return [
-        ['1. Information We Collect', 'SWIFT collects no personal information.'],
+        ['1. Information We Collect', 'Orbit Tap collects no personal information.'],
         ['2. Local Storage', 'Only gesture settings are stored on your device.'],
-        ['3. Network', 'SWIFT makes zero network requests.'],
+        ['3. Network', 'Orbit Tap makes zero network requests.'],
         ['4. Contact', 'Please use the developer contact in the App Store.'],
       ];
     } else {

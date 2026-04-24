@@ -1,4 +1,4 @@
-# Tasklist - Swift Safari Gesture Control Extension
+# Tasklist - Orbit Tap Safari Gesture Control Extension
 
 > 리더 및 모든 Teammate가 공동으로 추적하는 진행상황 문서
 

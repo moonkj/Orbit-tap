@@ -1,11 +1,11 @@
-# SWIFT - Safari Gesture Extension 개발 프로세스
+# Orbit Tap - Safari Gesture Extension 개발 프로세스
 
 > 구현 단계가 진행될 때마다 업데이트되며, 각 단계 완료 시 GitHub 커밋
 
 ---
 
 ## 프로젝트 개요
-- **앱 이름**: SWIFT
+- **앱 이름**: Orbit Tap
 - **플랫폼**: iOS Safari Extension (Flutter + TypeScript + Swift)
 - **Bundle ID**: com.shadowengine.app
 - **구독**: $0.99/월 (무료 10회/일)
@@ -229,8 +229,8 @@ StoreKit 구매 성공 후 팝업에서 "Pro 무제한" 표시 안 됨
   - 구독 설명 예: "무제한 제스처 사용, 하루 10회 제한 해제"
 
 **2. 구독 그룹 현지화 (핵심 누락 지점)**
-- SWIFT Pro 그룹 자체 현지화가 별도로 필요
-- 6개 언어 × 표시 이름 `SWIFT Pro`
+- Orbit Tap Pro 그룹 자체 현지화가 별도로 필요
+- 6개 언어 × 표시 이름 `Orbit Tap Pro`
 - 이 작업 후 상태: "메타데이터 누락됨" → **"제출 준비 완료"**
 
 **3. 빌드 번호 상승 + 재빌드**
@@ -240,7 +240,7 @@ StoreKit 구매 성공 후 팝업에서 "Pro 무제한" 표시 안 됨
 
 **4. 앱 버전에 IAP 연결**
 - App Store 버전 1.0.0 페이지 하단 "앱 내 구입 및 구독" 섹션
-- ➕ → SWIFT Pro Monthly 체크
+- ➕ → Orbit Tap Pro Monthly 체크
 
 **5. 심사 재제출**
 

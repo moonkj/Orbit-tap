@@ -20,7 +20,7 @@ void main() {
     testWidgets('renders app title', (tester) async {
       await tester.pumpWidget(testApp(const SettingsScreen()));
       await tester.pumpAndSettle();
-      expect(find.text('Swift'), findsOneWidget);
+      expect(find.text('Orbit Tap'), findsOneWidget);
     });
 
     testWidgets('shows gesture toggles', (tester) async {
@@ -54,7 +54,7 @@ void main() {
     testWidgets('renders first page', (tester) async {
       await tester.pumpWidget(testApp(const OnboardingScreen()));
       await tester.pumpAndSettle();
-      expect(find.text('Swift'), findsOneWidget);
+      expect(find.text('Orbit Tap'), findsOneWidget);
     });
 
     testWidgets('has next button', (tester) async {
@@ -73,14 +73,14 @@ void main() {
   group('AppLocalizations', () {
     test('English locale returns correct values', () {
       final l10n = AppLocalizations(const Locale('en'));
-      expect(l10n.get('appName'), 'Swift');
+      expect(l10n.get('appName'), 'Orbit Tap');
       expect(l10n.get('settings'), 'Settings');
       expect(l10n.get('gestures'), 'Gestures');
     });
 
     test('Korean locale returns correct values', () {
       final l10n = AppLocalizations(const Locale('ko'));
-      expect(l10n.get('appName'), 'Swift');
+      expect(l10n.get('appName'), 'Orbit Tap');
       expect(l10n.get('settings'), '설정');
       expect(l10n.get('gestures'), '제스처');
     });
