@@ -18,6 +18,11 @@
   };
 
   // ── i18n ──────────────────────────────────────────────────
+  const HOWTO_HTML = {
+    ko: '플로팅 버튼 <b style="color:var(--text)">3번 탭</b> → 제스처 모드 활성화<br>파란 테두리가 나타나면 아래 제스처를 그리세요<br><span style="font-size:11px;color:var(--text)">· 1탭: 뒤로 · 2탭: 앞으로 · 길게 누르기: 가이드 표시</span>',
+    en: 'Tap the floating button <b style="color:var(--text)">3 times</b> → Gesture mode<br>Draw gestures below when blue border appears<br><span style="font-size:11px;color:var(--text)">· 1 tap: Back · 2 taps: Forward · Long press: Guide</span>'
+  };
+
   const I18N = {
     ko: { tagline:'Safari 제스처 컨트롤', master_label:'Orbit Tap Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', howto_title:'제스처 사용법', usage_label:'오늘', gestures_title:'제스처', xshape_label:'탭 닫기', lshape_label:'새 탭 열기', circle_label:'페이지 내 검색', cshape_label:'새로고침 (캐시 무시)', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_size:'크기', opacity:'투명도', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'Orbit Tap v1.0.0' },
     en: { tagline:'Gesture control for Safari', master_label:'Orbit Tap Extension', master_desc:'Enable all gestures & floating button', howto_title:'GESTURE USAGE', usage_label:'Today', gestures_title:'GESTURES', xshape_label:'Close Tab', lshape_label:'New Tab', circle_label:'Find on Page', cshape_label:'Hard Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'Orbit Tap v1.0.0' }
@@ -33,6 +38,8 @@
       const el = document.getElementById(id);
       if (el) el.textContent = t(key);
     }
+    const howtoBody = document.getElementById('txt_howto_body');
+    if (howtoBody) howtoBody.innerHTML = HOWTO_HTML[lang] || HOWTO_HTML.en;
   }
 
   // ── Scrolly send() ────────────────────────────────────────
