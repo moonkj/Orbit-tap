@@ -19,8 +19,8 @@
 
   // ── i18n ──────────────────────────────────────────────────
   const HOWTO_HTML = {
-    ko: '플로팅 버튼 <b style="color:var(--text)">3번 탭</b> → 제스처 모드 활성화<br>파란 테두리가 나타나면 아래 제스처를 그리세요<br><span style="font-size:11px;color:var(--text)">· 1탭: 뒤로 · 2탭: 앞으로 · 길게 누르기: 가이드 표시</span>',
-    en: 'Tap the floating button <b style="color:var(--text)">3 times</b> → Gesture mode<br>Draw gestures below when blue border appears<br><span style="font-size:11px;color:var(--text)">· 1 tap: Back · 2 taps: Forward · Long press: Guide</span>'
+    ko: '플로팅 버튼 <b style="color:var(--text)">3번 탭</b> → 제스처 모드 활성화<br>화면에 그라디언트 테두리가 나타나면 아래 제스처를 그리세요<br><span style="font-size:11px;color:var(--text)">· 1탭: 뒤로 · 2탭: 앞으로 · 길게 누르기: 가이드 표시</span>',
+    en: 'Tap the floating button <b style="color:var(--text)">3 times</b> → Gesture mode<br>Draw gestures below when the gradient border appears<br><span style="font-size:11px;color:var(--text)">· 1 tap: Back · 2 taps: Forward · Long press: Guide</span>'
   };
 
   const I18N = {
