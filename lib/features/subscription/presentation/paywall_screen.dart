@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/platform_channel.dart';
+import '../domain/subscription_service.dart';
 
 final purchaseLoadingProvider = StateProvider<bool>((ref) => false);
 final priceProvider = StateProvider<String>((ref) => '');
@@ -246,7 +247,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   Future<void> _purchase(BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     ref.read(purchaseLoadingProvider.notifier).state = true;
     try {
-      final success = await PlatformChannel.purchase('com.swift.app.monthly');
+      final success = await ref.read(subscriptionProvider.notifier).purchase();
       if (context.mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -282,7 +283,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   Future<void> _restore(BuildContext context, WidgetRef ref, AppLocalizations l10n) async {
     ref.read(purchaseLoadingProvider.notifier).state = true;
     try {
-      final success = await PlatformChannel.restorePurchases();
+      final success = await ref.read(subscriptionProvider.notifier).restore();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -293,6 +294,12 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         if (success) {
           if (Navigator.of(context).canPop()) Navigator.of(context).pop(); else context.go('/');
         }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${l10n.get('purchaseFailed')}: $e')),
+        );
       }
     } finally {
       ref.read(purchaseLoadingProvider.notifier).state = false;

@@ -115,9 +115,14 @@ async function handleRestoreTab(): Promise<{ success: boolean; url?: string }> {
 }
 
 async function handleGetSubscription(): Promise<{ isActive: boolean }> {
-  // chrome.runtime.sendNativeMessage 시도 (Manifest V3 background)
+  // Use the in-memory cache when fresh — avoids spamming the native bridge
+  // for every popup open / content script. TTL is short enough that
+  // cancellations propagate within minutes.
+  if (subscriptionCache && Date.now() - subscriptionCache.checkedAt < SUBSCRIPTION_CACHE_TTL) {
+    return { isActive: subscriptionCache.isActive };
+  }
+
   const g = globalThis as any;
-  // chrome API만 사용 (ShieldMail 패턴)
   const sendNative = g.chrome?.runtime?.sendNativeMessage;
 
   if (typeof sendNative === 'function') {
@@ -127,8 +132,13 @@ async function handleGetSubscription(): Promise<{ isActive: boolean }> {
         new Promise((_, reject) => setTimeout(() => reject('timeout'), 3000))
       ]);
       const isActive = result?.isActive === true || result?.tier === 'pro';
+      subscriptionCache = { isActive, checkedAt: Date.now() };
       const debugRaw = result ? JSON.stringify(result).slice(0, 200) : 'undefined';
-      await browser.storage.local.set({ subscriptionActive: isActive, subscriptionDebug: { src: 'ok', active: isActive, type: typeof result, raw: debugRaw } });
+      await browser.storage.local.set({
+        subscriptionActive: isActive,
+        subscriptionCheckedAt: Date.now(),
+        subscriptionDebug: { src: 'ok', active: isActive, type: typeof result, raw: debugRaw },
+      });
       return { isActive };
     } catch (e: any) {
       await browser.storage.local.set({ subscriptionDebug: { src: 'err', err: String(e) } });
@@ -137,9 +147,15 @@ async function handleGetSubscription(): Promise<{ isActive: boolean }> {
     await browser.storage.local.set({ subscriptionDebug: { src: 'no_api' } });
   }
 
-  // fallback: storage
+  // Native call failed. Fall back to last-known storage value, but only if
+  // it's recent enough — never trust stale 'subscriptionActive' indefinitely.
   try {
-    const stored = await browser.storage.local.get('subscriptionActive');
+    const stored = await browser.storage.local.get(['subscriptionActive', 'subscriptionCheckedAt']);
+    const checkedAt = stored?.subscriptionCheckedAt ?? 0;
+    const isStale = Date.now() - checkedAt > 24 * 60 * 60 * 1000;
+    if (isStale) {
+      return { isActive: false };
+    }
     return { isActive: stored?.subscriptionActive === true };
   } catch {
     return { isActive: false };

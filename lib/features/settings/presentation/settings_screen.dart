@@ -5,34 +5,17 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/platform_channel.dart';
+import '../../subscription/domain/subscription_service.dart';
 
-final isProProvider = StateProvider<bool>((ref) => false);
-
-class SettingsScreen extends ConsumerStatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _checkSubscription();
-  }
-
-  Future<void> _checkSubscription() async {
-    final active = await PlatformChannel.isSubscriptionActive();
-    if (mounted) ref.read(isProProvider.notifier).state = active;
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final isPro = ref.watch(isProProvider);
+    final subState = ref.watch(subscriptionProvider);
+    final isPro = subState == SubscriptionState.premium;
 
     return Scaffold(
       body: SafeArea(
@@ -108,7 +91,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           child: FilledButton.icon(
                             onPressed: () async {
                               await context.push('/subscribe');
-                              _checkSubscription();
+                              if (context.mounted) {
+                                ref.read(subscriptionProvider.notifier).checkStatus();
+                              }
                             },
                             icon: const Icon(Icons.workspace_premium),
                             label: Text(l10n.get('upgrade'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -121,8 +106,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () async {
-                            await PlatformChannel.restorePurchases();
-                            _checkSubscription();
+                            await ref.read(subscriptionProvider.notifier).restore();
                           },
                           child: Text(l10n.get('restore'), style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
                         ),
