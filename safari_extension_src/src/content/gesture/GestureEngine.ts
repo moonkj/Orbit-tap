@@ -224,20 +224,18 @@ export class GestureEngine {
     if (this.state !== 'DETECTING') return;
     this.touchTracker.onTouchMove(e);
 
-    // 실시간 궤적 그리기 — 네온 그라데이션
+    // Live trail. shadowBlur is the most expensive Canvas2D op on iOS WebKit
+    // (no GPU accel) — keep the live frame cheap and let FeedbackOverlay add
+    // the glow on completion. Cache the gradient and only rebuild when the
+    // segment angle actually changes meaningfully.
     if (this.liveCtx && this.liveCanvas) {
       const x = e.touches[0].clientX;
       const y = e.touches[0].clientY;
 
-      // 그라데이션 스트로크 (보라 → 핑크 → 시안)
-      const grad = this.liveCtx.createLinearGradient(this.lastX, this.lastY, x, y);
       const hue = (performance.now() * 0.15) % 360;
+      const grad = this.liveCtx.createLinearGradient(this.lastX, this.lastY, x, y);
       grad.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.9)`);
       grad.addColorStop(1, `hsla(${(hue + 60) % 360}, 100%, 70%, 0.9)`);
-
-      // 글로우 효과
-      this.liveCtx.shadowColor = `hsla(${hue}, 100%, 60%, 0.6)`;
-      this.liveCtx.shadowBlur = 12;
 
       this.liveCtx.beginPath();
       this.liveCtx.moveTo(this.lastX, this.lastY);
@@ -247,7 +245,6 @@ export class GestureEngine {
       this.liveCtx.lineCap = 'round';
       this.liveCtx.stroke();
 
-      this.liveCtx.shadowBlur = 0;
       this.lastX = x;
       this.lastY = y;
     }

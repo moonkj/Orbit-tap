@@ -26,6 +26,17 @@ const DEFAULT_CONFIG: GestureConfig = {
 export class ConfigBridge {
   private config: GestureConfig | null = null;
   private configChangeCallbacks: Array<(config: GestureConfig) => void> = [];
+  private lastNotifiedSig: string = '';
+
+  /** Suppress duplicate notifications when the popup pushes via multiple
+   *  paths (sendMessage + storage.set + saveConfig relay). All three
+   *  surfaces converge here; we only want callbacks once per real change. */
+  private notifyIfChanged(next: GestureConfig): void {
+    const sig = JSON.stringify(next);
+    if (sig === this.lastNotifiedSig) return;
+    this.lastNotifiedSig = sig;
+    this.configChangeCallbacks.forEach(cb => cb(next));
+  }
 
   async loadConfig(): Promise<GestureConfig> {
     try {
@@ -82,7 +93,7 @@ export class ConfigBridge {
           browser.storage.local.set(toSave).catch(() => {});
         } catch {}
 
-        this.configChangeCallbacks.forEach(cb => cb(this.config!));
+        this.notifyIfChanged(this.config);
       }
     });
 
@@ -90,7 +101,7 @@ export class ConfigBridge {
       browser.storage.onChanged.addListener((changes: any, areaName: string) => {
         if (areaName === 'local' && changes.gestureConfig?.newValue) {
           this.config = { ...DEFAULT_CONFIG, ...changes.gestureConfig.newValue };
-          this.configChangeCallbacks.forEach(cb => cb(this.config!));
+          this.notifyIfChanged(this.config);
         }
       });
     } catch {}

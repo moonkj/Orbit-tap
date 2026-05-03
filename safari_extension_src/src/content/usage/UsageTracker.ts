@@ -53,6 +53,8 @@ function defaultData(): UsageData {
 
 export class UsageTracker {
   private data: UsageData = defaultData();
+  private saveTimer: number | null = null;
+  private readonly SAVE_DEBOUNCE_MS = 400;
 
   /** storage 변경 실시간 감지 */
   startListening(): void {
@@ -154,7 +156,7 @@ export class UsageTracker {
       this.data.totalFreeCount++;
       this.data.weekFreeCount++;
     }
-    await this.save();
+    this.scheduleSave();
   }
 
   isSubscribed(): boolean {
@@ -179,6 +181,14 @@ export class UsageTracker {
   async resetStats(): Promise<void> {
     this.data = defaultData();
     await this.save();
+  }
+
+  private scheduleSave(): void {
+    if (this.saveTimer !== null) return;
+    this.saveTimer = (globalThis as any).setTimeout(() => {
+      this.saveTimer = null;
+      this.save();
+    }, this.SAVE_DEBOUNCE_MS);
   }
 
   private async save(): Promise<void> {
