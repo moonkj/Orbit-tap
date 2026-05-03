@@ -34,7 +34,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       // Scroll down to reveal subscription section
-      await tester.drag(find.byType(ListView), const Offset(0, -600));
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -600));
       await tester.pump();
       expect(find.text('Subscription'), findsOneWidget);
     });
@@ -44,7 +44,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       // Scroll to floating button section
-      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -300));
       await tester.pump();
       expect(find.text('Floating Button'), findsWidgets);
     });

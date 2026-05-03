@@ -1,5 +1,6 @@
 import type { GestureConfig } from '../config/ConfigBridge';
 import type { UsageTracker } from '../usage/UsageTracker';
+import { showSubscriptionPrompt } from './SubscriptionPrompt';
 
 type ButtonAction = 'gesture' | 'back' | 'forward' | 'gestureGuide';
 type GestureActivator = () => void;
@@ -372,9 +373,21 @@ export class FloatingButton {
     this.usageTracker = tracker;
   }
 
-  private executeTapAction(action: ButtonAction): void {
-    // 사용량 기록 (가이드 제외, 비동기 — 블로킹 없음)
-    if (action !== 'gestureGuide' && this.usageTracker) {
+  private async executeTapAction(action: ButtonAction): Promise<void> {
+    // gestureGuide는 무료 한도와 무관 (도움말 표시일 뿐)
+    if (action === 'gestureGuide') {
+      this.showGestureGuide();
+      return;
+    }
+
+    // gesture는 GestureEngine.activateGestureMode 안에서 한도 체크
+    // back/forward는 여기서 직접 한도 체크 + 차단
+    if (action !== 'gesture' && this.usageTracker) {
+      await this.usageTracker.refresh();
+      if (!this.usageTracker.canUse()) {
+        showSubscriptionPrompt();
+        return;
+      }
       this.usageTracker.recordUse();
     }
 
@@ -387,9 +400,6 @@ export class FloatingButton {
         break;
       case 'forward':
         browser.runtime.sendMessage({ action: 'navigate', direction: 'forward' });
-        break;
-      case 'gestureGuide':
-        this.showGestureGuide();
         break;
     }
   }

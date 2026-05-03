@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/platform_channel.dart';
-import '../../settings/presentation/settings_screen.dart';
 
 final purchaseLoadingProvider = StateProvider<bool>((ref) => false);
 final priceProvider = StateProvider<String>((ref) => '');
@@ -78,7 +77,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               _BenefitItem(icon: Icons.refresh, text: l10n.get('cShapeRefresh')),
               const SizedBox(height: 28),
 
-              Text(price.isNotEmpty ? '$price / ${l10n.locale.languageCode == 'ko' ? '월' : 'month'}' : '',
+              Text(price.isNotEmpty ? '$price / ${_monthLabel(l10n.locale.languageCode)}' : '',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary)),
               const SizedBox(height: 6),
               Text(l10n.get('monthlyPrice'),
@@ -261,11 +260,22 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('${l10n.get('purchaseFailed')}: $e')),
         );
       }
     } finally {
       ref.read(purchaseLoadingProvider.notifier).state = false;
+    }
+  }
+
+  String _monthLabel(String code) {
+    switch (code) {
+      case 'ko': return '월';
+      case 'ja': return '月';
+      case 'zh': return '月';
+      case 'fr': return 'mois';
+      case 'hi': return 'महीना';
+      default: return 'month';
     }
   }
 

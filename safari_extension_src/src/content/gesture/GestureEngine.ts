@@ -3,6 +3,7 @@ import { ShapeDetector, GestureType } from './ShapeDetector';
 import { IntentDetector } from '../intent/IntentDetector';
 import { FeedbackOverlay } from '../ui/FeedbackOverlay';
 import { SearchOverlay } from '../ui/SearchOverlay';
+import { showSubscriptionPrompt } from '../ui/SubscriptionPrompt';
 import { UsageTracker } from '../usage/UsageTracker';
 import type { GestureConfig } from '../config/ConfigBridge';
 
@@ -357,49 +358,6 @@ export class GestureEngine {
   }
 
   private showSubscriptionPrompt(): void {
-    const el = document.createElement('div');
-    el.style.cssText = `
-      position:fixed; top:0; left:0; right:0; bottom:0;
-      z-index:2147483647; display:flex; align-items:center; justify-content:center;
-      background:rgba(0,0,0,0.6);
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-    `;
-    el.innerHTML = `
-      <div style="background:#1c1c1e;border-radius:16px;padding:28px 24px;max-width:300px;text-align:center;color:#fff;">
-        <div style="font-size:32px;margin-bottom:12px;">⚡</div>
-        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
-          ${i18n('오늘 무료 사용 완료', 'Free Limit Reached', '本日の無料利用上限に達しました', '今日免费使用已达上限', 'Limite gratuite atteinte', 'आज की मुफ्त सीमा पूरी')}
-        </div>
-        <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
-          ${i18n(
-            '무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!',
-            'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!',
-            '無料ユーザーは1日10回まで利用できます。\nOrbit Tap Pro を購読すると無制限でご利用いただけます!',
-            '免费用户每天最多使用10次。\n订阅 Orbit Tap Pro 即可无限使用!',
-            "Les utilisateurs gratuits peuvent utiliser jusqu'à 10 fois par jour.\nAbonnez-vous à Orbit Tap Pro pour un accès illimité !",
-            'मुफ्त उपयोगकर्ता दिन में 10 बार तक उपयोग कर सकते हैं।\nअसीमित पहुंच के लिए Orbit Tap Pro की सदस्यता लें!'
-          )}
-        </div>
-        <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
-        <button id="swift-sub-btn" style="
-          width:100%;padding:14px;border:none;border-radius:12px;
-          background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;
-          font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('구독하기', 'Subscribe', '購読する', '订阅', "S'abonner", 'सदस्यता लें')}</button>
-        <button id="swift-sub-close" style="
-          width:100%;padding:10px;border:none;background:none;
-          color:#98989d;font-size:13px;cursor:pointer;margin-top:8px;
-          font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('나중에', 'Later', 'あとで', '稍后', 'Plus tard', 'बाद में')}</button>
-      </div>
-    `;
-    document.documentElement.appendChild(el);
-
-    el.querySelector('#swift-sub-close')?.addEventListener('click', () => el.remove());
-    el.querySelector('#swift-sub-btn')?.addEventListener('click', () => {
-      // ShieldMail 패턴: URL scheme으로 앱 구독 화면 열기
-      window.location.href = 'swiftgesture://subscribe';
-      el.remove();
-    });
+    showSubscriptionPrompt();
   }
 }

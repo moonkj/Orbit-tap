@@ -14,9 +14,9 @@ export interface UsageData {
   _sig?: string;
 }
 
-/** 간단 서명: storage 변조 방지 (콘솔에서 isSubscribed 직접 수정 차단) */
+/** Storage tamper guard. Covers count, totalFreeCount, weekFreeCount, monthSubDays — all enforcement-relevant fields. */
 function computeSignature(data: UsageData): string {
-  const raw = `${SIGN_SALT}:${data.isSubscribed}:${data.date}:${data.count}`;
+  const raw = `${SIGN_SALT}:${data.isSubscribed}:${data.date}:${data.count}:${data.weekStart}:${data.weekFreeCount}:${data.totalFreeCount}:${data.monthKey}:${data.monthSubDays}`;
   let h = 0;
   for (let i = 0; i < raw.length; i++) {
     h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
@@ -24,18 +24,23 @@ function computeSignature(data: UsageData): string {
   return h.toString(36);
 }
 
+function pad2(n: number): string { return n < 10 ? `0${n}` : `${n}`; }
+
+/** Local-timezone YYYY-MM-DD so the daily reset matches the user's wall clock. */
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 function weekStart(): string {
   const d = new Date();
   d.setDate(d.getDate() - d.getDay());
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 function monthKey(): string {
-  return new Date().toISOString().slice(0, 7);
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
 }
 
 function defaultData(): UsageData {
@@ -66,9 +71,12 @@ export class UsageTracker {
       const stored = await browser.storage.local.get(USAGE_KEY);
       if (stored?.[USAGE_KEY]) {
         const loaded = { ...defaultData(), ...stored[USAGE_KEY] };
-        // 서명 검증: 변조된 경우 구독 상태 무효화
-        if (loaded.isSubscribed && loaded._sig !== computeSignature(loaded)) {
+        // Verify signature for ALL data, not just subscribed.
+        // If tampered: drop subscription claim AND reset count to today's max
+        // (treat as already at limit — fail closed, never bypass paywall).
+        if (loaded._sig !== computeSignature(loaded)) {
           loaded.isSubscribed = false;
+          loaded.count = DAILY_FREE_LIMIT;
         }
         this.data = loaded;
       }

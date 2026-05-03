@@ -349,9 +349,9 @@
     } catch(_) {}
   }
 
-  // UsageTracker와 동일한 서명 알고리즘 (변조 방지)
+  // Mirror of UsageTracker.computeSignature — must match field-for-field.
   function computeSig(data) {
-    const raw = `sw1ft_2026:${data.isSubscribed}:${data.date}:${data.count}`;
+    const raw = `sw1ft_2026:${data.isSubscribed}:${data.date}:${data.count}:${data.weekStart || ''}:${data.weekFreeCount || 0}:${data.totalFreeCount || 0}:${data.monthKey || ''}:${data.monthSubDays || 0}`;
     let h = 0;
     for (let i = 0; i < raw.length; i++) { h = ((h << 5) - h + raw.charCodeAt(i)) | 0; }
     return h.toString(36);

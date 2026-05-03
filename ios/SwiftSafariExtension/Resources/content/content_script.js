@@ -645,6 +645,85 @@
         }
     }
 
+    function getLang$1() {
+        const l = (navigator.language || 'en').toLowerCase();
+        if (l.startsWith('ko'))
+            return 'ko';
+        if (l.startsWith('ja'))
+            return 'ja';
+        if (l.startsWith('zh'))
+            return 'zh';
+        if (l.startsWith('fr'))
+            return 'fr';
+        if (l.startsWith('hi'))
+            return 'hi';
+        return 'en';
+    }
+    function tr(ko, en, ja, zh, fr, hi) {
+        const map = { ko, en, ja, zh, fr, hi };
+        return map[getLang$1()] || en;
+    }
+    const TITLE_BY_LANG = {
+        ko: '오늘 무료 사용 완료',
+        en: 'Free Limit Reached',
+        ja: '本日の無料利用上限に達しました',
+        zh: '今日免费使用已达上限',
+        fr: 'Limite gratuite atteinte',
+        hi: 'आज की मुफ्त सीमा पूरी',
+    };
+    const BODY_BY_LANG = {
+        ko: '무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!',
+        en: 'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!',
+        ja: '無料ユーザーは1日10回まで利用できます。\nOrbit Tap Pro を購読すると無制限でご利用いただけます!',
+        zh: '免费用户每天最多使用10次。\n订阅 Orbit Tap Pro 即可无限使用!',
+        fr: "Les utilisateurs gratuits peuvent utiliser jusqu'à 10 fois par jour.\nAbonnez-vous à Orbit Tap Pro pour un accès illimité !",
+        hi: 'मुफ्त उपयोगकर्ता दिन में 10 बार तक उपयोग कर सकते हैं।\nअसीमित पहुंच के लिए Orbit Tap Pro की सदस्यता लें!',
+    };
+    let activePrompt = null;
+    function showSubscriptionPrompt() {
+        if (activePrompt)
+            return;
+        const lang = getLang$1();
+        const el = document.createElement('div');
+        el.style.cssText = `
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    z-index:2147483647; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.6);
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    padding: 24px;
+  `;
+        el.innerHTML = `
+    <div style="background:#1c1c1e;border-radius:16px;padding:28px 24px;max-width:340px;width:100%;text-align:center;color:#fff;">
+      <div style="font-size:32px;margin-bottom:12px;">⚡</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
+        ${TITLE_BY_LANG[lang] || TITLE_BY_LANG.en}
+      </div>
+      <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;white-space:pre-line;">
+        ${BODY_BY_LANG[lang] || BODY_BY_LANG.en}
+      </div>
+      <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
+      <button id="swift-sub-btn" style="
+        width:100%;padding:14px;border:none;border-radius:12px;
+        background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;
+        font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      ">${tr('구독하기', 'Subscribe', '購読する', '订阅', "S'abonner", 'सदस्यता लें')}</button>
+      <button id="swift-sub-close" style="
+        width:100%;padding:14px;border:none;background:none;
+        color:#98989d;font-size:14px;cursor:pointer;margin-top:8px;
+        font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      ">${tr('나중에', 'Later', 'あとで', '稍后', 'Plus tard', 'बाद में')}</button>
+    </div>
+  `;
+        document.documentElement.appendChild(el);
+        activePrompt = el;
+        const dismiss = () => { el.remove(); activePrompt = null; };
+        el.querySelector('#swift-sub-close')?.addEventListener('click', dismiss);
+        el.querySelector('#swift-sub-btn')?.addEventListener('click', () => {
+            window.location.href = 'swiftgesture://subscribe';
+            dismiss();
+        });
+    }
+
     const GESTURE_CONFIG_KEY = {
         [GestureType.X_SHAPE]: 'xShape',
         [GestureType.L_SHAPE]: 'lShape',
@@ -967,42 +1046,7 @@
             this.cooldownTimer = window.setTimeout(() => { this.state = 'IDLE'; this.cooldownTimer = null; }, 500);
         }
         showSubscriptionPrompt() {
-            const el = document.createElement('div');
-            el.style.cssText = `
-      position:fixed; top:0; left:0; right:0; bottom:0;
-      z-index:2147483647; display:flex; align-items:center; justify-content:center;
-      background:rgba(0,0,0,0.6);
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-    `;
-            el.innerHTML = `
-      <div style="background:#1c1c1e;border-radius:16px;padding:28px 24px;max-width:300px;text-align:center;color:#fff;">
-        <div style="font-size:32px;margin-bottom:12px;">⚡</div>
-        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">
-          ${i18n('오늘 무료 사용 완료', 'Free Limit Reached', '本日の無料利用上限に達しました', '今日免费使用已达上限', 'Limite gratuite atteinte', 'आज की मुफ्त सीमा पूरी')}
-        </div>
-        <div style="font-size:13px;color:#98989d;margin-bottom:20px;line-height:1.5;">
-          ${i18n('무료 사용자는 하루 10회까지 사용할 수 있습니다.\nOrbit Tap Pro를 구독하면 무제한으로 사용하세요!', 'Free users can use up to 10 times per day.\nSubscribe to Orbit Tap Pro for unlimited access!', '無料ユーザーは1日10回まで利用できます。\nOrbit Tap Pro を購読すると無制限でご利用いただけます!', '免费用户每天最多使用10次。\n订阅 Orbit Tap Pro 即可无限使用!', "Les utilisateurs gratuits peuvent utiliser jusqu'à 10 fois par jour.\nAbonnez-vous à Orbit Tap Pro pour un accès illimité !", 'मुफ्त उपयोगकर्ता दिन में 10 बार तक उपयोग कर सकते हैं।\nअसीमित पहुंच के लिए Orbit Tap Pro की सदस्यता लें!')}
-        </div>
-        <div style="font-size:22px;font-weight:700;color:#0a84ff;margin-bottom:16px;">Pro</div>
-        <button id="swift-sub-btn" style="
-          width:100%;padding:14px;border:none;border-radius:12px;
-          background:#0a84ff;color:#fff;font-size:16px;font-weight:600;cursor:pointer;
-          font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('구독하기', 'Subscribe', '購読する', '订阅', "S'abonner", 'सदस्यता लें')}</button>
-        <button id="swift-sub-close" style="
-          width:100%;padding:10px;border:none;background:none;
-          color:#98989d;font-size:13px;cursor:pointer;margin-top:8px;
-          font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-        ">${i18n('나중에', 'Later', 'あとで', '稍后', 'Plus tard', 'बाद में')}</button>
-      </div>
-    `;
-            document.documentElement.appendChild(el);
-            el.querySelector('#swift-sub-close')?.addEventListener('click', () => el.remove());
-            el.querySelector('#swift-sub-btn')?.addEventListener('click', () => {
-                // ShieldMail 패턴: URL scheme으로 앱 구독 화면 열기
-                window.location.href = 'swiftgesture://subscribe';
-                el.remove();
-            });
+            showSubscriptionPrompt();
         }
     }
 
@@ -1358,9 +1402,20 @@
         setUsageTracker(tracker) {
             this.usageTracker = tracker;
         }
-        executeTapAction(action) {
-            // 사용량 기록 (가이드 제외, 비동기 — 블로킹 없음)
-            if (action !== 'gestureGuide' && this.usageTracker) {
+        async executeTapAction(action) {
+            // gestureGuide는 무료 한도와 무관 (도움말 표시일 뿐)
+            if (action === 'gestureGuide') {
+                this.showGestureGuide();
+                return;
+            }
+            // gesture는 GestureEngine.activateGestureMode 안에서 한도 체크
+            // back/forward는 여기서 직접 한도 체크 + 차단
+            if (action !== 'gesture' && this.usageTracker) {
+                await this.usageTracker.refresh();
+                if (!this.usageTracker.canUse()) {
+                    showSubscriptionPrompt();
+                    return;
+                }
                 this.usageTracker.recordUse();
             }
             switch (action) {
@@ -1372,9 +1427,6 @@
                     break;
                 case 'forward':
                     browser.runtime.sendMessage({ action: 'navigate', direction: 'forward' });
-                    break;
-                case 'gestureGuide':
-                    this.showGestureGuide();
                     break;
             }
         }
@@ -1613,25 +1665,29 @@
     const USAGE_KEY = 'swiftUsage';
     const DAILY_FREE_LIMIT = 10;
     const SIGN_SALT = 'sw1ft_2026';
-    /** 간단 서명: storage 변조 방지 (콘솔에서 isSubscribed 직접 수정 차단) */
+    /** Storage tamper guard. Covers count, totalFreeCount, weekFreeCount, monthSubDays — all enforcement-relevant fields. */
     function computeSignature(data) {
-        const raw = `${SIGN_SALT}:${data.isSubscribed}:${data.date}:${data.count}`;
+        const raw = `${SIGN_SALT}:${data.isSubscribed}:${data.date}:${data.count}:${data.weekStart}:${data.weekFreeCount}:${data.totalFreeCount}:${data.monthKey}:${data.monthSubDays}`;
         let h = 0;
         for (let i = 0; i < raw.length; i++) {
             h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
         }
         return h.toString(36);
     }
+    function pad2(n) { return n < 10 ? `0${n}` : `${n}`; }
+    /** Local-timezone YYYY-MM-DD so the daily reset matches the user's wall clock. */
     function today() {
-        return new Date().toISOString().slice(0, 10);
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
     function weekStart() {
         const d = new Date();
         d.setDate(d.getDate() - d.getDay());
-        return d.toISOString().slice(0, 10);
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
     function monthKey() {
-        return new Date().toISOString().slice(0, 7);
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
     }
     function defaultData() {
         return {
@@ -1661,9 +1717,12 @@
                 const stored = await browser.storage.local.get(USAGE_KEY);
                 if (stored?.[USAGE_KEY]) {
                     const loaded = { ...defaultData(), ...stored[USAGE_KEY] };
-                    // 서명 검증: 변조된 경우 구독 상태 무효화
-                    if (loaded.isSubscribed && loaded._sig !== computeSignature(loaded)) {
+                    // Verify signature for ALL data, not just subscribed.
+                    // If tampered: drop subscription claim AND reset count to today's max
+                    // (treat as already at limit — fail closed, never bypass paywall).
+                    if (loaded._sig !== computeSignature(loaded)) {
                         loaded.isSubscribed = false;
+                        loaded.count = DAILY_FREE_LIMIT;
                     }
                     this.data = loaded;
                 }
