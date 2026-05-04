@@ -99,10 +99,10 @@ export class FloatingButton {
         height: ${size}px;
         border-radius: ${rad}px;
         background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.12), transparent 60%),
-                    linear-gradient(145deg, rgba(60,60,68,0.7), rgba(28,28,30,0.75));
+                    linear-gradient(145deg, rgba(60,60,68,0.92), rgba(28,28,30,0.96));
         -webkit-backdrop-filter: saturate(180%) blur(24px);
         backdrop-filter: saturate(180%) blur(24px);
-        border: 0.5px solid rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.22);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -112,9 +112,10 @@ export class FloatingButton {
         transform: translate3d(0, 0, 0);
         touch-action: none;
         -webkit-backface-visibility: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12),
-                    0 4px 14px rgba(0,0,0,0.18),
-                    inset 0 0.5px 0 rgba(255,255,255,0.08);
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.18),
+                    0 2px 6px rgba(0,0,0,0.20),
+                    0 8px 24px rgba(0,0,0,0.28),
+                    inset 0 0.5px 0 rgba(255,255,255,0.10);
         transition: opacity 0.2s ease;
         user-select: none;
         -webkit-user-select: none;
