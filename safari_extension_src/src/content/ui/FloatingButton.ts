@@ -205,12 +205,21 @@ export class FloatingButton {
     this.button.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
     this.button.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
 
-    // Load saved position from storage
+    // Load saved position from storage. Stored as { xPct, yPct } in [0..1]
+    // so the button keeps the same relative spot across pages with
+    // different viewports. (Legacy { x, y } pixel values are migrated.)
     try {
       const data = await browser.storage.local.get('floatingBtnPos');
-      if (data?.floatingBtnPos) {
-        this.currentX = data.floatingBtnPos.x;
-        this.currentY = data.floatingBtnPos.y;
+      const pos = data?.floatingBtnPos;
+      if (pos) {
+        if (typeof pos.xPct === 'number' && typeof pos.yPct === 'number') {
+          this.currentX = pos.xPct * window.innerWidth;
+          this.currentY = pos.yPct * window.innerHeight;
+        } else if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+          // Migrate legacy pixel storage
+          this.currentX = pos.x;
+          this.currentY = pos.y;
+        }
       }
     } catch {}
 
@@ -440,8 +449,16 @@ export class FloatingButton {
 
   private savePosition(): void {
     try {
+      // Save as percentage of current viewport so other pages with
+      // different viewport sizes (split view, mobile-meta sites, etc.)
+      // place the button at the same relative spot, not the same px.
+      const w = window.innerWidth || 1;
+      const h = window.innerHeight || 1;
       browser.storage.local.set({
-        floatingBtnPos: { x: this.currentX, y: this.currentY }
+        floatingBtnPos: {
+          xPct: this.currentX / w,
+          yPct: this.currentY / h,
+        }
       });
     } catch {}
   }
