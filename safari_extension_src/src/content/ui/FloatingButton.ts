@@ -12,18 +12,21 @@ const SIZE_MAP: Record<string, number> = {
 };
 
 /** iPad has a much larger viewport, so the floating button looks tiny at
- *  the iPhone-tuned sizes. Scale 1.6x on iPad / tablets so it stays
- *  thumb-friendly without forcing the user to pick "large" manually.
+ *  the iPhone-tuned sizes. Scale 1.6x on iPad so it stays thumb-friendly
+ *  without forcing the user to pick "large" manually.
  *
- *  Detected ONCE at module load — page-level `<meta viewport>` can change
- *  `window.innerWidth` per site, so we use `screen.width/height` (device
- *  dimensions) plus UA, which are stable across navigations. */
+ *  Detection uses ONLY navigator UA + maxTouchPoints — both are stable
+ *  across page navigations. Earlier attempts that touched window.innerWidth
+ *  or screen.width caused the size to flip per page in Stage Manager /
+ *  Split View where those values track the app's allocated area, not the
+ *  physical device. */
 const IS_TABLET = (() => {
   const ua = navigator.userAgent || '';
   if (/iPad/.test(ua)) return true;
-  // iPadOS 13+ reports as Macintosh; the touch-point check disambiguates.
+  // iPadOS 13+ reports as Macintosh in UA; the touch-point check
+  // distinguishes a real iPad from a real Mac.
   if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
-  return Math.min(screen.width, screen.height) >= 768;
+  return false;
 })();
 const TABLET_SCALE = 1.6;
 
