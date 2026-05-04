@@ -29,7 +29,9 @@ export class FloatingButton {
   private tapCount = 0;
   private tapTimer: number | null = null;
   private longPressTimer: number | null = null;
-  private readonly TAP_TIMEOUT = 700;
+  // Distinct windows so tap-vs-hold detection is unambiguous and the
+  // multi-tap (1/2/3) cluster window is short enough to feel native.
+  private readonly TAP_CLUSTER_WINDOW = 320;
   private readonly DRAG_HOLD_DURATION = 600;
   private readonly GUIDE_HOLD_DURATION = 2000;
   private guideTimer: number | null = null;
@@ -342,9 +344,13 @@ export class FloatingButton {
       return;
     }
 
-    // 꾹 눌러서 drag-ready 됐지만 안 움직인 경우 → 무시 (가이드는 5초 타이머에서)
+    // Long-press completed without drag — ignore. Reset any pending tap
+    // cluster so the next tap starts at count 1 (otherwise a stale count
+    // from earlier rapid taps could accidentally fire gesture mode).
     if (this.dragReady) {
       this.dragReady = false;
+      if (this.tapTimer) { clearTimeout(this.tapTimer); this.tapTimer = null; }
+      this.tapCount = 0;
       return;
     }
 
@@ -361,7 +367,7 @@ export class FloatingButton {
           default: this.executeTapAction('gesture'); break;
         }
         this.tapCount = 0;
-      }, this.TAP_TIMEOUT);
+      }, this.TAP_CLUSTER_WINDOW);
     }
   }
 
@@ -444,9 +450,18 @@ export class FloatingButton {
       hi: { title:'जेस्चर गाइड', triTapLbl:'3 बार टैप → जेस्चर मोड', triTapDesc:'ग्रेडिएंट बॉर्डर दिखने पर जेस्चर बनाएं', xLbl:'X आकार', xDesc:'वर्तमान टैब बंद करें', lLbl:'L आकार', lDesc:'नया टैब खोलें', circleLbl:'वृत्त', circleDesc:'पेज में टेक्स्ट खोजें', cShapeLbl:'C आकार', cShapeDesc:'रीलोड (कैश अनदेखा)', footer:'1 टैप: पीछे · 2 टैप: आगे · 3 टैप: जेस्चर · लंबे समय: गाइड' }
     };
     const g = GUIDE[lang] || GUIDE.en;
+    const closeLabel = lang === 'ko' ? '닫기' : lang === 'ja' ? '閉じる' : lang === 'zh' ? '关闭' : lang === 'fr' ? 'Fermer' : lang === 'hi' ? 'बंद करें' : 'Close';
     this.guideOverlay = document.createElement('div');
     this.guideOverlay.className = 'swift-guide';
     this.guideOverlay.innerHTML = `
+      <button class="swift-guide-close" aria-label="${closeLabel}" style="
+        position:absolute; top:max(20px, env(safe-area-inset-top)); right:max(20px, env(safe-area-inset-right));
+        width:40px; height:40px; border-radius:20px; border:none;
+        background:rgba(255,255,255,0.12); color:#fff;
+        font-size:20px; cursor:pointer; line-height:1;
+        display:flex; align-items:center; justify-content:center;
+        font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      ">✕</button>
       <h2>Orbit Tap ${g.title}</h2>
       <div class="swift-guide-item" style="background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);">
         <div class="swift-guide-icon">👆×3</div>
@@ -456,28 +471,28 @@ export class FloatingButton {
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon" style="color:#FF453A">✕</div>
+        <div class="swift-guide-icon">${this.glyphSvg('x', '#FF453A')}</div>
         <div class="swift-guide-text">
           <div class="swift-guide-label">${g.xLbl}</div>
           <div class="swift-guide-desc">${g.xDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon" style="color:#30D158">L</div>
+        <div class="swift-guide-icon">${this.glyphSvg('l', '#30D158')}</div>
         <div class="swift-guide-text">
           <div class="swift-guide-label">${g.lLbl}</div>
           <div class="swift-guide-desc">${g.lDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon" style="color:#0A84FF">○</div>
+        <div class="swift-guide-icon">${this.glyphSvg('circle', '#0A84FF')}</div>
         <div class="swift-guide-text">
           <div class="swift-guide-label">${g.circleLbl}</div>
           <div class="swift-guide-desc">${g.circleDesc}</div>
         </div>
       </div>
       <div class="swift-guide-item">
-        <div class="swift-guide-icon" style="color:#FF9F0A">C</div>
+        <div class="swift-guide-icon">${this.glyphSvg('c', '#FF9F0A')}</div>
         <div class="swift-guide-text">
           <div class="swift-guide-label">${g.cShapeLbl}</div>
           <div class="swift-guide-desc">${g.cShapeDesc}</div>
@@ -486,12 +501,34 @@ export class FloatingButton {
       <div style="margin-top:8px;color:rgba(255,255,255,0.85);font-size:11px;text-align:center;">${g.footer}</div>
     `;
 
-    this.guideOverlay.addEventListener('click', () => {
+    const dismiss = () => {
       this.guideOverlay?.remove();
       this.guideOverlay = null;
-    }, { once: true });
+    };
+    // Explicit close button + tap-anywhere-else dismiss
+    this.guideOverlay.querySelector('.swift-guide-close')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dismiss();
+    });
+    this.guideOverlay.addEventListener('click', dismiss, { once: true });
 
     this.host.appendChild(this.guideOverlay);
     requestAnimationFrame(() => this.guideOverlay?.classList.add('visible'));
+  }
+
+  /** Same stroke style across all five gesture rows so the guide looks
+   *  like one consistent system instead of mixing emoji/letters/glyphs. */
+  private glyphSvg(kind: 'x' | 'l' | 'circle' | 'c', color: string): string {
+    const stroke = `stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+    switch (kind) {
+      case 'x':
+        return `<svg viewBox="0 0 28 28" width="28" height="28"><path d="M7 7 L21 21 M21 7 L7 21" ${stroke}/></svg>`;
+      case 'l':
+        return `<svg viewBox="0 0 28 28" width="28" height="28"><path d="M8 7 L8 21 L21 21" ${stroke}/></svg>`;
+      case 'circle':
+        return `<svg viewBox="0 0 28 28" width="28" height="28"><circle cx="14" cy="14" r="9" ${stroke}/></svg>`;
+      case 'c':
+        return `<svg viewBox="0 0 28 28" width="28" height="28"><path d="M21 9 A8 8 0 1 0 21 19" ${stroke}/></svg>`;
+    }
   }
 }

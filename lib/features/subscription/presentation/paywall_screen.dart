@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/platform_channel.dart';
+import '../../../core/widgets/gesture_glyph.dart';
 import '../domain/subscription_service.dart';
 
 final purchaseLoadingProvider = StateProvider<bool>((ref) => false);
@@ -55,66 +56,78 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
+              // Hero — brand gradient (matches in-page gesture mode border)
               Container(
-                width: 80, height: 80,
+                width: 84, height: 84,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF8B5CF6)]),
-                  borderRadius: BorderRadius.circular(20),
+                  gradient: AppColors.brandGradient,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.brandPink.withValues(alpha: 0.35),
+                      blurRadius: 24, offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 40),
+                child: const Icon(Icons.workspace_premium, color: Colors.white, size: 42),
               ),
               const SizedBox(height: 20),
               Text(l10n.get('swiftPremium'),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+                style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 6),
               Text(l10n.get('allGesturesUnlocked'),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 24),
+
+              // Free vs Pro comparison
+              _ComparisonStrip(l10n: l10n),
               const SizedBox(height: 28),
 
-              _BenefitItem(icon: Icons.all_inclusive, text: l10n.get('allGesturesUnlocked')),
-              _BenefitItem(icon: Icons.close, text: l10n.get('xShapeCloseTab')),
-              _BenefitItem(icon: Icons.subdirectory_arrow_right, text: l10n.get('lShapeNewTab')),
-              _BenefitItem(icon: Icons.circle_outlined, text: l10n.get('circleSearch')),
-              _BenefitItem(icon: Icons.refresh, text: l10n.get('cShapeRefresh')),
+              // Per-gesture benefits with brand glyphs
+              _GestureBenefit(glyph: GestureGlyph.x, color: AppColors.error, text: l10n.get('xShapeCloseTab')),
+              _GestureBenefit(glyph: GestureGlyph.l, color: AppColors.success, text: l10n.get('lShapeNewTab')),
+              _GestureBenefit(glyph: GestureGlyph.circle, color: AppColors.primary, text: l10n.get('circleSearch')),
+              _GestureBenefit(glyph: GestureGlyph.c, color: AppColors.warning, text: l10n.get('cShapeRefresh')),
               const SizedBox(height: 28),
 
               Text(price.isNotEmpty ? '$price / ${_monthLabel(l10n.locale.languageCode)}' : '',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  foreground: Paint()
+                    ..shader = AppColors.brandGradient.createShader(const Rect.fromLTWH(0, 0, 200, 60)),
+                )),
               const SizedBox(height: 6),
               Text(l10n.get('monthlyPrice'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 24),
 
-              // 구독 버튼
               SizedBox(
-                width: double.infinity, height: 54,
+                width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: isLoading ? null : () => _purchase(context, ref, l10n),
                   icon: isLoading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.workspace_premium),
-                  label: Text(l10n.get('upgrade'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
+                  label: Text(l10n.get('upgrade')),
                 ),
               ),
               const SizedBox(height: 12),
 
-              // 복원 버튼
               TextButton(
                 onPressed: isLoading ? null : () => _restore(context, ref, l10n),
-                child: Text(l10n.get('restore'), style: const TextStyle(fontSize: 13)),
+                child: Text(l10n.get('restore'), style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: 16),
 
-              // Apple 약관 (3.1.2(c))
               Text(
                 l10n.get('subscriptionTerms'),
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11, height: 1.4),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 8),
 
@@ -307,24 +320,85 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   }
 }
 
-class _BenefitItem extends StatelessWidget {
-  final IconData icon;
+class _GestureBenefit extends StatelessWidget {
+  final GestureGlyph glyph;
+  final Color color;
   final String text;
-  const _BenefitItem({required this.icon, required this.text});
+  const _GestureBenefit({required this.glyph, required this.color, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 20),
-          const SizedBox(width: 12),
-          Icon(icon, color: AppColors.primary, size: 18),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(child: GestureGlyphIcon(glyph: glyph, color: color, size: 22)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
+          ),
+          const Icon(Icons.check_circle, color: AppColors.success, size: 18),
         ],
       ),
     );
   }
 }
+
+class _ComparisonStrip extends StatelessWidget {
+  final AppLocalizations l10n;
+  const _ComparisonStrip({required this.l10n});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isKo = l10n.locale.languageCode == 'ko';
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(isKo ? '무료' : 'Free', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+                const SizedBox(height: 6),
+                Text(isKo ? '하루 10회' : '10 / day', style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+          ),
+          Container(width: 1, height: 36, color: cs.outlineVariant),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShaderMask(
+                  shaderCallback: (r) => AppColors.brandGradient.createShader(r),
+                  child: Text(
+                    'Pro',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(isKo ? '무제한' : 'Unlimited', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
