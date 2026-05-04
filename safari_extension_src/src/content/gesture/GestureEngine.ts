@@ -113,9 +113,14 @@ export class GestureEngine {
         animation: swift-border-glow 2s ease-in-out infinite;
       }
       .swift-gm-border.active { opacity:1; }
-      @keyframes swift-border-glow {
-        0%, 100% { filter: brightness(1); }
-        50% { filter: brightness(1.4); }
+      @media (prefers-reduced-motion: no-preference) {
+        @keyframes swift-border-glow {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.4); }
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .swift-gm-border { animation: none !important; }
       }
     `;
     document.head.appendChild(this.overlayStyle);

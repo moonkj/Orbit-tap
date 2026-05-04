@@ -24,11 +24,15 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             children: [
               // App icon and branding
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset('assets/icon.png', width: 80, height: 80, errorBuilder: (c, e, s) =>
-                  Container(width: 80, height: 80, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
-                    child: const Icon(Icons.touch_app, color: Colors.white, size: 40))),
+              Semantics(
+                label: 'Orbit Tap',
+                image: true,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset('assets/icon.png', width: 80, height: 80, errorBuilder: (c, e, s) =>
+                    Container(width: 80, height: 80, decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
+                      child: const Icon(Icons.touch_app, color: Colors.white, size: 40))),
+                ),
               ),
               const SizedBox(height: 16),
               Text(AppConstants.appName, style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -237,16 +241,20 @@ class _LegalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        child: Row(
-          children: [
-            Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
-            Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ],
+    return Semantics(
+      button: true,
+      label: title,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          child: Row(
+            children: [
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 15))),
+              ExcludeSemantics(child: Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            ],
+          ),
         ),
       ),
     );

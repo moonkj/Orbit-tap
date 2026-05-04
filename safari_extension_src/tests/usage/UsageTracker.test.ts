@@ -2,9 +2,9 @@ import { UsageTracker, UsageData } from '../../src/content/usage/UsageTracker';
 
 const storageMock = (globalThis as any).__storageMock as Record<string, any>;
 
-// 테스트용 서명 헬퍼 (UsageTracker 내부와 동일 알고리즘)
+// 테스트용 서명 헬퍼 (UsageTracker 내부와 동일 알고리즘 - Track A 강화 후)
 function computeTestSig(data: any): string {
-  const raw = `sw1ft_2026:${data.isSubscribed}:${data.date}:${data.count}`;
+  const raw = `sw1ft_2026:${data.isSubscribed}:${data.date}:${data.count}:${data.weekStart}:${data.weekFreeCount}:${data.totalFreeCount}:${data.monthKey}:${data.monthSubDays}`;
   let h = 0;
   for (let i = 0; i < raw.length; i++) {
     h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
@@ -12,18 +12,35 @@ function computeTestSig(data: any): string {
   return h.toString(36);
 }
 
+function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
+
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function weekStartStr(): string {
   const d = new Date();
   d.setDate(d.getDate() - d.getDay());
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function monthKeyStr(): string {
-  return new Date().toISOString().slice(0, 7);
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+}
+
+/** Build a complete UsageData fixture and attach a valid _sig.
+ *  Tests must use this — Track A strengthened the load() check so any
+ *  fixture without a matching signature now fail-closes (count=limit). */
+function mkUsage(overrides: Partial<UsageData> = {}): UsageData & { _sig: string } {
+  const data: UsageData = {
+    date: todayStr(), count: 0, isSubscribed: false,
+    totalFreeCount: 0, weekStart: weekStartStr(), weekFreeCount: 0,
+    monthKey: monthKeyStr(), monthSubDays: 0,
+    ...overrides,
+  };
+  return { ...data, _sig: computeTestSig(data) };
 }
 
 describe('UsageTracker', () => {
@@ -42,7 +59,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('load()', () => {
     it('reads from browser.storage.local', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 3,
         isSubscribed: false,
@@ -51,7 +68,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 5,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
 
@@ -75,7 +92,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('canUse()', () => {
     it('returns true when count < 10', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 5,
         isSubscribed: false,
@@ -84,14 +101,14 @@ describe('UsageTracker', () => {
         weekFreeCount: 5,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
       expect(tracker.canUse()).toBe(true);
     });
 
     it('returns false when count >= 10', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 10,
         isSubscribed: false,
@@ -100,14 +117,14 @@ describe('UsageTracker', () => {
         weekFreeCount: 10,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
       expect(tracker.canUse()).toBe(false);
     });
 
     it('returns false when count exceeds 10', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 15,
         isSubscribed: false,
@@ -116,24 +133,18 @@ describe('UsageTracker', () => {
         weekFreeCount: 15,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
       expect(tracker.canUse()).toBe(false);
     });
 
     it('returns true when isSubscribed regardless of count', async () => {
-      storageMock['swiftUsage'] = {
-        date: todayStr(),
+      storageMock['swiftUsage'] = mkUsage({
         count: 999,
         isSubscribed: true,
-        _sig: computeTestSig({ isSubscribed: true, date: todayStr(), count: 999 }),
-        totalFreeCount: 0,
-        weekStart: weekStartStr(),
-        weekFreeCount: 0,
-        monthKey: monthKeyStr(),
         monthSubDays: 5,
-      };
+      });
 
       await tracker.load();
       expect(tracker.canUse()).toBe(true);
@@ -168,17 +179,10 @@ describe('UsageTracker', () => {
     });
 
     it('does not increment totalFreeCount or weekFreeCount when subscribed', async () => {
-      storageMock['swiftUsage'] = {
-        date: todayStr(),
-        count: 0,
+      storageMock['swiftUsage'] = mkUsage({
         isSubscribed: true,
-        _sig: computeTestSig({ isSubscribed: true, date: todayStr(), count: 0 }),
-        totalFreeCount: 0,
-        weekStart: weekStartStr(),
-        weekFreeCount: 0,
-        monthKey: monthKeyStr(),
         monthSubDays: 1,
-      };
+      });
 
       await tracker.load();
       await tracker.recordUse();
@@ -191,10 +195,15 @@ describe('UsageTracker', () => {
     });
 
     it('persists to storage after recording', async () => {
+      vi.useFakeTimers();
       await tracker.load();
       vi.clearAllMocks();
 
       await tracker.recordUse();
+      // Save is debounced (Track D) — flush the trailing-edge timer
+      // and let the resulting microtask settle.
+      await vi.runAllTimersAsync();
+      vi.useRealTimers();
 
       expect(browser.storage.local.set).toHaveBeenCalled();
       const setCall = vi.mocked(browser.storage.local.set).mock.calls[0][0] as any;
@@ -207,7 +216,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('remaining()', () => {
     it('returns correct remaining count for free user', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 7,
         isSubscribed: false,
@@ -216,14 +225,14 @@ describe('UsageTracker', () => {
         weekFreeCount: 7,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
       expect(tracker.remaining()).toBe(3);
     });
 
     it('returns 0 when count >= limit', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 12,
         isSubscribed: false,
@@ -232,24 +241,18 @@ describe('UsageTracker', () => {
         weekFreeCount: 12,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
       expect(tracker.remaining()).toBe(0);
     });
 
     it('returns Infinity for subscribed users', async () => {
-      storageMock['swiftUsage'] = {
-        date: todayStr(),
+      storageMock['swiftUsage'] = mkUsage({
         count: 50,
         isSubscribed: true,
-        _sig: computeTestSig({ isSubscribed: true, date: todayStr(), count: 50 }),
-        totalFreeCount: 0,
-        weekStart: weekStartStr(),
-        weekFreeCount: 0,
-        monthKey: monthKeyStr(),
         monthSubDays: 3,
-      };
+      });
 
       await tracker.load();
       expect(tracker.remaining()).toBe(Infinity);
@@ -269,17 +272,10 @@ describe('UsageTracker', () => {
     });
 
     it('changes isSubscribed to false', async () => {
-      storageMock['swiftUsage'] = {
-        date: todayStr(),
-        count: 0,
+      storageMock['swiftUsage'] = mkUsage({
         isSubscribed: true,
-        _sig: computeTestSig({ isSubscribed: true, date: todayStr(), count: 0 }),
-        totalFreeCount: 0,
-        weekStart: weekStartStr(),
-        weekFreeCount: 0,
-        monthKey: monthKeyStr(),
         monthSubDays: 1,
-      };
+      });
 
       await tracker.load();
       expect(tracker.isSubscribed()).toBe(true);
@@ -350,7 +346,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('getStats()', () => {
     it('returns correct stats object', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 4,
         isSubscribed: false,
@@ -359,7 +355,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 25,
         monthKey: monthKeyStr(),
         monthSubDays: 3,
-      };
+      });
 
       await tracker.load();
 
@@ -394,7 +390,7 @@ describe('UsageTracker', () => {
       expect(tracker.getStats().todayCount).toBe(0);
 
       // Simulate another tab updating storage
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 7,
         isSubscribed: false,
@@ -403,7 +399,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 7,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.refresh();
 
@@ -423,7 +419,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('date rollover', () => {
     it('resets daily count when date changes', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: '2025-01-01', // yesterday or earlier
         count: 8,
         isSubscribed: false,
@@ -432,7 +428,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 20,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
 
@@ -450,7 +446,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('week rollover', () => {
     it('resets weekFreeCount when weekStart changes', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 3,
         isSubscribed: false,
@@ -459,7 +455,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 42,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
 
@@ -471,7 +467,7 @@ describe('UsageTracker', () => {
     });
 
     it('preserves weekFreeCount when weekStart has not changed', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 3,
         isSubscribed: false,
@@ -480,7 +476,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 42,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
 
@@ -493,7 +489,7 @@ describe('UsageTracker', () => {
   // ---------------------------------------------------------------
   describe('month rollover', () => {
     it('resets monthSubDays when monthKey changes', async () => {
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 0,
         isSubscribed: false,
@@ -502,7 +498,7 @@ describe('UsageTracker', () => {
         weekFreeCount: 0,
         monthKey: '2024-01', // old month
         monthSubDays: 15,
-      };
+      });
 
       await tracker.load();
 
@@ -533,7 +529,7 @@ describe('UsageTracker', () => {
 
     it('preserves storage value when native messaging fails', async () => {
       vi.mocked(browser.runtime.sendNativeMessage).mockRejectedValueOnce(new Error('fail'));
-      storageMock['swiftUsage'] = {
+      storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
         count: 0,
         isSubscribed: false,
@@ -542,10 +538,33 @@ describe('UsageTracker', () => {
         weekFreeCount: 0,
         monthKey: monthKeyStr(),
         monthSubDays: 0,
-      };
+      });
 
       await tracker.load();
       expect(tracker.isSubscribed()).toBe(false);
+    });
+
+    // Track A regression guard — count tampering must also fail closed,
+    // not just isSubscribed tampering. Anyone editing storage to set
+    // count=0 without recomputing the signature should land at the
+    // daily limit (canUse() === false), never granted free uses.
+    it('tampered count → fail closed (canUse=false)', async () => {
+      const realData: UsageData = {
+        date: todayStr(),
+        count: 5,
+        isSubscribed: false,
+        totalFreeCount: 5,
+        weekStart: weekStartStr(),
+        weekFreeCount: 5,
+        monthKey: monthKeyStr(),
+        monthSubDays: 0,
+      };
+      const sigForFiveUses = computeTestSig(realData);
+      // Forge: write count=0 with the signature computed for count=5.
+      // The load() check must catch the mismatch and fail-close.
+      storageMock.swiftUsage = { ...realData, count: 0, _sig: sigForFiveUses };
+      await tracker.load();
+      expect(tracker.canUse()).toBe(false);
     });
   });
 });

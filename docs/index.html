@@ -1,39 +1,86 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbit Tap - Safari Gesture Control</title>
+<title>Orbit Tap — Safari Gesture Control</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:#0a0a0f; color:#fff; }
+body { font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:#1c1c1e; color:#fff; }
 .hero { text-align:center; padding:80px 20px 60px; }
 .hero img { width:80px; border-radius:18px; margin-bottom:20px; }
-.hero h1 { font-size:36px; margin-bottom:8px; }
-.hero p { color:#98989d; font-size:16px; }
+.hero h1 { font-size:36px; margin-bottom:8px;
+  background: linear-gradient(135deg, #a855f7, #ec4899, #06b6d4);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p { color:#98989d; font-size:16px; line-height:1.5; }
 .features { max-width:600px; margin:0 auto; padding:0 20px 60px; }
-.feat { display:flex; align-items:center; gap:16px; padding:16px 0; border-bottom:1px solid #222; }
-.feat-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; }
-.feat h3 { font-size:16px; } .feat p { font-size:13px; color:#98989d; }
+.feat { display:flex; align-items:center; gap:16px; padding:16px 0; border-bottom:1px solid #2c2c2e; }
+.feat-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+.feat h3 { font-size:16px; } .feat p { font-size:13px; color:#98989d; margin-top:2px; }
 .cta { text-align:center; padding:40px 20px; }
 .cta a { background:#0a84ff; color:#fff; padding:14px 32px; border-radius:12px; text-decoration:none; font-weight:600; font-size:16px; }
-footer { text-align:center; padding:40px 20px; color:#555; font-size:13px; }
+footer { text-align:center; padding:40px 20px; color:#636366; font-size:13px; }
 footer a { color:#0a84ff; text-decoration:none; }
+[lang="ko"], [lang="ja"], [lang="zh"], [lang="fr"], [lang="hi"] { display: none; }
 </style>
+<script>
+  // Show the localized block for the user's browser language; fall back to en.
+  document.addEventListener('DOMContentLoaded', () => {
+    const supported = ['en','ko','ja','zh','fr','hi'];
+    const raw = (navigator.language || 'en').toLowerCase();
+    const code = raw.startsWith('zh') ? 'zh' :
+                 supported.find(c => raw.startsWith(c)) || 'en';
+    document.querySelectorAll('[data-lang]').forEach(el => {
+      el.style.display = el.getAttribute('data-lang') === code ? '' : 'none';
+    });
+    document.documentElement.lang = code;
+  });
+</script>
 </head>
 <body>
 <div class="hero">
+  <img src="../ios/SwiftSafariExtension/Resources/popup/icon.png" alt="Orbit Tap icon" onerror="this.style.display='none'">
   <h1>Orbit Tap</h1>
-  <p>한 탭으로 뒤로, 앞으로<br>Safari Gesture Control Extension</p>
+  <p data-lang="en">One tap back, two taps forward, three taps for gestures.<br>Safari Gesture Control Extension.</p>
+  <p data-lang="ko">한 번 탭으로 뒤로, 두 번 탭으로 앞으로, 세 번 탭으로 제스처 모드.<br>Safari 제스처 컨트롤 확장 프로그램.</p>
+  <p data-lang="ja">1タップで戻る、2タップで進む、3タップでジェスチャーモード。<br>Safari ジェスチャーコントロール拡張機能。</p>
+  <p data-lang="zh">单击后退，双击前进，三击进入手势模式。<br>Safari 手势控制扩展。</p>
+  <p data-lang="fr">Un appui pour retour, deux pour avancer, trois pour les gestes.<br>Extension de contrôle gestuel Safari.</p>
+  <p data-lang="hi">एक टैप पीछे, दो टैप आगे, तीन टैप जेस्चर मोड के लिए।<br>Safari जेस्चर नियंत्रण एक्सटेंशन।</p>
 </div>
 <div class="features">
-  <div class="feat"><div class="feat-icon" style="background:#ff453a22;color:#ff453a">✕</div><div><h3>X 모양 — 탭 닫기</h3><p>X를 그려 현재 탭을 닫습니다</p></div></div>
-  <div class="feat"><div class="feat-icon" style="background:#30d15822;color:#30d158">L</div><div><h3>L 모양 — 새 탭</h3><p>L을 그려 새 탭을 엽니다</p></div></div>
-  <div class="feat"><div class="feat-icon" style="background:#0a84ff22;color:#0a84ff">○</div><div><h3>원 그리기 — 검색</h3><p>원을 그려 페이지 내 텍스트를 검색합니다</p></div></div>
-  <div class="feat"><div class="feat-icon" style="background:#ff9f0a22;color:#ff9f0a">C</div><div><h3>C 모양 — 새로고침</h3><p>C를 그려 캐시 무시 새로고침합니다</p></div></div>
+  <div class="feat">
+    <div class="feat-icon" style="background:rgba(255,69,58,0.15)"><svg viewBox="0 0 28 28" width="28" height="28" stroke="#ff453a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M7 7 L21 21 M21 7 L7 21"/></svg></div>
+    <div>
+      <h3 data-lang="en">X — Close Tab</h3><h3 data-lang="ko">X 모양 — 탭 닫기</h3><h3 data-lang="ja">X — タブを閉じる</h3><h3 data-lang="zh">X — 关闭标签页</h3><h3 data-lang="fr">X — Fermer l'onglet</h3><h3 data-lang="hi">X — टैब बंद करें</h3>
+      <p data-lang="en">Draw an X to close the current tab</p><p data-lang="ko">X를 그려 현재 탭을 닫습니다</p><p data-lang="ja">Xを描いて現在のタブを閉じます</p><p data-lang="zh">画X关闭当前标签页</p><p data-lang="fr">Dessinez un X pour fermer l'onglet</p><p data-lang="hi">वर्तमान टैब बंद करने के लिए X बनाएं</p>
+    </div>
+  </div>
+  <div class="feat">
+    <div class="feat-icon" style="background:rgba(48,209,88,0.15)"><svg viewBox="0 0 28 28" width="28" height="28" stroke="#30d158" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M8 7 L8 21 L21 21"/></svg></div>
+    <div>
+      <h3 data-lang="en">L — New Tab</h3><h3 data-lang="ko">L 모양 — 새 탭</h3><h3 data-lang="ja">L — 新しいタブ</h3><h3 data-lang="zh">L — 新建标签页</h3><h3 data-lang="fr">L — Nouvel onglet</h3><h3 data-lang="hi">L — नया टैब</h3>
+      <p data-lang="en">Draw an L to open a new tab</p><p data-lang="ko">L을 그려 새 탭을 엽니다</p><p data-lang="ja">Lを描いて新しいタブを開きます</p><p data-lang="zh">画L打开新标签页</p><p data-lang="fr">Dessinez un L pour ouvrir un onglet</p><p data-lang="hi">नया टैब खोलने के लिए L बनाएं</p>
+    </div>
+  </div>
+  <div class="feat">
+    <div class="feat-icon" style="background:rgba(10,132,255,0.15)"><svg viewBox="0 0 28 28" width="28" height="28" stroke="#0a84ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="14" cy="14" r="9"/></svg></div>
+    <div>
+      <h3 data-lang="en">Circle — Find on Page</h3><h3 data-lang="ko">원 — 페이지 내 검색</h3><h3 data-lang="ja">円 — ページ内検索</h3><h3 data-lang="zh">圆形 — 页面内搜索</h3><h3 data-lang="fr">Cercle — Recherche</h3><h3 data-lang="hi">वृत्त — पेज में खोजें</h3>
+      <p data-lang="en">Draw a circle to search text on the page</p><p data-lang="ko">원을 그려 페이지 내 텍스트를 검색합니다</p><p data-lang="ja">円を描いてページ内のテキストを検索します</p><p data-lang="zh">画圆搜索页面内文本</p><p data-lang="fr">Dessinez un cercle pour rechercher du texte</p><p data-lang="hi">पेज में टेक्स्ट खोजने के लिए वृत्त बनाएं</p>
+    </div>
+  </div>
+  <div class="feat">
+    <div class="feat-icon" style="background:rgba(255,159,10,0.15)"><svg viewBox="0 0 28 28" width="28" height="28" stroke="#ff9f0a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M21 9 A8 8 0 1 0 21 19"/></svg></div>
+    <div>
+      <h3 data-lang="en">C — Hard Refresh</h3><h3 data-lang="ko">C 모양 — 새로고침</h3><h3 data-lang="ja">C — 強制再読み込み</h3><h3 data-lang="zh">C — 强制刷新</h3><h3 data-lang="fr">C — Actualisation forcée</h3><h3 data-lang="hi">C — पुनः लोड करें</h3>
+      <p data-lang="en">Draw a C to reload bypassing cache</p><p data-lang="ko">C를 그려 캐시 무시 새로고침합니다</p><p data-lang="ja">Cを描いてキャッシュを無視して再読み込み</p><p data-lang="zh">画C忽略缓存刷新</p><p data-lang="fr">Dessinez un C pour ignorer le cache</p><p data-lang="hi">कैश अनदेखा करके रीलोड के लिए C बनाएं</p>
+    </div>
+  </div>
 </div>
 <footer>
-  <a href="privacy.html">개인정보 처리방침</a> · <a href="terms.html">이용약관</a> · <a href="support.html">지원</a>
+  <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a>
   <p style="margin-top:16px">&copy; 2026 Orbit Tap. All rights reserved.</p>
 </footer>
 </body>
