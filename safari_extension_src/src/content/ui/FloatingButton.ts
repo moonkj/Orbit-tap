@@ -58,11 +58,18 @@ export class FloatingButton {
   private onGestureActivate: GestureActivator | null = null;
   private usageTracker: UsageTracker | null = null;
 
+  // Position is tracked as percent of viewport (0..1) so the button stays
+  // in the same relative spot across pages with different innerWidth/Height
+  // (mobile-meta sites, iPad split view, orientation changes, etc.).
+  private posXPct = 0.92;
+  private posYPct = 0.72;
+  private readonly DEFAULT_X_PCT = 0.92;
+  private readonly DEFAULT_Y_PCT = 0.72;
+
   constructor(config: GestureConfig) {
     this.config = config;
-    // 기본 위치: 오른쪽 하단 (안전 영역 내)
-    this.currentX = Math.max(10, (window.innerWidth || 375) - 70);
-    this.currentY = Math.max(100, ((window.innerHeight || 812) * 0.7));
+    this.currentX = 0;
+    this.currentY = 0;
   }
 
   private getButtonSize(): number {
@@ -206,28 +213,29 @@ export class FloatingButton {
     this.button.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false, signal });
     this.button.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: true, signal });
 
-    // Load saved position from storage. Stored as { xPct, yPct } in [0..1]
-    // so the button keeps the same relative spot across pages with
-    // different viewports. (Legacy { x, y } pixel values are migrated.)
+    // Position is always derived from posXPct/posYPct against the current
+    // viewport. Storage holds the percent so it stays consistent across
+    // pages. Legacy { x, y } pixel values are migrated on first read.
     try {
       const data = await browser.storage.local.get('floatingBtnPos');
       const pos = data?.floatingBtnPos;
-      if (pos) {
-        if (typeof pos.xPct === 'number' && typeof pos.yPct === 'number') {
-          this.currentX = pos.xPct * window.innerWidth;
-          this.currentY = pos.yPct * window.innerHeight;
-        } else if (typeof pos.x === 'number' && typeof pos.y === 'number') {
-          // Migrate legacy pixel storage
-          this.currentX = pos.x;
-          this.currentY = pos.y;
-        }
+      if (pos && typeof pos.xPct === 'number' && typeof pos.yPct === 'number') {
+        this.posXPct = pos.xPct;
+        this.posYPct = pos.yPct;
+      } else if (pos && typeof pos.x === 'number' && typeof pos.y === 'number') {
+        // One-time legacy migration: convert pixel to percent against
+        // the current viewport. The next drag will re-save in percent.
+        const w = window.innerWidth || 1;
+        const h = window.innerHeight || 1;
+        this.posXPct = Math.max(0, Math.min(1, pos.x / w));
+        this.posYPct = Math.max(0, Math.min(1, pos.y / h));
       }
     } catch {}
 
-    // Clamp position to viewport
+    // Resolve percent → pixel against current viewport, clamped to fit.
     const btnSize = this.getButtonSize();
-    this.currentX = Math.max(0, Math.min(this.currentX, window.innerWidth - btnSize));
-    this.currentY = Math.max(0, Math.min(this.currentY, window.innerHeight - btnSize));
+    this.currentX = Math.max(0, Math.min(this.posXPct * window.innerWidth, window.innerWidth - btnSize));
+    this.currentY = Math.max(0, Math.min(this.posYPct * window.innerHeight, window.innerHeight - btnSize));
 
     this.updatePosition();
 
@@ -450,16 +458,15 @@ export class FloatingButton {
 
   private savePosition(): void {
     try {
-      // Save as percentage of current viewport so other pages with
-      // different viewport sizes (split view, mobile-meta sites, etc.)
-      // place the button at the same relative spot, not the same px.
       const w = window.innerWidth || 1;
       const h = window.innerHeight || 1;
+      // Update tracked percent and persist. Both the in-memory and
+      // storage values are always percent so subsequent reads on
+      // other pages produce the same relative position.
+      this.posXPct = this.currentX / w;
+      this.posYPct = this.currentY / h;
       browser.storage.local.set({
-        floatingBtnPos: {
-          xPct: this.currentX / w,
-          yPct: this.currentY / h,
-        }
+        floatingBtnPos: { xPct: this.posXPct, yPct: this.posYPct }
       });
     } catch {}
   }
