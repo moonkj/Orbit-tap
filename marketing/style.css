@@ -1,0 +1,89 @@
+/* App Store screenshot — 1320x2868 (iPhone 6.9") */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+html, body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+
+.screen {
+  width: 1320px;
+  height: 2868px;
+  background: #FFFFFF;
+  color: #0A0A0F;
+  position: relative;
+  overflow: hidden;
+  padding: 180px 80px 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.headline {
+  font-size: 120px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: 28px;
+}
+.gradient {
+  display: inline-block;
+  background: linear-gradient(135deg, #a855f7, #ec4899, #06b6d4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.subhead {
+  font-size: 56px;
+  font-weight: 500;
+  color: #98989D;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin-bottom: 80px;
+}
+
+.devices {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* iPhone mockup frame using pure CSS */
+.phone {
+  position: relative;
+  width: 800px;
+  background: #0a0a0f;
+  border-radius: 88px;
+  padding: 18px;
+  box-shadow: 0 60px 120px -20px rgba(0,0,0,0.45),
+              0 30px 60px -15px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 28px; left: 50%;
+  transform: translateX(-50%);
+  width: 280px; height: 36px;
+  background: #0a0a0f;
+  border-radius: 18px;
+  z-index: 2;
+}
+.phone img {
+  display: block;
+  width: 100%;
+  border-radius: 72px;
+  background: #1c1c1e;
+}
+
+/* Multi-device hero arrangement (mimics reference style) */
+.hero { padding: 0; align-items: center; }
+.hero .phone { width: 540px; padding: 14px; border-radius: 64px; box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5); }
+.hero .phone::before { width: 200px; height: 28px; top: 22px; border-radius: 14px; }
+.hero .phone img { border-radius: 50px; }
+
+.hero .phone-1 { transform: rotate(-8deg) translate(-180px, -60px); position: absolute; }
+.hero .phone-2 { transform: rotate(8deg) translate(180px, -120px); position: absolute; }
+.hero .phone-3 { transform: rotate(-3deg) translate(-40px, 280px); position: absolute; z-index: 3; }
+
+/* Single-device layout */
+.single { align-items: center; }
+.single .phone { width: 920px; }

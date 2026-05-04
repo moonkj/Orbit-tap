@@ -11,6 +11,19 @@ const SIZE_MAP: Record<string, number> = {
   large: 76,
 };
 
+/** iPad has a much larger viewport, so the floating button looks tiny at
+ *  the iPhone-tuned sizes. Scale 1.6x when running on iPad / a tablet
+ *  viewport so it stays thumb-friendly without forcing the user to
+ *  pick "large" manually. */
+function isTabletViewport(): boolean {
+  const ua = navigator.userAgent || '';
+  if (/iPad/.test(ua)) return true;
+  // iPadOS 13+ reports as Mac in UA; fall back to viewport heuristic.
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+  return Math.min(window.innerWidth, window.innerHeight) >= 768;
+}
+const TABLET_SCALE = 1.6;
+
 export class FloatingButton {
   private host: HTMLElement | null = null;
   private button: HTMLElement | null = null;
@@ -47,7 +60,8 @@ export class FloatingButton {
   }
 
   private getButtonSize(): number {
-    return SIZE_MAP[this.config.buttonSize] ?? 48;
+    const base = SIZE_MAP[this.config.buttonSize] ?? 48;
+    return isTabletViewport() ? Math.round(base * TABLET_SCALE) : base;
   }
 
   private getOpacity(): number {

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Orbit Tap — App Store screenshots preview</title>
+<style>
+body { background: #2c2c2e; color: #fff; font-family: -apple-system, sans-serif; padding: 40px; }
+h1 { font-size: 24px; margin-bottom: 16px; }
+.note { color: #98989d; margin-bottom: 32px; max-width: 700px; line-height: 1.6; font-size: 14px; }
+.row { display: flex; gap: 32px; flex-wrap: wrap; }
+.row > div { flex-shrink: 0; }
+iframe {
+  width: 1320px; height: 2868px;
+  border: 1px solid #3a3a3c;
+  border-radius: 8px;
+  /* Scale down so they fit in browser viewport */
+  transform: scale(0.25); transform-origin: top left;
+  background: #fff;
+}
+.frame-wrap { width: 330px; height: 717px; overflow: hidden; }
+.frame-wrap p { margin-top: 8px; color: #98989d; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Orbit Tap — App Store screenshots</h1>
+<p class="note">
+  4 screenshots at 1320×2868 (iPhone 6.9", App Store required).
+  Open each .html file individually, then in Chrome DevTools press
+  Cmd+Shift+P → "Capture full size screenshot" → save as PNG.
+  Place the 3 source images in <code>screenshots/</code>: <code>settings.png</code>, <code>popup.png</code>, <code>guide.png</code>.
+</p>
+<div class="row">
+  <div class="frame-wrap"><iframe src="screen1.html"></iframe><p>1. Hero (3 devices)</p></div>
+  <div class="frame-wrap"><iframe src="screen2.html"></iframe><p>2. Settings</p></div>
+  <div class="frame-wrap"><iframe src="screen3.html"></iframe><p>3. Popup</p></div>
+  <div class="frame-wrap"><iframe src="screen4.html"></iframe><p>4. Guide overlay</p></div>
+</div>
+</body>
+</html>
