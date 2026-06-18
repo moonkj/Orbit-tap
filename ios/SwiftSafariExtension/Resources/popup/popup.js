@@ -28,12 +28,12 @@
   };
 
   const I18N = {
-    ko: { tagline:'Safari 제스처 컨트롤', master_label:'Orbit Tap Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', howto_title:'Orbit Tap 사용법', usage_label:'오늘', gestures_title:'제스처', xshape_label:'탭 닫기', lshape_label:'새 탭 열기', circle_label:'페이지 내 검색', cshape_label:'새로고침 (캐시 무시)', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_size:'크기', opacity:'투명도', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'Orbit Tap v1.0.0' },
-    en: { tagline:'Gesture control for Safari', master_label:'Orbit Tap Extension', master_desc:'Enable all gestures & floating button', howto_title:'HOW TO USE ORBIT TAP', usage_label:'Today', gestures_title:'GESTURES', xshape_label:'Close Tab', lshape_label:'New Tab', circle_label:'Find on Page', cshape_label:'Hard Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'Orbit Tap v1.0.0' },
-    ja: { tagline:'Safariジェスチャーコントロール', master_label:'Orbit Tap 拡張機能', master_desc:'すべてのジェスチャーとフローティングボタンを有効化', howto_title:'Orbit Tap の使い方', usage_label:'今日', gestures_title:'ジェスチャー', xshape_label:'タブを閉じる', lshape_label:'新しいタブ', circle_label:'ページ内検索', cshape_label:'再読み込み (キャッシュ無視)', floating_title:'フローティングボタン', show_button:'フローティングボタンを表示', show_button_desc:'すべてのページで素早くアクセス', btn_size:'サイズ', opacity:'不透明度', sensitivity_title:'感度', less_sensitive:'低', more_sensitive:'高', footer:'Orbit Tap v1.0.0' },
-    zh: { tagline:'Safari 手势控制', master_label:'Orbit Tap 扩展', master_desc:'启用所有手势和悬浮按钮', howto_title:'Orbit Tap 使用方法', usage_label:'今天', gestures_title:'手势', xshape_label:'关闭标签页', lshape_label:'新建标签页', circle_label:'页面内搜索', cshape_label:'刷新 (忽略缓存)', floating_title:'悬浮按钮', show_button:'显示悬浮按钮', show_button_desc:'在每个页面快速访问', btn_size:'大小', opacity:'不透明度', sensitivity_title:'灵敏度', less_sensitive:'低', more_sensitive:'高', footer:'Orbit Tap v1.0.0' },
-    fr: { tagline:'Contrôle gestuel pour Safari', master_label:'Extension Orbit Tap', master_desc:'Activer tous les gestes et le bouton flottant', howto_title:'COMMENT UTILISER ORBIT TAP', usage_label:"Aujourd'hui", gestures_title:'GESTES', xshape_label:"Fermer l'onglet", lshape_label:'Nouvel onglet', circle_label:'Rechercher dans la page', cshape_label:'Actualisation forcée', floating_title:'BOUTON FLOTTANT', show_button:'Afficher le bouton flottant', show_button_desc:'Accès rapide sur chaque page', btn_size:'Taille', opacity:'Opacité', sensitivity_title:'SENSIBILITÉ', less_sensitive:'Moins', more_sensitive:'Plus', footer:'Orbit Tap v1.0.0' },
-    hi: { tagline:'Safari के लिए इशारा नियंत्रण', master_label:'Orbit Tap एक्सटेंशन', master_desc:'सभी इशारे और फ्लोटिंग बटन सक्षम करें', howto_title:'Orbit Tap का उपयोग कैसे करें', usage_label:'आज', gestures_title:'इशारे', xshape_label:'टैब बंद करें', lshape_label:'नया टैब', circle_label:'पेज में खोजें', cshape_label:'रीलोड (कैश अनदेखा)', floating_title:'फ्लोटिंग बटन', show_button:'फ्लोटिंग बटन दिखाएं', show_button_desc:'हर पेज पर त्वरित पहुंच', btn_size:'आकार', opacity:'अपारदर्शिता', sensitivity_title:'संवेदनशीलता', less_sensitive:'कम', more_sensitive:'अधिक', footer:'Orbit Tap v1.0.0' }
+    ko: { tagline:'Safari 제스처 컨트롤', master_label:'Orbit Tap Extension', master_desc:'모든 제스처 및 플로팅 버튼 활성화', howto_title:'Orbit Tap 사용법', usage_label:'오늘', gestures_title:'제스처', xshape_label:'탭 닫기', lshape_label:'새 탭 열기', circle_label:'페이지 내 검색', cshape_label:'새로고침 (캐시 무시)', floating_title:'플로팅 버튼', show_button:'플로팅 버튼 표시', show_button_desc:'모든 페이지에서 빠른 접근', btn_size:'크기', opacity:'투명도', sensitivity_title:'민감도', less_sensitive:'낮음', more_sensitive:'높음', footer:'Orbit Tap v1.1.0' },
+    en: { tagline:'Gesture control for Safari', master_label:'Orbit Tap Extension', master_desc:'Enable all gestures & floating button', howto_title:'HOW TO USE ORBIT TAP', usage_label:'Today', gestures_title:'GESTURES', xshape_label:'Close Tab', lshape_label:'New Tab', circle_label:'Find on Page', cshape_label:'Hard Refresh', floating_title:'FLOATING BUTTON', show_button:'Show Floating Button', show_button_desc:'Quick access on every page', btn_size:'Size', opacity:'Opacity', sensitivity_title:'SENSITIVITY', less_sensitive:'Less', more_sensitive:'More', footer:'Orbit Tap v1.1.0' },
+    ja: { tagline:'Safariジェスチャーコントロール', master_label:'Orbit Tap 拡張機能', master_desc:'すべてのジェスチャーとフローティングボタンを有効化', howto_title:'Orbit Tap の使い方', usage_label:'今日', gestures_title:'ジェスチャー', xshape_label:'タブを閉じる', lshape_label:'新しいタブ', circle_label:'ページ内検索', cshape_label:'再読み込み (キャッシュ無視)', floating_title:'フローティングボタン', show_button:'フローティングボタンを表示', show_button_desc:'すべてのページで素早くアクセス', btn_size:'サイズ', opacity:'不透明度', sensitivity_title:'感度', less_sensitive:'低', more_sensitive:'高', footer:'Orbit Tap v1.1.0' },
+    zh: { tagline:'Safari 手势控制', master_label:'Orbit Tap 扩展', master_desc:'启用所有手势和悬浮按钮', howto_title:'Orbit Tap 使用方法', usage_label:'今天', gestures_title:'手势', xshape_label:'关闭标签页', lshape_label:'新建标签页', circle_label:'页面内搜索', cshape_label:'刷新 (忽略缓存)', floating_title:'悬浮按钮', show_button:'显示悬浮按钮', show_button_desc:'在每个页面快速访问', btn_size:'大小', opacity:'不透明度', sensitivity_title:'灵敏度', less_sensitive:'低', more_sensitive:'高', footer:'Orbit Tap v1.1.0' },
+    fr: { tagline:'Contrôle gestuel pour Safari', master_label:'Extension Orbit Tap', master_desc:'Activer tous les gestes et le bouton flottant', howto_title:'COMMENT UTILISER ORBIT TAP', usage_label:"Aujourd'hui", gestures_title:'GESTES', xshape_label:"Fermer l'onglet", lshape_label:'Nouvel onglet', circle_label:'Rechercher dans la page', cshape_label:'Actualisation forcée', floating_title:'BOUTON FLOTTANT', show_button:'Afficher le bouton flottant', show_button_desc:'Accès rapide sur chaque page', btn_size:'Taille', opacity:'Opacité', sensitivity_title:'SENSIBILITÉ', less_sensitive:'Moins', more_sensitive:'Plus', footer:'Orbit Tap v1.1.0' },
+    hi: { tagline:'Safari के लिए इशारा नियंत्रण', master_label:'Orbit Tap एक्सटेंशन', master_desc:'सभी इशारे और फ्लोटिंग बटन सक्षम करें', howto_title:'Orbit Tap का उपयोग कैसे करें', usage_label:'आज', gestures_title:'इशारे', xshape_label:'टैब बंद करें', lshape_label:'नया टैब', circle_label:'पेज में खोजें', cshape_label:'रीलोड (कैश अनदेखा)', floating_title:'फ्लोटिंग बटन', show_button:'फ्लोटिंग बटन दिखाएं', show_button_desc:'हर पेज पर त्वरित पहुंच', btn_size:'आकार', opacity:'अपारदर्शिता', sensitivity_title:'संवेदनशीलता', less_sensitive:'कम', more_sensitive:'अधिक', footer:'Orbit Tap v1.1.0' }
   };
   const lang = (() => {
     const l = (navigator.language || 'en').toLowerCase();
@@ -209,73 +209,6 @@
 
   renderUI();
 
-  // ── Usage Display ──────────────────────────────────────────
-  function renderUsage(count, isSub) {
-    const card = document.getElementById('usageCard');
-    if (!card) return;
-
-    if (isSub) {
-      card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--green);font-weight:700;">Pro</span> <span style="color:var(--sub);">' + i18n('무제한', 'Unlimited', '無制限', '无限', 'Illimité', 'असीमित') + '</span></div>';
-    } else {
-      card.innerHTML = '<div style="font-size:13px;"><span style="color:var(--sub);" id="txt_usage_label">' + t('usage_label') + '</span> <span style="color:var(--text);font-weight:700;">' + count + '</span><span style="color:var(--sub);"> / 10</span></div><button id="subscribeBtn" style="padding:8px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,sans-serif;" >Pro</button>';
-      document.getElementById('subscribeBtn')?.addEventListener('click', () => {
-        try {
-          const p = browser.tabs?.create({ url: 'swiftgesture://subscribe' });
-          if (!p) window.open('swiftgesture://subscribe');
-          else p.catch(() => window.open('swiftgesture://subscribe'));
-        } catch(_) { window.open('swiftgesture://subscribe'); }
-      });
-    }
-  }
-
-  function loadUsage() {
-    let count = 0;
-    let isSub = false;
-
-    // 팝업에서 직접 native messaging (ShieldMail 패턴)
-    try {
-      if (typeof chrome !== 'undefined' && chrome.runtime?.sendNativeMessage) {
-        chrome.runtime.sendNativeMessage(
-          'com.shadowengine.app',
-          { action: 'getSubscriptionStatus' },
-          (resp) => {
-            if (resp?.isActive === true || resp?.tier === 'pro') {
-              isSub = true;
-              browser.storage?.local?.set({ subscriptionActive: true })?.catch(() => {});
-              renderUsage(count, true);
-            }
-          }
-        );
-      }
-    } catch(_) {}
-
-    try {
-      browser.storage?.local?.get(['swiftUsage', 'subscriptionActive', 'subscriptionDebug', 'subDbgContent'])?.then(result => {
-        const data = result?.swiftUsage || {};
-        const todayStr = new Date().toISOString().slice(0, 10);
-        count = (data.date === todayStr) ? (data.count || 0) : 0;
-        if (data.isSubscribed) isSub = true;
-        if (result?.subscriptionActive === true) isSub = true;
-
-
-        // background에 fresh 체크
-        try {
-          browser.runtime?.sendMessage?.({ action: 'getSubscriptionStatus' })?.then(r => {
-            if (r?.isActive === true) {
-              isSub = true;
-              renderUsage(count, isSub);
-            }
-          })?.catch(() => {});
-        } catch(_){}
-
-        renderUsage(count, isSub);
-      })?.catch(() => renderUsage(count, isSub));
-    } catch(_) { renderUsage(count, isSub); }
-  }
-  loadUsage();
-
-  // subscribeBtn 이벤트는 renderUsage()에서 동적으로 등록
-
   // ── Admin Mode ────────────────────────────────────────────
   const USAGE_KEY = 'swiftUsage';
   let versionTaps = 0;
@@ -342,39 +275,9 @@
         document.getElementById('statWeekFree').textContent = data.weekFreeCount || 0;
         document.getElementById('statTotalFree').textContent = data.totalFreeCount || 0;
         document.getElementById('statMonthSub').textContent = data.monthSubDays || 0;
-
-        const toggle = document.getElementById('adminSubToggle');
-        toggle.checked = data.isSubscribed || false;
       })?.catch(() => {});
     } catch(_) {}
   }
-
-  // Mirror of UsageTracker.computeSignature — must match field-for-field.
-  function computeSig(data) {
-    const raw = `sw1ft_2026:${data.isSubscribed}:${data.date}:${data.count}:${data.weekStart || ''}:${data.weekFreeCount || 0}:${data.totalFreeCount || 0}:${data.monthKey || ''}:${data.monthSubDays || 0}`;
-    let h = 0;
-    for (let i = 0; i < raw.length; i++) { h = ((h << 5) - h + raw.charCodeAt(i)) | 0; }
-    return h.toString(36);
-  }
-
-  // 구독 전환
-  document.getElementById('adminSubToggle').addEventListener('change', function() {
-    const isSub = this.checked;
-    try {
-      browser.storage?.local?.get(USAGE_KEY)?.then(result => {
-        const data = result?.[USAGE_KEY] || {};
-        data.isSubscribed = isSub;
-        if (isSub) data.monthSubDays = (data.monthSubDays || 0) + 1;
-        data._sig = computeSig(data);
-        browser.storage?.local?.set({ [USAGE_KEY]: data })?.then(() => {
-          loadUsage();
-          loadAdminStats();
-          // content script에도 알림
-          send('subscriptionChanged', { isSubscribed: isSub });
-        })?.catch(() => {});
-      })?.catch(() => {});
-    } catch(_) {}
-  });
 
   // 통계 초기화
   document.getElementById('adminResetBtn').addEventListener('click', () => {

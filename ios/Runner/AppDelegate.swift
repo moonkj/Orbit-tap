@@ -20,7 +20,7 @@ import UIKit
     }
 
     func registerChannels(with messenger: FlutterBinaryMessenger) {
-        StoreKitChannel.register(with: messenger)
+        // v1.1.0: paid app — no in-app purchase (StoreKit removed).
         AppGroupChannel.register(with: messenger)
         ExtensionStatusChannel.register(with: messenger)
     }

@@ -127,36 +127,6 @@ describe('GestureEngine', () => {
       expect(overlays.length).toBe(1);
     });
 
-    it('should call usageTracker.refresh() before checking canUse()', async () => {
-      await engine.activateGestureMode();
-      expect(usageTracker.refresh).toHaveBeenCalledOnce();
-      expect(usageTracker.canUse).toHaveBeenCalledOnce();
-    });
-
-    it('should show subscription prompt when canUse() returns false', async () => {
-      const limitedTracker = createMockUsageTracker(false);
-      const limitedEngine = new GestureEngine(config, intentDetector as any, limitedTracker as any);
-
-      await limitedEngine.activateGestureMode();
-
-      // Should NOT create the gesture overlay
-      const overlay = document.querySelector('.swift-gm-overlay');
-      expect(overlay).toBeNull();
-
-      // Should show subscription prompt (has subscribe button)
-      const subBtn = document.querySelector('#swift-sub-btn');
-      expect(subBtn).not.toBeNull();
-
-      const closeBtn = document.querySelector('#swift-sub-close');
-      expect(closeBtn).not.toBeNull();
-    });
-
-    it('should refresh and check usage each time it is activated', async () => {
-      await engine.activateGestureMode();
-      expect(usageTracker.refresh).toHaveBeenCalledTimes(1);
-      expect(usageTracker.canUse).toHaveBeenCalledTimes(1);
-    });
-
     it('should set auto-deactivation timer for 5 seconds', async () => {
       await engine.activateGestureMode();
 
@@ -355,26 +325,6 @@ describe('GestureEngine', () => {
       (engine as any).showToast('a');
       (engine as any).showToast('b');
       expect((engine as any).toast.textContent).toBe('b');
-    });
-  });
-
-  describe('showSubscriptionPrompt()', () => {
-    it('creates prompt with buttons', () => {
-      (engine as any).showSubscriptionPrompt();
-      expect(document.querySelector('#swift-sub-btn')).not.toBeNull();
-      expect(document.querySelector('#swift-sub-close')).not.toBeNull();
-    });
-
-    it('close removes prompt', () => {
-      (engine as any).showSubscriptionPrompt();
-      (document.querySelector('#swift-sub-close') as HTMLElement).click();
-      expect(document.querySelector('#swift-sub-btn')).toBeNull();
-    });
-
-    it('subscribe removes prompt', () => {
-      (engine as any).showSubscriptionPrompt();
-      (document.querySelector('#swift-sub-btn') as HTMLElement).click();
-      expect(document.querySelector('#swift-sub-btn')).toBeNull();
     });
   });
 

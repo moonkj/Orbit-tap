@@ -73,7 +73,7 @@ describe('UsageTracker', () => {
       await tracker.load();
 
       expect(browser.storage.local.get).toHaveBeenCalledWith('swiftUsage');
-      expect(tracker.remaining()).toBe(7); // 10 - 3
+      expect(tracker.remaining()).toBe(Infinity); // paid app — unlimited
       expect(tracker.getStats().todayCount).toBe(3);
       expect(tracker.getStats().totalFree).toBe(10);
     });
@@ -81,7 +81,7 @@ describe('UsageTracker', () => {
     it('initializes with defaults when storage is empty', async () => {
       await tracker.load();
 
-      expect(tracker.remaining()).toBe(10);
+      expect(tracker.remaining()).toBe(Infinity);
       expect(tracker.canUse()).toBe(true);
       expect(tracker.getStats().todayCount).toBe(0);
     });
@@ -91,59 +91,18 @@ describe('UsageTracker', () => {
   // canUse()
   // ---------------------------------------------------------------
   describe('canUse()', () => {
-    it('returns true when count < 10', async () => {
+    // Paid app (v1.1.0): single tier — usage is never gated, regardless of
+    // stored count or subscription flag.
+    it('always returns true regardless of count', async () => {
       storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
-        count: 5,
-        isSubscribed: false,
-        totalFreeCount: 5,
-        weekStart: weekStartStr(),
-        weekFreeCount: 5,
-        monthKey: monthKeyStr(),
-        monthSubDays: 0,
-      });
-
-      await tracker.load();
-      expect(tracker.canUse()).toBe(true);
-    });
-
-    it('returns false when count >= 10', async () => {
-      storageMock['swiftUsage'] = mkUsage({
-        date: todayStr(),
-        count: 10,
-        isSubscribed: false,
-        totalFreeCount: 10,
-        weekStart: weekStartStr(),
-        weekFreeCount: 10,
-        monthKey: monthKeyStr(),
-        monthSubDays: 0,
-      });
-
-      await tracker.load();
-      expect(tracker.canUse()).toBe(false);
-    });
-
-    it('returns false when count exceeds 10', async () => {
-      storageMock['swiftUsage'] = mkUsage({
-        date: todayStr(),
-        count: 15,
-        isSubscribed: false,
-        totalFreeCount: 15,
-        weekStart: weekStartStr(),
-        weekFreeCount: 15,
-        monthKey: monthKeyStr(),
-        monthSubDays: 0,
-      });
-
-      await tracker.load();
-      expect(tracker.canUse()).toBe(false);
-    });
-
-    it('returns true when isSubscribed regardless of count', async () => {
-      storageMock['swiftUsage'] = mkUsage({
         count: 999,
-        isSubscribed: true,
-        monthSubDays: 5,
+        isSubscribed: false,
+        totalFreeCount: 999,
+        weekStart: weekStartStr(),
+        weekFreeCount: 999,
+        monthKey: monthKeyStr(),
+        monthSubDays: 0,
       });
 
       await tracker.load();
@@ -215,43 +174,17 @@ describe('UsageTracker', () => {
   // remaining()
   // ---------------------------------------------------------------
   describe('remaining()', () => {
-    it('returns correct remaining count for free user', async () => {
+    // Paid app (v1.1.0): single tier — no usage cap.
+    it('always returns Infinity', async () => {
       storageMock['swiftUsage'] = mkUsage({
         date: todayStr(),
-        count: 7,
-        isSubscribed: false,
-        totalFreeCount: 7,
-        weekStart: weekStartStr(),
-        weekFreeCount: 7,
-        monthKey: monthKeyStr(),
-        monthSubDays: 0,
-      });
-
-      await tracker.load();
-      expect(tracker.remaining()).toBe(3);
-    });
-
-    it('returns 0 when count >= limit', async () => {
-      storageMock['swiftUsage'] = mkUsage({
-        date: todayStr(),
-        count: 12,
-        isSubscribed: false,
-        totalFreeCount: 12,
-        weekStart: weekStartStr(),
-        weekFreeCount: 12,
-        monthKey: monthKeyStr(),
-        monthSubDays: 0,
-      });
-
-      await tracker.load();
-      expect(tracker.remaining()).toBe(0);
-    });
-
-    it('returns Infinity for subscribed users', async () => {
-      storageMock['swiftUsage'] = mkUsage({
         count: 50,
-        isSubscribed: true,
-        monthSubDays: 3,
+        isSubscribed: false,
+        totalFreeCount: 50,
+        weekStart: weekStartStr(),
+        weekFreeCount: 50,
+        monthKey: monthKeyStr(),
+        monthSubDays: 0,
       });
 
       await tracker.load();
@@ -328,7 +261,7 @@ describe('UsageTracker', () => {
       expect(tracker.getStats().monthSub).toBe(0);
       expect(tracker.isSubscribed()).toBe(false);
       expect(tracker.canUse()).toBe(true);
-      expect(tracker.remaining()).toBe(10);
+      expect(tracker.remaining()).toBe(Infinity);
     });
 
     it('persists reset to storage', async () => {
@@ -404,7 +337,7 @@ describe('UsageTracker', () => {
       await tracker.refresh();
 
       expect(tracker.getStats().todayCount).toBe(7);
-      expect(tracker.remaining()).toBe(3);
+      expect(tracker.remaining()).toBe(Infinity);
     });
 
     it('calls browser.storage.local.get', async () => {
@@ -435,7 +368,7 @@ describe('UsageTracker', () => {
       // Daily count should be reset since stored date != today
       expect(tracker.getStats().todayCount).toBe(0);
       expect(tracker.canUse()).toBe(true);
-      expect(tracker.remaining()).toBe(10);
+      expect(tracker.remaining()).toBe(Infinity);
       // totalFreeCount should be preserved
       expect(tracker.getStats().totalFree).toBe(50);
     });
@@ -544,11 +477,11 @@ describe('UsageTracker', () => {
       expect(tracker.isSubscribed()).toBe(false);
     });
 
-    // Track A regression guard — count tampering must also fail closed,
-    // not just isSubscribed tampering. Anyone editing storage to set
-    // count=0 without recomputing the signature should land at the
-    // daily limit (canUse() === false), never granted free uses.
-    it('tampered count → fail closed (canUse=false)', async () => {
+    // Paid app (v1.1.0): single tier — there is no client-side usage cap to
+    // bypass, so canUse() is unconditionally true even on tampered storage.
+    // The signature guard still runs (it drops a forged subscription claim),
+    // but it no longer gates usage.
+    it('stays usable even with tampered storage (no cap to bypass)', async () => {
       const realData: UsageData = {
         date: todayStr(),
         count: 5,
@@ -561,10 +494,9 @@ describe('UsageTracker', () => {
       };
       const sigForFiveUses = computeTestSig(realData);
       // Forge: write count=0 with the signature computed for count=5.
-      // The load() check must catch the mismatch and fail-close.
       storageMock.swiftUsage = { ...realData, count: 0, _sig: sigForFiveUses };
       await tracker.load();
-      expect(tracker.canUse()).toBe(false);
+      expect(tracker.canUse()).toBe(true);
     });
   });
 });

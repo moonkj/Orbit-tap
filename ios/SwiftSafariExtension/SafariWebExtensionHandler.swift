@@ -20,10 +20,6 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         switch action {
         case "getConfig":
             response = loadGestureConfig()
-        case "getSubscriptionStatus":
-            response = buildSubscriptionResponse()
-        case "purchase":
-            response = ["url": "swiftgesture://subscribe"]
         default:
             response = ["error": "Unknown action"]
         }
@@ -41,21 +37,5 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             return ["status": "default"]
         }
         return config
-    }
-
-    /// ShieldMail 패턴: App Groups에서 구독 상태 읽기
-    private func buildSubscriptionResponse() -> [String: Any] {
-        let defaults = UserDefaults(suiteName: AppGroupConstants.suiteName)
-        let isActive = defaults?.bool(forKey: AppGroupConstants.subscriptionActiveKey) ?? false
-        let expiryTimestamp = defaults?.double(forKey: AppGroupConstants.subscriptionExpiryKey) ?? 0
-        let jws = defaults?.string(forKey: AppGroupConstants.jwsKey)
-        let productId = defaults?.string(forKey: AppGroupConstants.productIdKey)
-
-        let now = Date().timeIntervalSince1970
-
-        return [
-            "tier": isActive ? "pro" : "free",
-            "isActive": isActive,
-        ]
     }
 }

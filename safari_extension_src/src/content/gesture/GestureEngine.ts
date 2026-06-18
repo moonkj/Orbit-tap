@@ -3,7 +3,6 @@ import { ShapeDetector, GestureType } from './ShapeDetector';
 import { IntentDetector } from '../intent/IntentDetector';
 import { FeedbackOverlay } from '../ui/FeedbackOverlay';
 import { SearchOverlay } from '../ui/SearchOverlay';
-import { showSubscriptionPrompt } from '../ui/SubscriptionPrompt';
 import { UsageTracker } from '../usage/UsageTracker';
 import type { GestureConfig } from '../config/ConfigBridge';
 
@@ -82,12 +81,6 @@ export class GestureEngine {
   async activateGestureMode(): Promise<void> {
     if (this.gestureMode) return;
 
-    // 최신 구독 상태 갱신 후 체크
-    await this.usageTracker.refresh();
-    if (!this.usageTracker.canUse()) {
-      this.showSubscriptionPrompt();
-      return;
-    }
     this.gestureMode = true;
 
     // 토스트
@@ -357,9 +350,5 @@ export class GestureEngine {
 
     this.state = 'COOLDOWN';
     this.cooldownTimer = window.setTimeout(() => { this.state = 'IDLE'; this.cooldownTimer = null; }, 500);
-  }
-
-  private showSubscriptionPrompt(): void {
-    showSubscriptionPrompt();
   }
 }

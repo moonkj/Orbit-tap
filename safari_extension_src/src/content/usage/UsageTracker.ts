@@ -140,14 +140,13 @@ export class UsageTracker {
     } catch {}
   }
 
+  // Paid app (v1.1.0+): single tier — everyone who has the app gets unlimited use.
   canUse(): boolean {
-    if (this.data.isSubscribed) return true;
-    return this.data.count < DAILY_FREE_LIMIT;
+    return true;
   }
 
   remaining(): number {
-    if (this.data.isSubscribed) return Infinity;
-    return Math.max(0, DAILY_FREE_LIMIT - this.data.count);
+    return Infinity;
   }
 
   async recordUse(): Promise<void> {

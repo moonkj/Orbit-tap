@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../subscription/domain/subscription_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -14,8 +12,6 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final subState = ref.watch(subscriptionProvider);
-    final isPro = subState == SubscriptionState.premium;
 
     return Scaffold(
       body: SafeArea(
@@ -56,69 +52,6 @@ class SettingsScreen extends ConsumerWidget {
               _FeatureItem(icon: Icons.radio_button_checked, color: AppColors.primary, title: l10n.get('featFloatingTitle'), description: l10n.get('featFloatingDesc')),
               const SizedBox(height: 32),
 
-              // Subscription Section
-              _SectionTitle(icon: Icons.workspace_premium, title: l10n.get('subscription')),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isPro ? Colors.green.withValues(alpha: 0.5) : theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                ),
-                child: isPro
-                  ? Row(
-                      children: [
-                        const Icon(Icons.workspace_premium, color: Colors.amber),
-                        const SizedBox(width: 8),
-                        Text(l10n.get('premiumActive'), style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, color: Colors.green)),
-                        const Spacer(),
-                        Text(l10n.get('allGesturesUnlocked'), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.person_outline, color: theme.colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 8),
-                            Text(l10n.get('freePlan'), style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-                            const Spacer(),
-                            Text(l10n.get('monthlyPrice'), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: FilledButton.icon(
-                            onPressed: () async {
-                              await context.push('/subscribe');
-                              if (context.mounted) {
-                                ref.read(subscriptionProvider.notifier).checkStatus();
-                              }
-                            },
-                            icon: const Icon(Icons.workspace_premium),
-                            label: Text(l10n.get('upgrade'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () async {
-                            await ref.read(subscriptionProvider.notifier).restore();
-                          },
-                          child: Text(l10n.get('restore'), style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
-                        ),
-                      ],
-                    ),
-              ),
-              const SizedBox(height: 32),
-
               // Legal Section
               _SectionTitle(icon: Icons.description, title: l10n.get('legalTitle')),
               const SizedBox(height: 12),
@@ -130,7 +63,7 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // Version
-              Text('${l10n.get('version')} 1.0.0', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              Text('${l10n.get('version')} 1.1.0', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
               const SizedBox(height: 32),
             ],
           ),

@@ -118,20 +118,6 @@
     <label class="toggle"><input type="checkbox" id="masterToggle"><span class="track"></span></label>
   </div>
 
-  <!-- Usage & Subscribe -->
-  <div class="card" id="usageCard" style="display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-size:13px;">
-      <span style="color:var(--sub);" id="txt_usage_label">Today</span>
-      <span style="color:var(--text);font-weight:700;" id="usageCount">0</span>
-      <span style="color:var(--sub);">/ 10</span>
-    </div>
-    <button id="subscribeBtn" style="
-      padding:8px 16px;border:none;border-radius:8px;
-      background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;
-      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-    ">Pro</button>
-  </div>
-
   <!-- How to use -->
   <div class="card" style="background:rgba(10,132,255,0.08);border:1px solid rgba(10,132,255,0.2);">
     <div class="card-title" style="color:var(--primary)" id="txt_howto_title">Orbit Tap 사용법</div>
@@ -232,7 +218,7 @@
 
   </div><!-- /subControls -->
 
-  <div class="footer" id="txt_footer" style="cursor:pointer;-webkit-user-select:none;">Orbit Tap v1.0.0</div>
+  <div class="footer" id="txt_footer" style="cursor:pointer;-webkit-user-select:none;">Orbit Tap v1.1.0</div>
 
   <!-- Admin Panel (hidden) -->
   <div id="adminPanel" style="display:none;">
@@ -252,11 +238,6 @@
     <div id="adminDash" style="display:none;">
       <div class="card" style="margin-top:10px;border:1px solid #FF453A;">
         <div class="card-title" style="color:#FF453A;">ADMIN DASHBOARD</div>
-
-        <div class="option-row">
-          <div><div class="option-label">Subscription (Free↔Pro)</div></div>
-          <label class="toggle"><input type="checkbox" id="adminSubToggle"><span class="track"></span></label>
-        </div>
 
         <div style="padding:10px 0;font-size:12px;color:var(--sub);line-height:1.8;">
           <div>Today: <span id="statToday" style="color:var(--text);">0</span></div>

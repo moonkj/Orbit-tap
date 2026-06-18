@@ -1,6 +1,5 @@
 import type { GestureConfig } from '../config/ConfigBridge';
 import type { UsageTracker } from '../usage/UsageTracker';
-import { showSubscriptionPrompt } from './SubscriptionPrompt';
 
 type ButtonAction = 'gesture' | 'back' | 'forward' | 'gestureGuide';
 type GestureActivator = () => void;
@@ -422,17 +421,6 @@ export class FloatingButton {
     if (action === 'gestureGuide') {
       this.showGestureGuide();
       return;
-    }
-
-    // gesture는 GestureEngine.activateGestureMode 안에서 한도 체크
-    // back/forward는 여기서 직접 한도 체크 + 차단
-    if (action !== 'gesture' && this.usageTracker) {
-      await this.usageTracker.refresh();
-      if (!this.usageTracker.canUse()) {
-        showSubscriptionPrompt();
-        return;
-      }
-      this.usageTracker.recordUse();
     }
 
     switch (action) {

@@ -49,7 +49,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         title: l10n.get('onboardingTitle5'),
         subtitle: l10n.get('onboardingSubtitle5'),
         description: l10n.get('onboardingDesc5'),
-        icon: Icons.workspace_premium,
+        icon: Icons.verified_user,
       ),
     ];
 

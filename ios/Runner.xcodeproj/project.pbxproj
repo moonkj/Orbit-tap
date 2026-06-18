@@ -18,8 +18,7 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
-		AABB0011AABB0011AABB0011 /* StoreKitChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0001AABB0001AABB0001 /* StoreKitChannel.swift */; };
-		AABB0012AABB0012AABB0012 /* AppGroupChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0002AABB0002AABB0002 /* AppGroupChannel.swift */; };
+				AABB0012AABB0012AABB0012 /* AppGroupChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0002AABB0002AABB0002 /* AppGroupChannel.swift */; };
 		AABB0013AABB0013AABB0013 /* ExtensionStatusChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0003AABB0003AABB0003 /* ExtensionStatusChannel.swift */; };
 		AABB0014AABB0014AABB0014 /* AppGroupConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0004AABB0004AABB0004 /* AppGroupConstants.swift */; };
 		C7E2C039EA1E67BF9596DEDB /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 465D1FDC88D25FC7B6AA7C37 /* Pods_Runner.framework */; };
@@ -93,8 +92,7 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A28B09C0CCDA609AC9094994 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
-		AABB0001AABB0001AABB0001 /* StoreKitChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitChannel.swift; sourceTree = "<group>"; };
-		AABB0002AABB0002AABB0002 /* AppGroupChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupChannel.swift; sourceTree = "<group>"; };
+				AABB0002AABB0002AABB0002 /* AppGroupChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupChannel.swift; sourceTree = "<group>"; };
 		AABB0003AABB0003AABB0003 /* ExtensionStatusChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionStatusChannel.swift; sourceTree = "<group>"; };
 		AABB0004AABB0004AABB0004 /* AppGroupConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppGroupConstants.swift; path = Shared/AppGroupConstants.swift; sourceTree = "<group>"; };
 		BA2708E0EE5BC2F58C2B7F40 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
@@ -229,7 +227,6 @@
 		AABB0021AABB0021AABB0021 /* Channels */ = {
 			isa = PBXGroup;
 			children = (
-				AABB0001AABB0001AABB0001 /* StoreKitChannel.swift */,
 				AABB0002AABB0002AABB0002 /* AppGroupChannel.swift */,
 				AABB0003AABB0003AABB0003 /* ExtensionStatusChannel.swift */,
 			);
@@ -522,7 +519,6 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
-				AABB0011AABB0011AABB0011 /* StoreKitChannel.swift in Sources */,
 				AABB0012AABB0012AABB0012 /* AppGroupChannel.swift in Sources */,
 				AABB0013AABB0013AABB0013 /* ExtensionStatusChannel.swift in Sources */,
 				AABB0014AABB0014AABB0014 /* AppGroupConstants.swift in Sources */,
@@ -579,13 +575,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = SwiftSafariExtension/SwiftSafariExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = QN975MTM7H;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbit Tap";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -727,13 +723,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = SwiftSafariExtension/SwiftSafariExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = QN975MTM7H;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbit Tap";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -907,13 +903,13 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = SwiftSafariExtension/SwiftSafariExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = QN975MTM7H;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SwiftSafariExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbit Tap";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shadowengine.app.extension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
