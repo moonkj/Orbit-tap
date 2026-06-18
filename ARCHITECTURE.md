@@ -5,6 +5,8 @@
 
 ---
 
+> ⚠️ **업데이트 (v1.1.0, 2026-06):** 본 문서는 초기 기획안입니다. 수익화 모델이 **월 $0.99 구독 → 1회 구매 유료 앱**으로 변경되었습니다. 인앱결제/StoreKit/페이월/무료-유료 티어 분리/하루 10회 제한은 **전부 제거**되었고, 앱을 구매한 모든 사용자가 전 기능을 **무제한**으로 씁니다(단일 티어). 구독자 0명 상태에서 전환했으며, 기존 무료 다운로더는 App Store의 무료→유료 전환 처리로 **평생 무료**(grandfather). 아래의 구독 관련 서술은 역사적 기록으로만 참고하세요. 또한 일부 기획 기능(V/Two-Finger/Double Tap/Quick Action/Stats 등)은 실제 출시본에 포함되지 않았고, **실제 제스처는 X(탭 닫기)/L(새 탭)/○(검색)/C(새로고침) 4종**입니다.
+
 ## 1. 아키텍처 개요
 
 ### 1.1 핵심 결정사항
@@ -14,7 +16,7 @@
 | **Flutter = 컨테이너 앱 전용** | Safari Web Extension은 별도 네이티브 타겟 필수. Flutter 엔진은 Extension 프로세스에서 실행 불가 (메모리 제한 ~120MB, 샌드박스) |
 | **TypeScript → JS 번들** | Extension content/background script는 JavaScript. TypeScript로 개발하여 타입 안정성 확보 후 Rollup으로 번들 |
 | **App Groups 데이터 공유** | 앱 ↔ Extension 간 실시간 통신 불가. UserDefaults(suiteName:)을 통한 비동기 공유만 가능 |
-| **StoreKit 2 직접 구현** | 월 $0.99 단순 구독이므로 RevenueCat 불필요. 앱 크기 절감 |
+| **1회 구매 유료 앱** (v1.1.0) | 인앱결제/StoreKit 없이 앱 자체를 유료화. 구매자 전원 무제한(단일 티어). 기존 무료 다운로더는 App Store 무료→유료 자동 grandfather. *(구버전은 StoreKit 2 월 구독이었음)* |
 
 ### 1.2 시스템 아키텍처
 
@@ -55,7 +57,7 @@
 | **컨테이너 앱 UI** | Flutter 3.x / Dart |
 | **상태 관리** | Riverpod |
 | **네이티브 브릿지** | MethodChannel → Swift |
-| **구독 결제** | StoreKit 2 (Swift, async/await) |
+| **수익화** | 1회 구매 유료 앱 (인앱결제 없음, v1.1.0) |
 | **Extension Native** | Swift (SafariWebExtensionHandler) |
 | **Extension Web** | TypeScript → Rollup → JS 번들 |
 | **테스트 (JS)** | Vitest |
@@ -82,7 +84,7 @@
 | Smart Exclusion (overflow-x, iframe) | DOM 속성 분석 | 90% |
 | 제스처 피드백 (아이콘 0.3초) | Shadow DOM 오버레이 | 95% |
 | 제스처 커스터마이징 (설정 앱) | Flutter UI → App Groups → JS 설정 동기화 | 90% |
-| 구독 결제 ($0.99/월) | StoreKit 2 | 95% |
+| 1회 구매 유료 앱 (v1.1.0) | App Store 가격 책정 | 100% |
 | Gesture Preview Mode | Canvas 또는 SVG로 경로 시각화 | 85% |
 
 ### 2.2 구현 주의 기능 (Yellow)
@@ -118,7 +120,7 @@ App Launch
   │   ├── Page 2: Safari Extension 활성화 가이드
   │   ├── Page 3: 제스처 인터랙티브 튜토리얼
   │   ├── Page 4: Floating Button 소개
-  │   └── Page 5: 구독 안내 (Free Trial)
+  │   └── Page 5: 개인정보/오프라인 안내 (구독 페이지 제거됨, v1.1.0)
   │
   └─ [이후 실행] → Main Settings Screen
       ├── Extension 상태 카드 (활성/비활성)
@@ -138,35 +140,26 @@ App Launch
       │   ├── 주간 제스처 사용 차트
       │   ├── 가장 많이 사용한 제스처 Top 3
       │   └── 절약 시간 추정
-      └── 구독 관리
-          ├── 현재 상태
-          ├── 구독/복원 버튼
-          └── 기능 비교 (무료 vs 프리미엄)
+      └── (구독 관리 섹션 제거됨 — v1.1.0 단일 티어)
 ```
 
-### 3.2 무료/유료 기능 분리
+### 3.2 기능 정책 (v1.1.0)
 
-| 기능 | 무료 | 유료 ($0.99/월) |
-|------|------|----------------|
-| Mid-Back/Forward 스와이프 | O | O |
-| Floating Button (싱글탭만) | O | O |
-| V/L Shape 제스처 | X | O |
-| Double Tap / Long Press | X | O |
-| Two Finger Flick | X | O |
-| Floating Button 전체 기능 | X | O |
-| Quick Action Layer | X | O |
-| 제스처 커스터마이징 | X | O |
-| Smart Exclusion 세부 설정 | X | O |
-| 사이트별 프로필 | X | O |
-| 사용 통계 | 기본 | 상세 |
+**1회 구매 유료 앱**으로 전환되어 무료/유료 티어 구분이 없습니다. 앱을 구매(또는 grandfather)한 모든 사용자가 전 기능을 **무제한**으로 사용합니다. (이전: 월 $0.99 구독 + 하루 10회 무료 제한 — 모두 제거)
+
+> 아래는 구버전의 무료/유료 분리표(역사 기록). 현재는 적용되지 않음.
+
+| 기능 | (구) 무료 | (구) 유료 |
+|------|------|------|
+| 핵심 제스처(X/L/○/C) | 하루 10회 | 무제한 |
+| 플로팅 버튼 | O | O |
 
 ### 3.3 예외 UX 상태
 
 | 상태 | 처리 |
 |------|------|
 | Extension 비활성화 | 메인 화면 상단에 경고 배너 + 설정 이동 버튼 |
-| 구독 만료 | Grace Period 3일 → 이후 무료 기능으로 자동 전환. 앱 진입 시 갱신 안내 |
-| 오프라인 | 로컬 캐시 기반 구독 확인. 번역 기능 비활성화 |
+| 오프라인 | 완전 오프라인 동작 (네트워크 요청 0, 구독 확인 불필요 — v1.1.0) |
 | 제스처 실패 | 시각적 피드백 (빨간 X 아이콘 0.3초) |
 | 제스처 성공 | 시각적 피드백 (녹색 체크 + 기능 아이콘 0.3초) |
 | 빈 상태 (탭 복구할 것 없음) | 토스트 메시지 "복구할 탭이 없습니다" |
@@ -292,13 +285,11 @@ swift_safari_gesture/
 - [ ] 제스처 튜토리얼/연습 모드
 - [ ] MethodChannel 브릿지 구현
 
-### Phase 6: 구독 결제 시스템 (2-3일)
-- [ ] StoreKit 2 네이티브 구현
-- [ ] MethodChannel 연동
-- [ ] Flutter Paywall UI
-- [ ] 구독 상태 → App Groups 동기화
-- [ ] Extension에서 구독 상태 확인 + Grace Period
-- [ ] 무료/유료 기능 분기 처리
+### Phase 6: 수익화 — 1회 구매 유료 앱 (v1.1.0)
+- [x] (구버전) StoreKit 2 월 구독 구현 → **v1.1.0에서 전부 제거**
+- [x] 인앱결제/페이월/무료 10회 제한 삭제, 단일 티어(전원 무제한)로 전환
+- [x] App Store Connect에서 앱 가격 책정 (Free → 유료)
+- [x] 기존 무료 다운로더는 무료→유료 전환으로 평생 무료(grandfather, 코드 불필요)
 
 ### Phase 7: 사용 통계 & 문서화 (1-2일)
 - [ ] 제스처 이벤트 카운트 로컬 저장
@@ -386,7 +377,7 @@ IDLE → [touch start] → DETECTING → [threshold met] → RECOGNIZED → COOL
 | 2 | Safari 네이티브 제스처 충돌 | 높음 | Center Zone 한정 인식, 실기기 프로토타입 우선 검증 |
 | 3 | App Store 4.2 거부 (최소 기능성) | 높음 | Container App에 충분한 독립 기능 (설정, 튜토리얼, 통계) 구현 |
 | 4 | Two Finger Flick ↔ Pinch-to-Zoom 구분 실패 | 높음 | distance_ratio 기반 판별 PoC, 실패 시 기능 제거 |
-| 5 | 구독 상태 동기화 지연 | 중간 | App Groups + Grace Period 3일 + 다층 확인 시스템 |
+| 5 | ~~구독 상태 동기화 지연~~ | 해소 | v1.1.0 유료 앱 전환으로 구독 동기화 자체가 불필요 |
 
 ---
 

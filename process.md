@@ -8,7 +8,7 @@
 - **앱 이름**: Orbit Tap
 - **플랫폼**: iOS Safari Extension (Flutter + TypeScript + Swift)
 - **Bundle ID**: com.shadowengine.app
-- **구독**: $0.99/월 (무료 10회/일)
+- **수익화**: 1회 구매 유료 앱 (v1.1.0~, 단일 티어 무제한) · *이전 v1.0.x는 월 $0.99 구독 + 무료 10회/일*
 - **지원 언어**: 6개 (한국어, 영어, 일본어, 중국어, 프랑스어, 힌디어)
 
 ---
@@ -258,9 +258,34 @@ Apple 심사팀 회신 시 수정 사항 나열 + 새 빌드 번호 명시
 
 ---
 
+## Phase 10: 유료 앱 전환 — 구독 제거 (v1.1.0) ✅
+
+### 배경
+구독자 0명 상태에서 월 $0.99 구독 → **1회 구매 유료 앱**으로 전환. 무료/유료 티어 폐지, 앱 구매자 전원 무제한.
+
+### 제거 내역
+| 영역 | 내용 |
+|------|------|
+| Flutter | PaywallScreen, subscription_service, `/subscribe` 라우트, 설정 구독 섹션, StoreKit 메서드/상수 |
+| Swift | StoreKitChannel.swift(+pbxproj 4엔트리), SceneDelegate `swiftgesture://` 핸들러, Handler 구독 응답, AppGroup 구독키 6개 |
+| Extension | SubscriptionPrompt.ts, GestureEngine/FloatingButton 한도 게이트, popup 사용량카드+구독버튼+관리자 구독토글 |
+| 문구 | popup "/10 Pro", 온보딩 "$0.99/월", 마케팅 "구독", l10n 구독키 13개, docs(이용약관/개인정보/지원) |
+| Dead code | 도달불가 화면 5개(stats/about/gesture_detail/floating_button/exclusion), 미사용 l10n 키 61개, fl_chart 의존성 |
+
+### grandfathering
+별도 코드 불필요 — App Store가 무료→유료 전환 시 기존 다운로더에게 자동으로 평생 무료 부여.
+
+### 검증
+- flutter analyze 0 error, 확장 build OK, vitest 신규 실패 0, l10n 무결성 통과
+- iOS release 빌드·실기기(iPhone) 설치 성공 (`Xcode build done`)
+- 35 files, +76 / -3065
+
+---
+
 ## 커밋 히스토리
 | 커밋 | 내용 |
 |------|------|
+| `fb3e47f` | **v1.1.0**: 1회 구매 유료 앱 전환 + 구독·dead code 전면 제거 |
 | `latest` | App Store resubmit: IAP metadata + group localization + build 2 |
 | `0a4eb5c` | Rename extension to SWIFT with i18n manifest and popup min-width fix |
 | `83c4620` | Add GitHub Pages: privacy, terms, support pages |
@@ -279,7 +304,7 @@ Apple 심사팀 회신 시 수정 사항 나열 + 새 빌드 번호 명시
 - **코드 리뷰**: 팀 에이전트 전원 CLEAN (Coder/UX/Security+Perf)
 - **테스트**: 247 통과, 90%+ 커버리지
 - **보안**: SHA-256 비밀번호, storage 서명, sender 검증, XSS 방지
-- **구독**: StoreKit 2 + App Groups + Manifest V3 native messaging
+- **수익화**: 1회 구매 유료 앱 (v1.1.0 — 구독/StoreKit/페이월/무료제한 전부 제거, 단일 티어 무제한)
 - **i18n**: 6개 언어 완전 커버
 - **성능**: 디바운싱, AbortController, 타이머 cleanup 완료
 
